@@ -4,12 +4,12 @@ The project inroduces an intent-based meta-orchestrator for a geo-distributed co
 
 The orchestrator is then called as a [Kubernetes operator](https://kopf.readthedocs.io/en/stable/) after [kubectl CLI](https://github.com/fluidos-project/kubectl-fluidos-plugin) extension run.
 
-# Requirements
+## Requirements
 
-# Installation
+## Installation
 
-# How to use
+## How to use
 
-# Examples
+## Examples
 
 
