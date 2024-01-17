@@ -1,0 +1,15 @@
+# A demo custom resource for the Kopf example operators.
+apiVersion: fluidos.dev/v1
+kind: FLUIDOSDeployment
+metadata:
+  name: kopf-example-1
+  labels:
+    somelabel: somevalue
+  annotations:
+    someannotation: somevalue
+spec:
+  duration: 1m
+  field: value
+  items:
+  - item1
+  - item2
