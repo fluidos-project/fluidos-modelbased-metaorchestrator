@@ -1,0 +1,9 @@
+covdefaults
+coverage
+pytest
+faker
+tqdm
+bandit
+mypy
+flake8
+types-PyYAML

@@ -1,32 +1,3 @@
-fluidos_model_orchestrator/model/gc_data/*.csv
-fluidos_model_orchestrator/model/gc_data/*.json
-fluidos_model_orchestrator/model/pods_gct/*.yaml
-fluidos_model_orchestrator/model/ckpt/*.pt
-fluidos_model_orchestrator/model/training_results
-datasets/GCT/configuration2id.json
-datasets/GCT/id2configuration.json
-datasets/GCT/location_dict.json
-datasets/GCT/pod_embeddings_with_images
-fluidos_model_orchestrator/model/ckpt_images_update
-datasets/GCT/machines/*.json
-datasets/GCT/pods/*.yaml
-datasets/GCT/table-*.csv
-datasets/GCT/machines_by_feature.json
-datasets/GCT/machines_dict_with_region.json
-datasets/GCT/*.csv
-datasets/GCT/pod_embeddings/*.npy
-configuration_stat.json
-fluidos_model_orchestrator/model/output.json
-fluidos_model_orchestrator/model/pods/*.yaml
-
-datasets/GCT/configuration_region2id.json
-datasets/GCT/id2configuration_region.json
-fluidos_model_orchestrator/model/ckpt
-fluidos_model_orchestrator/model/images_statistics/large_image_sizes.json
-fluidos_model_orchestrator/model/images_statistics/large_images_feature_vector.json
-fluidos_model_orchestrator/model/images_statistics/large_images_sizes_vector.json
-locations_distribution.json
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -156,12 +127,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-.DS_Store
-
-# MacOS
-.DS_Store
-
-# VSCode
-.vscode/
-node
-utils/logs
