@@ -1,19 +1,16 @@
 from typing import Any
 
-from ..common import ModelInterface, ModelPredictResponse
+from ..common import ModelInterface
 from ..common import ModelPredictRequest
 from ..common import Intent
+from .dummy import DummyOrchestrator
 
 from kopf import PermanentError
 
 import logging
 
+
 logger = logging.getLogger(__name__)
-
-
-class DummyOrchestrator(ModelInterface):
-    def predict(self, req: ModelPredictRequest) -> ModelPredictResponse:
-        return None
 
 
 def get_model_object() -> ModelInterface:

@@ -1,9 +1,11 @@
 covdefaults
 coverage
 pytest
+pytest-kind
 faker
 tqdm
 bandit
 mypy
 flake8
 types-PyYAML
+tox
