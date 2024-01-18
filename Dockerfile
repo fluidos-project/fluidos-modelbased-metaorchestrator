@@ -7,4 +7,6 @@ ADD setup.cfg setup.py /app/
 
 RUN pip install .
 
+ENV TOKENIZERS_PARALLELISM=false
+
 CMD kopf run -m fluidos_model_orchestrator --verbose

@@ -1,7 +1,9 @@
 import subprocess
 from fluidos_model_orchestrator.resources import _extract_command, _extract_remote_cluster_id
+import pytest
 
 
+@pytest.mark.skip
 def test_extract_command():
     # this test assumes kind cluster milan to be operating
     response = subprocess.run("liqoctl generate peer-command --kubeconfig \"$PWD/utils/examples/milan-kubeconfig.yaml\"", shell=True, check=True, capture_output=True)
@@ -18,6 +20,7 @@ def test_extract_command():
     )
 
 
+@pytest.mark.skip
 def test_extract_remote_cluster_id():
     # this test assumes kind cluster milan to be operating
     template_command = "liqoctl peer out-of-band milan --auth-url SECRET --cluster-id CLUSTER_ID --auth-token SECRET"
