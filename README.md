@@ -11,12 +11,20 @@ The operator assumes the following:
 Moreover, the interaction with the operator assumes:
 * fluidos-kubectl-plugin version >= *MISSING*
 
-To run the operator in debug mode, the following is required:
+To run the operator in development mode, the following is required:
 * python >= 3.11
 
-## How to run
+## How to run the operator
 
-The operator can be executed in two main modes, namely debug mode and 
+The operator can be executed in two main modes, namely development mode and production mode.
+The former refers to the the operator being executed within a local environment against a running kubernetes cluster (usually Kind). The latter, on the other hand, refers to the operator running within a kubernetes cluster.
+
+### Development mode
+
+### Production mode
+
+
+## Examples
 
 
 ## Contributing
