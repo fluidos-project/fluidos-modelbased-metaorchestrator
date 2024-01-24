@@ -25,7 +25,7 @@ async def configure(logger: logging.Logger, settings: kopf.OperatorSettings, par
 
 
 def enrich_configuration(config: Configuration, settings: kopf.OperatorSettings, param: Any, memo: dict, kwargs):
-    logging.info("Enrich default configuration with user provide information")
+    logging.info("Enrich default configuration with user provided information")
 
     pass
 
