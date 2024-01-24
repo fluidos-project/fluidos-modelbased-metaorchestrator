@@ -165,3 +165,4 @@ dmypy.json
 .vscode/
 node
 utils/logs
+.pytest-kind
