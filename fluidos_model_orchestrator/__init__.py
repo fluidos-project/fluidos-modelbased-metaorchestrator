@@ -21,7 +21,7 @@ from .resources import ResourceProvider
 from .resources import get_resource_finder
 
 
-@kopf.on.create("modelbaseddeployment")
+@kopf.on.create("fluidosdeployments")
 def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Logger, errors=kopf.ErrorsMode.PERMANENT, **kwargs):
     logger.info("Processing incoming request")
     logger.debug(f"Received request: {spec}")
