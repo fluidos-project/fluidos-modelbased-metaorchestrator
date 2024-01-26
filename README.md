@@ -1,4 +1,8 @@
-# fluidos-model-orchestrator
+<!-- markdownlint-disable first-line-h1 -->
+<p align="center">
+<a href="https://www.fluidos.eu/"> <img src="./docs/images/fluidoslogo.png" width="150"/> </a>
+<h3 align="center">FLUIDOS Model-based Meta-Orchestrator</h3>
+</p>
 
 This repository contains the operator to perform model-based meta-orchestration within a Cloud-to-Edge continuum as described by FLUIDOS.
 
@@ -21,10 +25,40 @@ The former refers to the the operator being executed within a local environment 
 
 ### Development mode
 
+Development mode assumes access to a Kubernetes cluster. An example of cluster, using kind is available [here](utils/cluster-multi-worker.yaml).
+
+```bash
+# start kind
+kind create cluster --name foo --config utils/cluster-multi-worker.yaml --kubeconfig utils/examples/dublin-kubeconfig.yaml
+
+# install CRD
+kubectl apply -f utils/fluidos-deployment-crd.yaml
+
+# start FLUIDOS operator
+kopfs run --verbose -m fluidos_model_orchestrator
+```
+
+The shell will provide the log of the execution of the operator.
+
 ### Production mode
 
+When deploying directly on a cluster, one can leverage the following utility steps:
 
-## Examples
+```bash
+# build docker image
+docker build -t fluidos-mbmo:latest . && docker push
+
+# install CRD
+kubectl apply -f utils/fluidos-deployment-crd.yaml
+
+# install operator to cluster
+kubectl apply -f utils/fluidos-deployment.yaml
+```
+
+Note that the docker image must be available to the cluster. If the cluster has been created with kind, the image must be loaded using `kind load docker-image fluidos-mbmo:latest`. Also, note that if the environment is using podman instead of docker, then alternative steps are required. Namely, the docker image must be loaded into the cluster nodes via the following steps:
+`podman save fluidos-mbmo:latest -o /tmp/fluidos-mbmo-latest.tar && kind load image-archive /tmp/fluidos-mbmo-latest.tar`.
+
+### Example of interaction
 
 
 ## Contributing
