@@ -7,4 +7,4 @@ ADD setup.cfg setup.py /app
 
 RUN pip install .
 
-CMD kopf run -m fluidos-model-orchestrator --verbose
+CMD kopf run -m fluidos_model_orchestrator --verbose
