@@ -11,6 +11,7 @@ This repository contains the operator to perform model-based meta-orchestration 
 The operator assumes the following:
 * Kubernetes version >= 28.1.0
 * REAR (node) functionality version >= *MISSING*
+* Liqo version >= 0.9.4
 
 Moreover, the interaction with the operator assumes:
 * fluidos-kubectl-plugin version >= *MISSING*
@@ -60,6 +61,7 @@ Note that the docker image must be available to the cluster. If the cluster has 
 
 ### Example of interaction
 
+TODO
 
 ## Contributing
 
