@@ -119,4 +119,4 @@ class Configuration:
     remote_node_key: str = "liqo.io/remote-cluster-id"
 
 
-configuration = Configuration()
+CONFIGURATION = Configuration()
