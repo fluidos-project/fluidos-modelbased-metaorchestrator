@@ -2,6 +2,7 @@ from typing import Any
 
 import kopf
 from kopf import PermanentError
+from kopf import TemporaryError
 
 from logging import Logger
 
@@ -45,7 +46,7 @@ def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Lo
         raise RuntimeError("Unable to find resource matching requirement")
 
     if not best_match.reserve():
-        raise RuntimeError(f"Unable to find {best_match}")
+        raise TemporaryError(f"Unable to find {best_match}")
 
     if not deploy(spec, best_match):
         raise PermanentError("Unable to deploy")

@@ -4,7 +4,7 @@ import kopf
 from asyncio import Lock
 import logging
 
-from .common import configuration
+from .common import CONFIGURATION
 from .common import Configuration
 
 
@@ -21,7 +21,7 @@ async def configure(logger: logging.Logger, settings: kopf.OperatorSettings, par
 
     LOCK = Lock()
 
-    enrich_configuration(configuration, settings, param, memo, kwargs)
+    enrich_configuration(CONFIGURATION, settings, param, memo, kwargs)
 
 
 def enrich_configuration(config: Configuration, settings: kopf.OperatorSettings, param: Any, memo: dict, kwargs):
