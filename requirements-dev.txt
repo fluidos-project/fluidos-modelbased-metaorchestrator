@@ -8,4 +8,5 @@ bandit
 mypy
 flake8
 types-PyYAML
-tox
+tox>=4.10.0
+tox-gh
