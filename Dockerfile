@@ -7,6 +7,7 @@ ADD setup.cfg setup.py /app/
 
 RUN pip install .
 
+# required by baseline model
 ENV TOKENIZERS_PARALLELISM=false
 
-CMD kopf run -m fluidos_model_orchestrator --verbose
+CMD kopf run -A -m fluidos_model_orchestrator --verbose
