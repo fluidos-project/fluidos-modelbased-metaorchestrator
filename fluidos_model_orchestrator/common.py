@@ -26,12 +26,14 @@ class Resource:
         logger.debug(f"Testing {self=} against {flavour=}")
         if not _cpu_compatible(self.cpu, flavour.cpu):
             return False
+
         if not _memory_compatible(self.memory, flavour.memory):
             return False
 
         if self.architecture is not None and self.architecture != flavour.architecture:
             return False
-        if self.gpu is not None and int(self.gpu) < int(flavour.gpu):
+
+        if self.gpu is not None and int(self.gpu) > int(flavour.gpu):
             return False
 
         # TODO: add checks for storage
@@ -54,6 +56,8 @@ def _memory_to_int(spec: str) -> int:
         return magnitude
     if unit == "Mi":
         return 1024 * magnitude
+    if unit == "Gi":
+        return 1024 * 1024 * magnitude
 
     raise ValueError(f"Not known {unit=}")
 
