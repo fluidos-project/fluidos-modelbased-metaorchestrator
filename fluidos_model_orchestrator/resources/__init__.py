@@ -122,6 +122,7 @@ class REARResourceFinder(ResourceFinder):
 
         local = self._find_local(resource)
 
+        # to be changed with something retrieved from the configuration
         if local is not None and (resource.region.casefold() is None or resource.region.casefold() == "dublin"):
             logger.info(f"Found local resource {local=}")
             return local
