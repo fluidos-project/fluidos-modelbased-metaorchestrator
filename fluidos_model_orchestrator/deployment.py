@@ -9,7 +9,7 @@ from kubernetes import config
 from kubernetes import client
 from kubernetes import utils
 
-from .common import configuration
+from .common import CONFIGURATION
 
 import logging
 
@@ -61,8 +61,8 @@ def enrich(spec: dict[str, Any], provider: ResourceProvider) -> bool:
         raise ValueError(f"Unsupported manifest kind: {spec['kind']}")
 
     if label:
-        nodeSelector[configuration.remote_node_key] = label
+        nodeSelector[CONFIGURATION.remote_node_key] = label
     else:
-        nodeSelector[configuration.local_node_key] = "true"
+        nodeSelector[CONFIGURATION.local_node_key] = "true"
 
     return True
