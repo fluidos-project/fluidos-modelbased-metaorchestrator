@@ -125,7 +125,11 @@ class KnownIntent(Enum):
     location = auto()
     resource = auto()
     throughput = auto()
+    compliance = auto()
     energy = auto()
+
+    def __repr__(self) -> str:
+        return super().__repr__()
 
 
 @dataclass

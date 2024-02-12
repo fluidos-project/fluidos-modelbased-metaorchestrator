@@ -3,6 +3,7 @@ from typing import Any
 from ..common import ModelInterface
 from ..common import ModelPredictRequest
 from ..common import Intent
+from ..common import KnownIntent
 from .dummy import DummyOrchestrator
 
 from kopf import PermanentError
@@ -26,9 +27,10 @@ def get_model_object(request: ModelPredictRequest) -> ModelInterface:
 
 def convert_to_model_request(spec: Any) -> ModelPredictRequest:
     logger.info("Converting incoming custom resource to model request")
+
     if spec["kind"] == "Deployment":
         logger.debug("Processing Deployment object")
-        return ModelPredictRequest(id=f"{spec['metadata']['name']}", pod_request=spec["spec"]["template"], intents=_extract_intents(spec["metadata"].get("annotations", {})))
+        return ModelPredictRequest(id=spec["metadata"]["name"], pod_request=spec["spec"]["template"], intents=_extract_intents(spec["metadata"].get("annotations", {})))
 
     if spec["kind"] == "Pod":
         logger.debug("Processing Pod object")
