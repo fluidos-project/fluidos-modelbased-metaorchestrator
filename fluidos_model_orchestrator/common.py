@@ -120,6 +120,10 @@ class Intent:
 
 class KnownItent(Enum):
     latency = auto()
+    location = auto()
+    resource = auto()
+    throughput = auto()
+    energy = auto()
 
 
 @dataclass
