@@ -13,10 +13,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+_model_instances: dict[str, ModelInterface] = {
+    "dummy": DummyOrchestrator()
+}
+
+
 def get_model_object(request: ModelPredictRequest) -> ModelInterface:
     logger.info(f"Retrieving model interface for {request}")
 
-    return DummyOrchestrator()
+    return _model_instances["dummy"]
 
 
 def convert_to_model_request(spec: Any) -> ModelPredictRequest:
