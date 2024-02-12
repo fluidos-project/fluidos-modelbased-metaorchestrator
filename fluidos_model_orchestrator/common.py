@@ -77,8 +77,10 @@ def _cpu_compatible(cpu_a_spec: str, cpu_b_spec: str) -> bool:
 def _cpu_to_int(spec: str) -> int:
     if spec[-1] == 'n':
         return int(spec[:-1])
+    elif spec[-1] == "m":
+        return int(spec[:-1]) * 1000
     else:
-        return int(spec) * 1000
+        return int(spec) * (1000 * 1000)
 
 
 @dataclass
@@ -118,7 +120,7 @@ class Intent:
     value: str
 
 
-class KnownItent(Enum):
+class KnownIntent(Enum):
     latency = auto()
     location = auto()
     resource = auto()
