@@ -1,5 +1,5 @@
 from fluidos_model_orchestrator.model import get_model_object
-from fluidos_model_orchestrator.model import DummyOrchestrator
+from fluidos_model_orchestrator.model.dummy import DummyOrchestrator
 
 
 def test_defaults_to_dummy():
