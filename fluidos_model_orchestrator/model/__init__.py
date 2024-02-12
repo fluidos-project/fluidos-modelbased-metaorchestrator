@@ -13,8 +13,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def get_model_object() -> ModelInterface:
-    logger.info("Retrieving model interface")
+def get_model_object(request: ModelPredictRequest) -> ModelInterface:
+    logger.info(f"Retrieving model interface for {request}")
+
     return DummyOrchestrator()
 
 

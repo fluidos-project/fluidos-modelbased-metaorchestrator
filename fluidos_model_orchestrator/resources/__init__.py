@@ -10,6 +10,8 @@ import kopf
 
 from ..common import Flavour
 from ..common import Resource
+from ..common import ModelPredictRequest
+from ..common import ModelPredictResponse
 
 from kubernetes import config, client
 
@@ -107,7 +109,7 @@ class ResourceFinder(ABC):
         raise NotImplementedError()
 
 
-def get_resource_finder() -> ResourceFinder:
+def get_resource_finder(request: ModelPredictRequest, predict: ModelPredictResponse) -> ResourceFinder:
     logger.info("REARResourceFinder being returned")
     return REARResourceFinder()
 
