@@ -1,9 +1,14 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 
-from dataclasses import dataclass, field
-from typing import Any, Optional
+from dataclasses import dataclass
+from dataclasses import field
+from typing import Any
+from typing import Optional
+from enum import Enum
+from enum import auto
 
 import logging
 
@@ -111,6 +116,10 @@ class ModelInterface(ABC):
 class Intent:
     name: str
     value: str
+
+
+class KnownItent(Enum):
+    latency = auto()
 
 
 @dataclass
