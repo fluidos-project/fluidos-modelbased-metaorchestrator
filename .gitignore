@@ -167,3 +167,4 @@ node
 utils/logs
 .pytest-kind
 Pipfile
+node
