@@ -27,10 +27,9 @@ def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Lo
     logger.info("Processing incoming request")
     logger.debug(f"Received request: {spec}")
 
-    predictor: ModelInterface = get_model_object()
-    finder: ResourceFinder = get_resource_finder()
-
     request: ModelPredictRequest = convert_to_model_request(spec)
+
+    predictor: ModelInterface = get_model_object(request)
 
     if request is None:
         raise kopf.PermanentError("Request is not valid, discarding")
@@ -39,6 +38,8 @@ def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Lo
 
     if prediction is None:
         raise ValueError("Model unable to provide valid prediction")
+
+    finder: ResourceFinder = get_resource_finder(request, prediction)
 
     best_match: ResourceProvider = finder.find_best_match(prediction.to_resource())
 
