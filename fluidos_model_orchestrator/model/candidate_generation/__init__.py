@@ -10,7 +10,7 @@ from typing import Dict, Any, List
 from sentence_transformers import SentenceTransformer
 
 from ...common import Resource, ModelInterface, ModelPredictRequest, ModelPredictResponse
-from utils import compute_embedding_for_sentence, find_matching_configs
+from fluidos_model_orchestrator.model.candidate_generation.model_utils import compute_embedding_for_sentence, find_matching_configs
 
 import logging
 
@@ -119,7 +119,7 @@ class Orchestrator(ModelInterface):
     def __init__(self, model_name: str = "orchestrator_cg_v0.0.1.pt", device: str = "cpu") -> None:
         self.sentence_transformer = SentenceTransformer(self.embedding_model_name)
         self.device = device
-        metadata_path = importlib_resources.files(__name__).joinpath("metadata.json")
+        metadata_path = importlib_resources.files(__name__).joinpath("metadata_cg_v0.0.1.json")
         try:
             with open(metadata_path, "r") as f:
                 self.metadata: Dict[str, int] = json.load(f)
