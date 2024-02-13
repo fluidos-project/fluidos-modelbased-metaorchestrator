@@ -1,0 +1,100 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from typing import Dict, Any
+
+
+class EmbeddingAggregation(nn.Module):
+    def __init__(self, aggregation_mode: str = "mean"):
+        super().__init__()
+        if aggregation_mode not in ['sum', "mean"]:
+            raise NotImplementedError(f"mode {aggregation_mode} not implemented!")
+        self.aggregation_mode = aggregation_mode
+
+    def forward(self, x):
+        if self.aggregation_mode == 'sum':
+            aggregated = torch.sum(x, dim=1)  # axis
+        elif self.aggregation_mode == 'mean':
+            aggregated = torch.mean(x, dim=1)  # axis
+
+        return aggregated
+
+
+class OrchestrationModel(nn.Module):
+    def __init__(self, config: Dict[str, Any]):
+        super(OrchestrationModel, self).__init__()
+
+        self.device = config['device']
+        self.config_embedding = nn.Embedding(num_embeddings=config['num_configs'], embedding_dim=8, device=self.device)
+        self.config_embedding_dropout = nn.Dropout(p=0.2)
+        self.pod_embedding = nn.Embedding(num_embeddings=119547, embedding_dim=512, device=self.device)  # distiluse-base-multilingual-cased-v2
+
+        self.fc1_size = config['fc1_size']
+        self.fc2_size = config['fc2_size']
+        self.fc3_size = config['fc3_size']
+
+        self.dropout_val1 = config['dropout1']
+        self.dropout_val2 = config['dropout2']
+        self.dropout_val3 = config['dropout3']
+
+        self.embedding_aggregator = EmbeddingAggregation(aggregation_mode=config["aggregation_mode"])  # component-wise average
+        self.linear1 = nn.Linear(512 + 2 * 8, self.fc1_size)  # pod_embedding + rel_configs_embedding + non-rel_configs_embedding
+        self.activation1 = nn.ReLU(inplace=True)
+        self.batch_norm1 = nn.BatchNorm1d(self.fc1_size)
+        self.dropout1 = nn.Dropout(p=self.dropout_val1)
+        self.fc_layer1 = nn.Sequential(self.linear1, self.activation1, self.batch_norm1, self.dropout1)
+
+        self.linear2 = nn.Linear(self.fc1_size, self.fc2_size)
+        self.activation2 = nn.ReLU(inplace=True)
+        self.batch_norm2 = nn.BatchNorm1d(self.fc2_size)
+        self.dropout2 = nn.Dropout(p=self.dropout_val2)
+        self.fc_layer2 = nn.Sequential(self.linear2, self.activation2, self.batch_norm2, self.dropout2)
+
+        self.linear3 = nn.Linear(self.fc2_size, self.fc3_size)
+        self.activation3 = nn.ReLU(inplace=True)
+        self.batch_norm = nn.BatchNorm1d(self.fc3_size)
+        self.dropout3 = nn.Dropout(p=self.dropout_val3)
+        self.fc_layer3 = nn.Sequential(self.linear3, self.activation3, self.batch_norm, self.dropout3)
+        self.head = torch.nn.Linear(in_features=self.fc3_size, out_features=config['num_configs'])
+
+    def forward(self, input):
+
+        """
+        Predicts relevant config id
+        config = (cpu, memory, location, throughput)
+
+        Args:
+            input (List): input features list, 3 items
+            input[0] (torch.Tensor): 0..512 for distiluse-base-multilingual-cased-v2 sentence transformer model,
+                0:512, pod_embeddings
+            input[1] (torch.Tensor): list of relevant configuration ids
+            input[2] (torch.Tensor): list of non relevant configuration ids
+
+        Returns:
+            torch.Tensor: logits (tensor with maximum index refers to predicted configuration id)
+        """
+        # Embedding preprocessing
+        x_in = input[0]
+        x_rel = input[1]
+        x_non_rel = input[2]
+
+        pod_embedding = x_in[:, :512]
+        pod_embedding = F.normalize(pod_embedding)
+
+        rel_config_embedding = self.config_embedding(x_rel)
+        rel_config_embedding = self.config_embedding_dropout(rel_config_embedding)
+        rel_config_embedding = F.normalize(rel_config_embedding)
+        rel_config_embedding = self.embedding_aggregator(rel_config_embedding)
+
+        non_rel_config_embedding = self.config_embedding.forward(x_non_rel)
+        non_rel_config_embedding = F.normalize(non_rel_config_embedding)
+        non_rel_config_embedding = self.embedding_aggregator(non_rel_config_embedding)
+
+        x = torch.cat((pod_embedding, rel_config_embedding, non_rel_config_embedding), dim=1)
+
+        x = self.fc_layer1(x)
+        x = self.fc_layer2(x)
+        x = self.fc_layer3(x)
+        x = self.head(x)
+        x = F.softmax(x, dim=1)
+        return x
