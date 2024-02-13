@@ -9,7 +9,7 @@ import ast
 from typing import Dict, Any, List
 from sentence_transformers import SentenceTransformer
 
-from ..common import Intent, Resource, ModelInterface, ModelPredictRequest, ModelPredictResponse
+from ...common import Resource, ModelInterface, ModelPredictRequest, ModelPredictResponse
 from utils import compute_embedding_for_sentence, find_matching_configs
 
 import logging
@@ -116,7 +116,7 @@ class OrchestrationModel(nn.Module):
 class Orchestrator(ModelInterface):
     embedding_model_name: str = "distiluse-base-multilingual-cased-v2"  # TODO read from metadata
 
-    def __init__(self, model_name: str = "orchestrator_grid_v0.0.3.pt", device: str = "cpu") -> None:
+    def __init__(self, model_name: str = "orchestrator_cg_v0.0.1.pt", device: str = "cpu") -> None:
         self.sentence_transformer = SentenceTransformer(self.embedding_model_name)
         self.device = device
         metadata_path = importlib_resources.files(__name__).joinpath("metadata.json")
@@ -131,7 +131,7 @@ class Orchestrator(ModelInterface):
         self.orchestrator.load_state_dict(torch.load(model_path, map_location=self.device)["model_state_dict"])
 
     def generate_configs_feature_set(self, intents_dict: Dict[str, Any]) -> tuple[torch.Tensor, torch.Tensor]:
-        # TODO: replace with actual history, add default mode
+        # TODO: add default mode
         relevant_configs: List[int] = []
         non_relevant_configs: List[int] = []
 
