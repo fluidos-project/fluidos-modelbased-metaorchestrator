@@ -1,7 +1,20 @@
+from __future__ import annotations
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, Any
+import json
+import random  # TODO remove
+import importlib_resources
+import ast
+from typing import Dict, Any, List
+from sentence_transformers import SentenceTransformer
+
+from ..common import Intent, Resource, ModelInterface, ModelPredictRequest, ModelPredictResponse
+from utils import compute_embedding_for_sentence, find_matching_configs
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class EmbeddingAggregation(nn.Module):
@@ -98,3 +111,78 @@ class OrchestrationModel(nn.Module):
         x = self.head(x)
         x = F.softmax(x, dim=1)
         return x
+
+
+class Orchestrator(ModelInterface):
+    embedding_model_name: str = "distiluse-base-multilingual-cased-v2"  # TODO read from metadata
+
+    def __init__(self, model_name: str = "orchestrator_grid_v0.0.3.pt", device: str = "cpu") -> None:
+        self.sentence_transformer = SentenceTransformer(self.embedding_model_name)
+        self.device = device
+        metadata_path = importlib_resources.files(__name__).joinpath("metadata.json")
+        try:
+            with open(metadata_path, "r") as f:
+                self.metadata: Dict[str, int] = json.load(f)
+        except:  # noqa
+            raise FileNotFoundError()
+
+        self.orchestrator: OrchestrationModel = OrchestrationModel(self.metadata["training_setup"])
+        model_path = importlib_resources.files(__name__).joinpath(model_name)
+        self.orchestrator.load_state_dict(torch.load(model_path, map_location=self.device)["model_state_dict"])
+
+    def generate_configs_feature_set(self, intents_dict: Dict[str, Any]) -> tuple[torch.Tensor, torch.Tensor]:
+        # TODO: replace with actual history, add default mode
+        relevant_configs: List[int] = []
+        non_relevant_configs: List[int] = []
+
+        # relevant configs - some of those which satisfy all the intents
+        # non_relevant configs - those which do not satisfy all the intents
+
+        relevant_configs_full, non_relevant_configs_full, minumal_value_config = find_matching_configs(intents_dict,
+                                                                                                       configuration2id=self.metadata["configuration2id"])
+        if len(relevant_configs_full) == 0:
+            relevant_configs = [0]
+        else:
+            relevant_configs = list(set(random.choices(relevant_configs_full, k=4)))  # TODO fix random selection with historical information loading
+        if len(non_relevant_configs_full) == 0:
+            non_relevant_configs = [0]
+        else:
+            non_relevant_configs = list(set(random.choices(non_relevant_configs_full, k=3)))   # TODO fix random selection with historical information loading
+
+        relevant_configs = torch.tensor(relevant_configs, device=self.device, dtype=torch.float32).unsqueeze(0)
+        non_relevant_configs = torch.tensor(non_relevant_configs, device=self.device, dtype=torch.float32).unsqueeze(0)
+
+        return relevant_configs, non_relevant_configs
+
+    def predict(self, data: ModelPredictRequest) -> ModelPredictResponse:
+
+        logger.info("pod embedding generation")
+        pod_embedding = compute_embedding_for_sentence(str(data.pod_request), self.sentence_transformer)
+        intents_dict: Dict[str, str] = {intent.name: intent.value for intent in data.intents}
+
+        relevant_configs, non_relevant_configs = self.generate_configs_feature_set(intents_dict)
+        relevant_configs = relevant_configs.type(torch.int32)
+        non_relevant_configs = non_relevant_configs.type(torch.int32)
+
+        # model input feature vector
+        logger.info("model input feature vector")
+        model_input = [pod_embedding, relevant_configs, non_relevant_configs]
+
+        self.orchestrator.eval()
+        logits = self.orchestrator.forward(model_input)
+        predicted_configuration_id = logits.detach().numpy().argmax()
+
+        predicted_config = self.metadata["id2configuration"][str(predicted_configuration_id)]
+        if predicted_config == "none":
+            predicted_config_dict: Dict[str, str] = {}
+            for item in data.intents:
+                predicted_config_dict[item.name] = "-1"
+        else:
+            predicted_config_dict = ast.literal_eval(predicted_config)
+
+        return ModelPredictResponse(
+            data.id,
+            resource_profile=Resource(
+                id=data.id, region=predicted_config_dict['fluidos-intent-location'], cpu=f"{predicted_config_dict['cpu']}",
+                memory=f"{predicted_config_dict['memory']}", architecture="arm64")
+        )
