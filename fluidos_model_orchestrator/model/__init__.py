@@ -4,7 +4,7 @@ from ..common import ModelInterface
 from ..common import ModelPredictRequest
 from ..common import Intent
 from .dummy import DummyOrchestrator
-
+from .candidate_generation import Orchestrator as CGOrchestrator
 from kopf import PermanentError
 
 import logging
@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 _model_instances: dict[str, ModelInterface] = {
-    "dummy": DummyOrchestrator()
+    "dummy": DummyOrchestrator(),
+    "candidate_generation": CGOrchestrator()
 }
 
 
