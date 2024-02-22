@@ -41,10 +41,16 @@ def convert_to_model_request(spec: Any) -> ModelPredictRequest:
 
 
 def _extract_intents(annotations: dict[str, str]) -> list[Intent]:
-    logger.debug("Extracting intens from annotations")
-    intents = [
-        Intent(_extract_intent_name(key).casefold(), str(value).casefold()) for key, value in annotations.items() if key.casefold().startswith("fluidos-intent-")
-    ]
+    logger.debug("Extracting explicit intens from annotations")
+    intents = []
+
+    for key, value in annotations.items():
+        if key.casefold().startswith("fluidos-intent-"):
+            intent_name = _extract_intent_name(key)
+            if KnownIntent.is_supported(intent_name):
+                intents.append(Intent(intent_name, str(value).casefold()))
+            else:
+                logger.info(f"Unknown intent: {intent_name=} -> {value=}")
 
     logger.debug(f"Extracted {len(intents)} intents from the annotations")
 
@@ -52,4 +58,4 @@ def _extract_intents(annotations: dict[str, str]) -> list[Intent]:
 
 
 def _extract_intent_name(data: str) -> str:
-    return "-".join(data.split("-")[2:])
+    return "-".join(data.split("-")[2:]).casefold()
