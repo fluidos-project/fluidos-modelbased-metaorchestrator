@@ -29,10 +29,10 @@ def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Lo
 
     request: ModelPredictRequest = convert_to_model_request(spec)
 
-    predictor: ModelInterface = get_model_object(request)
-
     if request is None:
         raise kopf.PermanentError("Request is not valid, discarding")
+
+    predictor: ModelInterface = get_model_object(request)
 
     prediction: ModelPredictResponse = predictor.predict(request)
 
