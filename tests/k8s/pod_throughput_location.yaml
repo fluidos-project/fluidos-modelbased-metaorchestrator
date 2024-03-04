@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    fluidos-intent-location: a
+    fluidos-intent-throughput: 4.47Ks
+  name: mysql
+spec:
+  containers:
+  - image: mysql:latest
+    name: mysql
+    ports:
+    - containerPort: 80
+    resources:
+      requests:
+        cpu: 61m
+        memory: 306Mi
