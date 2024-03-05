@@ -6,7 +6,6 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
-from typing import Optional
 from enum import Enum
 from enum import auto
 
@@ -21,11 +20,11 @@ class Resource:
     id: str
     cpu: str = None
     memory: str = None
-    architecture: Optional[str] = None
-    gpu: Optional[str] = None
-    ephemeral_storage: Optional[str] = None
-    persistent_storage: Optional[str] = None
-    region: Optional[str] = None
+    architecture: str | None = None
+    gpu: str | None = None
+    ephemeral_storage: str | None = None
+    persistent_storage: str | None = None
+    region: str | None = None
 
     def can_run_on(self, flavour: Flavour) -> bool:
         logger.debug(f"Testing {self=} against {flavour=}")

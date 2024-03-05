@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import json
 import random  # TODO remove
-import importlib_resources
+# import importlib_resources
 import ast
 from typing import Dict, Any, List
 from sentence_transformers import SentenceTransformer
@@ -183,6 +183,6 @@ class Orchestrator(ModelInterface):
         return ModelPredictResponse(
             data.id,
             resource_profile=Resource(
-                id=data.id, region=predicted_config_dict['fluidos-intent-location'], cpu=f"{predicted_config_dict['cpu']}",
-                memory=f"{predicted_config_dict['memory']}", architecture="arm64")
+                id=data.id, region=predicted_config_dict['fluidos-intent-location'], cpu=f"{predicted_config_dict['cpu']}",  # TODO: needs fixing, this is using fluidos-intent as per the manifest, not as represented in the request
+                memory=f"{predicted_config_dict['memory']}", architecture="arm64")  # TODO: fix requred, here we impose the architecture to be arm64, is it correct? arch is optional in Resource. 
         )
