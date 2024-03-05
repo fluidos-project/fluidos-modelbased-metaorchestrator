@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import json
 import random  # TODO remove
-# import importlib_resources
+import pkg_resources  # noqa
 import ast
 from typing import Dict, Any, List
 from sentence_transformers import SentenceTransformer
@@ -119,16 +119,12 @@ class Orchestrator(ModelInterface):
     def __init__(self, model_name: str = "orchestrator_cg_v0.0.1.pt", device: str = "cpu") -> None:
         self.sentence_transformer = SentenceTransformer(self.embedding_model_name)
         self.device = device
-        metadata_path = importlib_resources.files(__name__).joinpath("metadata_cg_v0.0.1.json")
-        try:
-            with open(metadata_path, "r") as f:
-                self.metadata: Dict[str, int] = json.load(f)
-        except:  # noqa
-            raise FileNotFoundError()
+        with pkg_resources.resource_stream(__name__, "metadata_cg_v0.0.1.json") as metadata_stream:
+            self.metadata: Dict[str, int] = json.load(metadata_stream)
 
         self.orchestrator: OrchestrationModel = OrchestrationModel(self.metadata["training_setup"])
-        model_path = importlib_resources.files(__name__).joinpath(model_name)
-        self.orchestrator.load_state_dict(torch.load(model_path, map_location=self.device)["model_state_dict"])
+        with pkg_resources.resource_stream(__name__, model_name) as model_stream:
+            self.orchestrator.load_state_dict(torch.load(model_stream, map_location=self.device)["model_state_dict"])
 
     def generate_configs_feature_set(self, intents_dict: Dict[str, Any]) -> tuple[torch.Tensor, torch.Tensor]:
         # TODO: add default mode
