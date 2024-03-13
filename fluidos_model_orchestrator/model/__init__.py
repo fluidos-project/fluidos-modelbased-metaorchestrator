@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 _model_instances: dict[str, ModelInterface] = {
     "dummy": DummyOrchestrator(),
-    "candidate_generation": CGOrchestrator(),
+    "candidate_generation": CGOrchestrator()
 }
 
 
