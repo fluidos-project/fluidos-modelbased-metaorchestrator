@@ -125,7 +125,24 @@ class KnownIntent(Enum):
     location = auto()
     resource = auto()
     throughput = auto()
+    compliance = auto()
     energy = auto()
+    battery = auto()
+
+    def __repr__(self) -> str:
+        return super().__repr__()
+
+    def to_intent_key(self) -> str:
+        return f"fluidos-intent-{self.name}"
+
+    @staticmethod
+    def is_supported(intent_name: str) -> bool:
+        if intent_name.startswith("fluidos-intent-"):
+            intent_name = "-".join(intent_name.split("-")[2:])
+
+        return any(
+            known_intent.name == intent_name for known_intent in KnownIntent
+        )
 
 
 @dataclass
