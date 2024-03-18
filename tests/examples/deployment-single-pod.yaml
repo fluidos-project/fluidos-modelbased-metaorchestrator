@@ -1,6 +1,6 @@
 # A demo custom resource for the Kopf example operators.
 apiVersion: fluidos.dev/v1
-kind: FLUIDOSDeployment
+kind: kopfexamples
 metadata:
   name: kopf-example-1
   labels:

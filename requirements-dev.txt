@@ -1,13 +1,10 @@
 covdefaults
 coverage
-importlib-resources
 pytest
-pytest-kind
+pytest-kubernetes
 faker
 tqdm
 bandit
 mypy
 flake8
 types-PyYAML
-tox>=4.10.0
-tox-gh

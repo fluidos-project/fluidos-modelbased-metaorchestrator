@@ -1,59 +1,22 @@
-# import subprocess
-import time
 from kopf.testing import KopfRunner
 import pytest
-from pytest_kind import KindCluster
+from pytest_kubernetes.providers.base import AClusterManager
 from pathlib import Path
+from os import environ
 
 
-# kind_cluster: KindCluster = None
-#
-#
-# def setup_module(module):
-#     kind_cluster = KindCluster("foo-bar")
-#     kind_cluster.create()
-#     module.kind_cluster = kind_cluster
-# def teardown_module(module):
-#     module.kind_cluster.delete()
-#     module.kind_cluster = None
-
-
-@pytest.mark.skip
-def test_operator_executes(kind_cluster: KindCluster):
-    time.sleep(3)
-    kind_cluster.kubectl("apply", "-f", Path(
-        Path(__file__).parent.parent,
-        "utils/fluidos-deployment-crd.yaml").absolute().as_posix())
-    time.sleep(3)
+@pytest.mark.xfail(environ.get("CI", "false") == "true", reason="Not running on Travis")
+def test_successfull_submission(k8s: AClusterManager):
+    k8s.create()
+    k8s.apply(Path(Path(__file__).parent.parent, "utils/fluidos-deployment-crd.yaml"))
     with KopfRunner(["run", "-A", "--verbose", "-m", "fluidos_model_orchestrator"]) as runner:
-        print(runner)
-        pass
-
-    assert runner.exit_code == 0
-
-
-@pytest.mark.skip
-def test_get_fd_succeds(kind_cluster: KindCluster):
-    time.sleep(3)
-    kind_cluster.kubectl("apply", "-f", Path(
-        Path(__file__).parent.parent,
-        "utils/fluidos-deployment-crd.yaml").absolute().as_posix())
-    time.sleep(3)
-    with KopfRunner(["run", "-A", "--verbose", "-m", "fluidos_model_orchestrator"]) as runner:
-        assert not kind_cluster.kubectl("get", "fd")
-
-    assert runner.exit_code == 0
-
-
-@pytest.mark.skip
-def test_scheduling_successfull_single_pod(kind_cluster: KindCluster):
-    time.sleep(3)
-    kind_cluster.kubectl("apply", "-f", Path(
-        Path(__file__).parent.parent,
-        "utils/fluidos-deployment-crd.yaml").absolute().as_posix())
-    time.sleep(3)
-    with KopfRunner(["run", "-A", "--verbose", "-m", "fluidos_model_orchestrator"]) as runner:
-        assert not kind_cluster.kubectl("apply", "-f", "tests/examples/test-deployment.yaml")
-        time.sleep(5)
+        assert runner is not None
+        assert 0 == len(k8s.kubectl(["get", "fd"])["items"])
+        k8s.apply(Path(Path(__file__).parent, "examples/test-deployment.yaml"))
+        names = [item['metadata']['name'] for item in k8s.kubectl(["get", "fd"])["items"]]
+        assert 1 == len(names)
+        for name in names:
+            k8s.kubectl(f"delete fd {name}".split(), as_dict=False)
+        assert 0 == len(k8s.kubectl(["get", "fd"])["items"])
 
     assert runner.exit_code == 0

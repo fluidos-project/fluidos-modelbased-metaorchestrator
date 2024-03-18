@@ -23,7 +23,7 @@ def test_when_no_intents_specified_none_injected_deployment():
     assert not len(request.intents)
 
 
-@pytest.mark.skip("Not supported yet")
+@pytest.mark.skip("ReplicaSet not supported yet")
 def test_when_no_intents_specified_none_injected_replica_set():
     with pkg_resources.resource_stream(__name__, "k8s/replica_set.yaml") as stream:
         specs = load(stream, Loader=Loader)
