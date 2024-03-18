@@ -49,7 +49,7 @@ jobs:
         with:
           destination_container_repo: ${{ env.IMAGE_NAME }}
           provider: dockerhub
-          short_description: 'FLUIDOS model-based metaorchestrator'
+          short_description: 'FLUIDOS model-based meta-orchestrator'
           readme_file: 'README.md'
 
       - name: Build and push Docker image
