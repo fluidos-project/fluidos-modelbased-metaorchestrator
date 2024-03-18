@@ -1,7 +1,9 @@
 name: check
 on:
-  push: ["main"]
-  pull_request: ["main"]
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
 
 concurrency:
   group: check-${{ github.ref }}
