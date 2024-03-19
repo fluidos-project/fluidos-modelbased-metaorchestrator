@@ -1,16 +1,17 @@
 from fluidos_model_orchestrator.common import KnownIntent
-# from pytest import fail
 
 
 def test_intent_values():
     expected_intents = [
         "fluidos-intent-latency",
         "fluidos-intent-location",
-        "fluidos-intent-resource",
         "fluidos-intent-throughput",
         "fluidos-intent-compliance",
         "fluidos-intent-energy",
         "fluidos-intent-battery",
+        "fluidos-intent-service",
+        "fluidos-intent-cpu",
+        "fluidos-intent-memory"
     ]
 
     for intent in KnownIntent:
@@ -33,3 +34,20 @@ def test_intent_validated():
 
     for invalid in invalid_intents:
         assert not KnownIntent.is_supported(invalid)
+
+
+def test_intent_converted():
+    expected = [
+        ("fluidos-intent-latency", KnownIntent.latency),
+        ("fluidos-intent-location", KnownIntent.location),
+        ("fluidos-intent-throughput", KnownIntent.throughput),
+        ("fluidos-intent-compliance", KnownIntent.compliance),
+        ("fluidos-intent-energy", KnownIntent.energy),
+        ("fluidos-intent-battery", KnownIntent.battery),
+        ("fluidos-intent-service", KnownIntent.service),
+        ("fluidos-intent-cpu", KnownIntent.cpu),
+        ("fluidos-intent-memory", KnownIntent.memory),
+    ]
+
+    for key, intent in expected:
+        assert intent == KnownIntent.get_intent(key)

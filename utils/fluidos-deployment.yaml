@@ -17,5 +17,5 @@ spec:
       # serviceAccountName: fluidos-account
       containers:
       - name: fluidos-mbmo
-        image: localhost/fluidos-mbmo:0.0.1
+        image: fluidos/metaorchestrator:0.0.1
         imagePullPolicy: IfNotPresent

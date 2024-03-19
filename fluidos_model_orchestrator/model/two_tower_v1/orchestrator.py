@@ -1,10 +1,12 @@
 from __future__ import annotations
+
 import tensorflow as tf
 import pandas as pd
 from pathlib import Path
 
 from ...common import (
     # Intent,
+    KnownIntent,
     Resource,
     ModelInterface,
     ModelPredictRequest,
@@ -17,32 +19,33 @@ logger = logging.getLogger(__name__)
 
 
 class TwoTowerOrchestrator(ModelInterface):
-
     def __init__(
         self,
-        model_path: Path,
+        model_path: Path = Path(Path(__file__).parent, "resources"),
         model_name: str = "model_2t_v1",
-        device: str = "cpu",
+        device: str = "cpu"
     ) -> None:
+        model_index = str(Path(model_path, "model_index").absolute())
+        logger.info(f"Retrieving model index from {model_index}")
         self.loaded_index = tf.saved_model.load(
-            str(model_path.joinpath(f"{model_name}/model_index"))
+            # str(model_path.joinpath(f"{model_name}/model_index"))
+            model_index
         )
+
+        machine_data_path = str(Path(model_path, "machine_resources.csv").absolute())
+
+        logger.info(f"Retrieving model_data from: {machine_data_path}")
+
         machine_df = pd.read_csv(
-            str(model_path.joinpath(f"{model_name}/machine_resources.csv")),
+            # str(model_path.joinpath(f"{model_name}/machine_resources.csv")),
+            machine_data_path,
             header="infer",
             dtype={"machine_id": "bytes", "cpu": "int64", "memory": "int64"},
         )
 
         self.machine_df = machine_df.drop("Unnamed: 0", axis=1)
 
-    # def get_machine_resources(self, machine_df, machine_id: str):
-    #     row = machine_df[machine_df["machine_id"] == machine_id]
-    #     if row.shape[0] == 0:
-    #         raise Exception(f"Couldn't find data for machineId: {machine_id}")
-    #     return row["cpu"].iloc[0].item(), row["memory"].iloc[0].item()
-
     def predict(self, data: ModelPredictRequest) -> ModelPredictResponse:
-
         input_data = {
             "pod_id": tf.constant([data.id]),
             "machine_id": tf.constant(["machine_id"]),
@@ -53,9 +56,9 @@ class TwoTowerOrchestrator(ModelInterface):
 
         # TODO this should be simplified once intent names are standardised
         for intent in data.intents:
-            if intent.name == "cpu":
+            if intent.name == KnownIntent.cpu:
                 input_data["cpu"] = tf.constant([int(intent.value.replace("m", ""))])
-            if intent.name == "memory":
+            if intent.name == KnownIntent.memory:
                 input_data["memory"] = tf.constant(
                     [int(intent.value.replace("Mi", ""))]
                 )
@@ -76,9 +79,9 @@ class TwoTowerOrchestrator(ModelInterface):
             data.id,
             resource_profile=Resource(
                 id=data.id,
-                region="dummyRegion",
+                # region="dummyRegion",
                 cpu=cpu,
                 memory=memory,
-                architecture="arm64",
+                # architecture="arm64",
             ),
         )

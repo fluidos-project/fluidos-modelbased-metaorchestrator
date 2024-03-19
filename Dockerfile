@@ -1,5 +1,7 @@
 FROM python:3.11
 
+ENV NAMESPACE=fluidos
+
 WORKDIR /app
 
 ADD fluidos_model_orchestrator/ /app/fluidos_model_orchestrator
@@ -10,4 +12,4 @@ RUN pip install .
 # required by baseline model
 ENV TOKENIZERS_PARALLELISM=false
 
-CMD kopf run -A -m fluidos_model_orchestrator --verbose
+CMD kopf run -n ${NAMESPACE} -m fluidos_model_orchestrator --verbose
