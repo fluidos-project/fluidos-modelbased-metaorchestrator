@@ -16,5 +16,4 @@ def test_orchestration_model_with_throughput():
     assert response
     assert response.resource_profile.region == 'a'
     assert response.resource_profile.cpu == "1000m"
-    assert response.resource_profile.memory == "155Mi"
-#    assert response.resource_profile.memory == "509Mi"
+    assert response.resource_profile.memory == "509Mi"

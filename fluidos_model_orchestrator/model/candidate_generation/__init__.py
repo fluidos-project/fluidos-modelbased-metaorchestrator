@@ -180,5 +180,5 @@ class Orchestrator(ModelInterface):
             data.id,
             resource_profile=Resource(
                 id=data.id, region=predicted_config_dict['fluidos-intent-location'], cpu=f"{predicted_config_dict['cpu']}",  # TODO: needs fixing, this is using fluidos-intent as per the manifest, not as represented in the request
-                memory=f"{predicted_config_dict['memory']}", architecture="arm64")  # TODO: fix requred, here we impose the architecture to be arm64, is it correct? arch is optional in Resource. 
+                memory=f"{predicted_config_dict['memory']}", architecture="arm64")  # TODO: fix requred, here we impose the architecture to be arm64, is it correct? arch is optional in Resource.
         )

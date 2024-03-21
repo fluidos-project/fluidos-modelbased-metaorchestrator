@@ -8,6 +8,7 @@ from dataclasses import field
 from typing import Any
 from enum import Enum
 from enum import auto
+from enum import unique
 
 import logging
 
@@ -18,8 +19,8 @@ logger = logging.getLogger(__name__)
 @dataclass(kw_only=True)
 class Resource:
     id: str
-    cpu: str = None
-    memory: str = None
+    cpu: str | None = None
+    memory: str | None = None
     architecture: str | None = None
     gpu: str | None = None
     ephemeral_storage: str | None = None
@@ -92,9 +93,16 @@ class Flavour:
 
 
 @dataclass
+class ContainerImageEmbedding:
+    image: str
+    embedding: str | None = None
+
+
+@dataclass
 class ModelPredictRequest:
     id: str
     pod_request: Any
+    container_image_embeddings: list[ContainerImageEmbedding]
     intents: list[Intent] = field(default_factory=list)
 
 
@@ -113,20 +121,22 @@ class ModelInterface(ABC):
         raise NotImplementedError("Not implemented: abstract method")
 
 
-@dataclass
-class Intent:
-    name: str
-    value: str
-
-
+@unique
 class KnownIntent(Enum):
+    # k8s resources
+    cpu = auto()
+    memory = auto()
+
+    # high order requests
     latency = auto()
     location = auto()
-    resource = auto()
     throughput = auto()
     compliance = auto()
     energy = auto()
     battery = auto()
+
+    # service
+    service = auto()
 
     def __repr__(self) -> str:
         return super().__repr__()
@@ -136,12 +146,26 @@ class KnownIntent(Enum):
 
     @staticmethod
     def is_supported(intent_name: str) -> bool:
-        if intent_name.startswith("fluidos-intent-"):
-            intent_name = "-".join(intent_name.split("-")[2:])
+        intent_name = "-".join(intent_name.split("-")[2:]).casefold()
 
         return any(
             known_intent.name == intent_name for known_intent in KnownIntent
         )
+
+    @staticmethod
+    def get_intent(intent_name: str) -> KnownIntent:
+        # defensive programming
+        if not KnownIntent.is_supported(intent_name):
+            raise ValueError(f"Unsupported intent: {intent_name=}")
+
+        name = "-".join(intent_name.split("-")[2:]).casefold()
+        return next(known_intent for known_intent in KnownIntent if known_intent.name == name)
+
+
+@dataclass
+class Intent:
+    name: KnownIntent
+    value: str
 
 
 @dataclass
