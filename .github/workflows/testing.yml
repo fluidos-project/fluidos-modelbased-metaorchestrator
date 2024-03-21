@@ -23,8 +23,6 @@ jobs:
           - ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          lfs: true
       - name: Setup python for test ${{ matrix.py }}
         uses: actions/setup-python@v4
         with:
