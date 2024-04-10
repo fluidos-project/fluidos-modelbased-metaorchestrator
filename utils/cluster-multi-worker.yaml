@@ -8,3 +8,9 @@ nodes:
     image: kindest/node:v1.25.0
   - role: worker
     image: kindest/node:v1.25.0
+    labels:
+      node-role.fluidos.eu/resources: "true"
+  - role: worker
+    image: kindest/node:v1.25.0
+    labels:
+      node-role.fluidos.eu/resources: "true"

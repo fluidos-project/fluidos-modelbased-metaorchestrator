@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fluidos-metaorchestrator-operator
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      application: fluidos-metaorchestrator-operator
+  template:
+    metadata:
+      labels:
+        application: fluidos-metaorchestrator-operator
+    spec:
+      serviceAccountName: fluidos-metaorchestrator-operator
+      containers:
+      - name: operator
+        image: fluidos/meta-orchestrator:latest

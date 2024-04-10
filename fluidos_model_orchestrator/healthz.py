@@ -1,7 +1,7 @@
 import kopf
-from datetime import datetime
+import datetime
 
 
-@kopf.on.probe(id="now")
-def healtz_get_current_timestamp(**_) -> str:
-    return datetime.utcnow().isoformat()
+@kopf.on.probe(id="now")  # type: ignore
+def healtz_get_current_timestamp() -> str:
+    return datetime.datetime.now(datetime.UTC).isoformat()

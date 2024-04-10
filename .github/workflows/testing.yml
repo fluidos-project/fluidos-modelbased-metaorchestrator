@@ -18,7 +18,6 @@ jobs:
       matrix:
         py:
           - "3.11"
-          - "3.10"
         os:
           - ubuntu-latest
     steps:

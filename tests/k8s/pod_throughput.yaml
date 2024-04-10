@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    fluidos-intent-throughput: 463.32Ks
+  name: flink
+spec:
+  containers:
+  - image: flink:latest
+    name: flink
+    ports:
+    - containerPort: 80
+    resources:
+      requests:
+        cpu: 2750m
+        memory: 754Mi

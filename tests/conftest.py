@@ -1,5 +1,7 @@
+from pathlib import Path
 import pytest
-from pytest_kubernetes.providers import AClusterManager
+from typing import Callable
+from pytest_kubernetes.providers.base import AClusterManager
 from pytest_kubernetes.providers import select_provider_manager
 
 

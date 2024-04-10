@@ -1,14 +1,13 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 import json
-import subprocess
 import time
 from typing import Any, Optional
 import uuid
 
 import kopf
 
-from ..common import Flavour
+from ..common import Flavour, Intent
 from ..common import Resource
 from ..common import ModelPredictRequest
 from ..common import ModelPredictResponse
@@ -59,53 +58,58 @@ class RemoteResourceProvider(ResourceProvider):
         return True
 
     def acquire(self) -> bool:
-        logger.info("Creating connection remote node")
-
-        try:
-            response = subprocess.run(f"liqoctl generate peer-command --kubeconfig \"$PWD/utils/examples/{self.remote_cluster}-kubeconfig.yaml\"", shell=True, check=True, capture_output=True)
-        except subprocess.CalledProcessError as e:
-            logger.debug("BEGIN -------")
-            logger.debug(e)
-            logger.debug("-------")
-            logger.debug(e.stderr)
-            logger.debug("-------")
-            logger.debug(e.stdout)
-            logger.debug("END -------")
-
-        peering_command = _extract_command(response.stdout)
-
-        self.remote_cluster_id = _extract_remote_cluster_id(peering_command)
-
-        subprocess.run(peering_command, shell=True, check=True, capture_output=True)  # because it should be running on the acquiring cluster
-
-        subprocess.run(f"kubectl delete solver/{self.id}", shell=True, check=False, capture_output=True)
-
-        if self.peering_candidate is not None:
-            subprocess.run(f"kubectl delete peeringcandidate/{self.peering_candidate}", shell=True, check=False, capture_output=True)
+        logger.info("Creating connection to remote node")
 
         return True
+
+    # def acquire(self) -> bool:
+    #     logger.info("Creating connection remote node")
+
+    #     try:
+    #         response = subprocess.run(f"liqoctl generate peer-command --kubeconfig \"$PWD/utils/examples/{self.remote_cluster}-kubeconfig.yaml\"", shell=True, check=True, capture_output=True)
+    #     except subprocess.CalledProcessError as e:
+    #         logger.debug("BEGIN -------")
+    #         logger.debug(e)
+    #         logger.debug("-------")
+    #         logger.debug(e.stderr)
+    #         logger.debug("-------")
+    #         logger.debug(e.stdout)
+    #         logger.debug("END -------")
+
+    #     peering_command = _extract_command(response.stdout)
+
+    #     self.remote_cluster_id = _extract_remote_cluster_id(peering_command)
+
+    #     subprocess.run(peering_command, shell=True, check=True, capture_output=True)  # because it should be running on the acquiring cluster
+
+    #     subprocess.run(f"kubectl delete solver/{self.id}", shell=True, check=False, capture_output=True)
+
+    #     if self.peering_candidate is not None:
+    #         subprocess.run(f"kubectl delete peeringcandidate/{self.peering_candidate}", shell=True, check=False, capture_output=True)
+
+    #     return True
 
     def get_label(self) -> str:
         return self.remote_cluster_id
 
 
-def _extract_remote_cluster_id(peering_command: str) -> str:
-    components = peering_command.split()
-    for id, token in enumerate(components):
-        if token == "--cluster-id":
-            return components[id + 1]
-    raise ValueError("Missing cluster-id")
+# def _extract_remote_cluster_id(peering_command: str) -> str:
+#     components = peering_command.split()
+#     for id, token in enumerate(components):
+#         if token == "--cluster-id":  # nosec
+#             return components[id + 1]
+#     raise ValueError("Missing cluster-id")
 
 
-def _extract_command(message: bytes) -> str:
-    logger.debug(f"Received {message=}")
-    text = str(message, encoding="utf-8")
+# def _extract_command(message: bytes) -> str:
+#     logger.debug(f"Received {message=}")
+#     text = str(message, encoding="utf-8")
 
-    return text.strip().split("\n")[-1]
+#     return text.strip().split("\n")[-1]
 
 
 class ResourceFinder(ABC):
-    def find_best_match(self, resource: Resource) -> ResourceProvider:
+    def find_best_match(self, resource: Resource | Intent) -> ResourceProvider | None:
         raise NotImplementedError()
 
 
@@ -119,13 +123,21 @@ class REARResourceFinder(ResourceFinder):
         config.load_config()
         self.api_client = client.CustomObjectsApi()
 
-    def find_best_match(self, resource: Resource) -> ResourceProvider:
+    def find_best_match(self, request: Resource | Intent) -> ResourceProvider | None:
         logger.info("Retrieving best match with REAR")
 
+        if type(request) is Resource:
+            resource = request
+        elif type(request) is Intent:
+            logger.info("Request is for \"intent\" resource")
+        else:
+            raise ValueError(f"Unkown resource type {type(request)}")
+
+        logger.info("Request is for \"traditional\" resource")
         local = self._find_local(resource)
 
         # to be changed with something retrieved from the configuration
-        if local is not None and (resource.region.casefold() is None or resource.region.casefold() == "dublin"):
+        if local is not None and (resource.region is None or resource.region.casefold() == "dublin"):
             logger.info(f"Found local resource {local=}")
             return local
 
@@ -134,9 +146,7 @@ class REARResourceFinder(ResourceFinder):
         if remote is not None:
             logger.info(f"Found remote resource {remote=}")
             return remote
-
         logger.info("No resource provider identified")
-
         return None
 
     def _initiate_search(self, body: dict[str, Any]) -> str:
@@ -155,7 +165,7 @@ class REARResourceFinder(ResourceFinder):
 
         return response["metadata"]["name"]
 
-    def _check_solver_status(self, solver_name):
+    def _check_solver_status(self, solver_name: str) -> dict[str, Any]:
         logger.info(f"Retrieving solver {solver_name} status")
 
         remote_flavour_status = self.api_client.get_namespaced_custom_object(
@@ -171,7 +181,7 @@ class REARResourceFinder(ResourceFinder):
 
         return remote_flavour_status
 
-    def _find_remote(self, resource: Resource) -> LocalResourceProvider:
+    def _find_remote(self, resource: Resource) -> ResourceProvider | None:
         logger.info("Retrieving remote flavours")
 
         body, _ = self._resource_to_rear_request(resource, resource.id)
@@ -228,8 +238,8 @@ class REARResourceFinder(ResourceFinder):
 
     def _build_range_selector(self, resource: Resource) -> dict[str, str]:
         selector: dict[str, str] = {
-            "minCpu": resource.cpu,
-            "minMemory": resource.memory
+            "minCpu": resource.cpu or "0n",
+            "minMemory": resource.memory or "1KiB"
         }
 
         if resource.gpu is not None:
@@ -237,7 +247,7 @@ class REARResourceFinder(ResourceFinder):
 
         return selector
 
-    def _find_local(self, resource: Resource) -> LocalResourceProvider:
+    def _find_local(self, resource: Resource) -> LocalResourceProvider | None:
         logger.info("Retrieving local flavours")
 
         local_flavours = self.api_client.list_namespaced_custom_object(

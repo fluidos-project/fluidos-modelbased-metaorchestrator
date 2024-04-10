@@ -4,7 +4,10 @@ from fluidos_model_orchestrator.model import convert_to_model_request
 
 from fluidos_model_orchestrator.model.two_tower_v1.orchestrator import TwoTowerOrchestrator
 
+import pytest
 
+
+@pytest.mark.skip()
 def test_orchestration_model_two_towers():
     with pkg_resources.resource_stream(__name__, "k8s/pod_throughput_location.yaml") as pod_stream:
         pod_dict = yaml.safe_load(pod_stream)

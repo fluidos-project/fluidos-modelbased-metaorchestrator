@@ -8,7 +8,7 @@ from logging import Logger
 
 from .model import convert_to_model_request
 from .model import get_model_object
-from .common import ModelInterface
+from .common import Intent, ModelInterface
 from .common import ModelPredictRequest
 from .common import ModelPredictResponse
 
@@ -22,8 +22,8 @@ from .resources import ResourceProvider
 from .resources import get_resource_finder
 
 
-@kopf.on.create("fluidosdeployments")
-def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Logger, errors=kopf.ErrorsMode.PERMANENT, **kwargs):
+@kopf.on.create("fluidosdeployments")  # type: ignore
+def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Logger, errors: kopf.ErrorsMode = kopf.ErrorsMode.PERMANENT, **kwargs: str) -> None:
     logger.info("Processing incoming request")
     logger.debug(f"Received request: {spec}")
 
@@ -41,7 +41,10 @@ def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Lo
 
     finder: ResourceFinder = get_resource_finder(request, prediction)
 
-    best_match: ResourceProvider = finder.find_best_match(prediction.to_resource())
+    best_match: ResourceProvider | None = finder.find_best_match(prediction.to_resource())
+
+    # find other resources types based on the intents
+    expanding_resources: list[tuple[ResourceProvider, Intent]] = _find_expanding_resources(finder, request.intents)
 
     if best_match is None:
         raise RuntimeError("Unable to find resource matching requirement")
@@ -49,5 +52,19 @@ def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Lo
     if not best_match.reserve():
         raise TemporaryError(f"Unable to find {best_match}")
 
-    if not deploy(spec, best_match):
+    if not deploy(spec, best_match, expanding_resources):
         raise PermanentError("Unable to deploy")
+
+
+def _find_expanding_resources(finder: ResourceFinder, intents: list[Intent]) -> list[tuple[ResourceProvider, Intent]]:
+    resources_and_intents: list[tuple[ResourceProvider, Intent]] = list()
+
+    for (resource, intent) in [
+        (finder.find_best_match(intent), intent) for intent in intents if intent.has_external_requirement()
+    ]:
+        if resource is not None:
+            resources_and_intents.append(
+                (resource, intent)
+            )
+
+    return resources_and_intents

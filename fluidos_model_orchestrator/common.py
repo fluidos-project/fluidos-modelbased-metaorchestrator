@@ -7,8 +7,9 @@ from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
 from enum import Enum
-from enum import auto
 from enum import unique
+
+import kubernetes
 
 import logging
 
@@ -46,7 +47,12 @@ class Resource:
         return True
 
 
-def _memory_compatible(memory_a_spec: str, memory_b_spec: str) -> bool:
+def _memory_compatible(memory_a_spec: str | None, memory_b_spec: str | None) -> bool:
+    if memory_a_spec is None:
+        return False
+    if memory_b_spec is None:
+        return False
+
     memory_a: int = _memory_to_int(memory_a_spec)
     memory_b: int = _memory_to_int(memory_b_spec)
 
@@ -67,7 +73,11 @@ def _memory_to_int(spec: str) -> int:
     raise ValueError(f"Not known {unit=}")
 
 
-def _cpu_compatible(cpu_a_spec: str, cpu_b_spec: str) -> bool:
+def _cpu_compatible(cpu_a_spec: str | None, cpu_b_spec: str | None) -> bool:
+    if cpu_a_spec is None:
+        return False
+    if cpu_b_spec is None:
+        return False
     cpu_a: int = _cpu_to_int(cpu_a_spec)
     cpu_b: int = _cpu_to_int(cpu_b_spec)
 
@@ -124,19 +134,27 @@ class ModelInterface(ABC):
 @unique
 class KnownIntent(Enum):
     # k8s resources
-    cpu = auto()
-    memory = auto()
+    cpu = "cpu", False
+    memory = "memory", False
 
     # high order requests
-    latency = auto()
-    location = auto()
-    throughput = auto()
-    compliance = auto()
-    energy = auto()
-    battery = auto()
+    latency = "latency", False
+    location = "location", False
+    throughput = "throughput", False
+    compliance = "compliance", False
+    energy = "energy", False
+    battery = "battery", False
 
     # service
-    service = auto()
+    service = "service", True
+
+    def __new__(cls, *args: str, **kwds: str) -> KnownIntent:
+        obj = object.__new__(cls)
+        obj._value_ = args[0]
+        return obj
+
+    def __init__(self, _: str, external: bool):
+        self._external = external
 
     def __repr__(self) -> str:
         return super().__repr__()
@@ -144,9 +162,13 @@ class KnownIntent(Enum):
     def to_intent_key(self) -> str:
         return f"fluidos-intent-{self.name}"
 
+    def has_external_requirement(self) -> bool:
+        return self._external
+
     @staticmethod
     def is_supported(intent_name: str) -> bool:
-        intent_name = "-".join(intent_name.split("-")[2:]).casefold()
+        if intent_name.startswith("fluidos-intent-"):
+            intent_name = "-".join(intent_name.split("-")[2:])
 
         return any(
             known_intent.name == intent_name for known_intent in KnownIntent
@@ -167,11 +189,16 @@ class Intent:
     name: KnownIntent
     value: str
 
+    def has_external_requirement(self) -> bool:
+        return self.name.has_external_requirement()
+
 
 @dataclass
 class Configuration:
     local_node_key: str = "fluidos.eu/resource-node"
     remote_node_key: str = "liqo.io/remote-cluster-id"
+    k8s_client: kubernetes.client.ApiClient | None = None
+    node_id: Any | None = None
 
 
 CONFIGURATION = Configuration()
