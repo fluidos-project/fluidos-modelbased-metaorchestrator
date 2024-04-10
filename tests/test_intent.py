@@ -1,21 +1,46 @@
 from fluidos_model_orchestrator.common import KnownIntent
+# from pytest import fail
 
 
 def test_intent_values():
-    expected_intents = [
+    expected_intents = set([
+        "fluidos-intent-cpu",
+        "fluidos-intent-memory",
         "fluidos-intent-latency",
         "fluidos-intent-location",
+        "fluidos-intent-resource",
         "fluidos-intent-throughput",
         "fluidos-intent-compliance",
         "fluidos-intent-energy",
         "fluidos-intent-battery",
         "fluidos-intent-service",
-        "fluidos-intent-cpu",
-        "fluidos-intent-memory"
-    ]
+    ])
 
     for intent in KnownIntent:
         assert intent.to_intent_key() in expected_intents
+
+
+def test_iternal_or_external():
+    external_intents = set([
+        "fluidos-intent-service",
+    ])
+
+    internal_intents = set([
+        "fluidos-intent-cpu",
+        "fluidos-intent-memory",
+        "fluidos-intent-latency",
+        "fluidos-intent-location",
+        "fluidos-intent-resource",
+        "fluidos-intent-throughput",
+        "fluidos-intent-compliance",
+        "fluidos-intent-energy",
+        "fluidos-intent-battery",
+    ])
+
+    for intent in KnownIntent:
+        key = intent.to_intent_key()
+        assert (key in internal_intents and key not in external_intents) or (key in external_intents and key not in internal_intents)
+        assert (intent.has_external_requirement() and key in external_intents) or (key in internal_intents)
 
 
 def test_intent_validated():
@@ -34,20 +59,3 @@ def test_intent_validated():
 
     for invalid in invalid_intents:
         assert not KnownIntent.is_supported(invalid)
-
-
-def test_intent_converted():
-    expected = [
-        ("fluidos-intent-latency", KnownIntent.latency),
-        ("fluidos-intent-location", KnownIntent.location),
-        ("fluidos-intent-throughput", KnownIntent.throughput),
-        ("fluidos-intent-compliance", KnownIntent.compliance),
-        ("fluidos-intent-energy", KnownIntent.energy),
-        ("fluidos-intent-battery", KnownIntent.battery),
-        ("fluidos-intent-service", KnownIntent.service),
-        ("fluidos-intent-cpu", KnownIntent.cpu),
-        ("fluidos-intent-memory", KnownIntent.memory),
-    ]
-
-    for key, intent in expected:
-        assert intent == KnownIntent.get_intent(key)

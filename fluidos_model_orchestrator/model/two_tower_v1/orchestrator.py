@@ -5,7 +5,6 @@ import pandas as pd
 from pathlib import Path
 
 from ...common import (
-    # Intent,
     KnownIntent,
     Resource,
     ModelInterface,
@@ -28,7 +27,6 @@ class TwoTowerOrchestrator(ModelInterface):
         model_index = str(Path(model_path, "model_index").absolute())
         logger.info(f"Retrieving model index from {model_index}")
         self.loaded_index = tf.saved_model.load(
-            # str(model_path.joinpath(f"{model_name}/model_index"))
             model_index
         )
 
@@ -37,7 +35,6 @@ class TwoTowerOrchestrator(ModelInterface):
         logger.info(f"Retrieving model_data from: {machine_data_path}")
 
         machine_df = pd.read_csv(
-            # str(model_path.joinpath(f"{model_name}/machine_resources.csv")),
             machine_data_path,
             header="infer",
             dtype={"machine_id": "bytes", "cpu": "int64", "memory": "int64"},
@@ -65,7 +62,6 @@ class TwoTowerOrchestrator(ModelInterface):
         _, candidate_machine_ids = self.loaded_index(input_data)
         machine_id = candidate_machine_ids[0][0].numpy().decode("utf-8")
         try:
-            # cpu, mem = get_machine_resources(machine_df, candidate_machine_id)
             row = self.machine_df[self.machine_df["machine_id"] == machine_id]
             if row.shape[0] == 0:
                 raise Exception(f"Couldn't find data for machineId: {machine_id}")
@@ -73,15 +69,12 @@ class TwoTowerOrchestrator(ModelInterface):
             memory = row["memory"].iloc[0].item()
         except Exception:
             cpu = memory = -1
-        # predicted_config = {"cpu": cpu, "mem": mem, "fluidos-intent-throughput": -1}
 
         return ModelPredictResponse(
             data.id,
             resource_profile=Resource(
                 id=data.id,
-                # region="dummyRegion",
                 cpu=cpu,
                 memory=memory,
-                # architecture="arm64",
             ),
         )

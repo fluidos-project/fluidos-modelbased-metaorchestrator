@@ -22,7 +22,7 @@ _model_instances: dict[str, ModelInterface] = {
     "dummy": DummyOrchestrator()
 }
 
-_model_characteristics: list[tuple[frozenset[KnownIntent], str]] = [
+_model_characteristics: list[tuple[set[KnownIntent], str]] = [
     (set([known_intent for known_intent in KnownIntent]), "CG"),
     (set([KnownIntent.latency, KnownIntent.location, KnownIntent.memory, KnownIntent.cpu]), "2T")
 ]

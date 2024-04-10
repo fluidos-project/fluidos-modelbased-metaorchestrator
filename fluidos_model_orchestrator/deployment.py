@@ -1,15 +1,12 @@
 from typing import Any
 
-from kopf import Spec
 import kopf
 
 from .resources import ResourceProvider
 
-from kubernetes import config
-from kubernetes import client
 from kubernetes import utils
 
-from .common import CONFIGURATION
+from .common import CONFIGURATION, Intent
 
 import logging
 
@@ -17,7 +14,7 @@ import logging
 logger = logging.getLogger()
 
 
-def deploy(spec: Spec, provider: ResourceProvider) -> bool:
+def deploy(spec: dict[str, Any], provider: ResourceProvider, expanding_resources: list[tuple[ResourceProvider, Intent]]) -> bool:
     spec_dict = {
         k: v for k, v in spec.items()
     }
@@ -27,9 +24,7 @@ def deploy(spec: Spec, provider: ResourceProvider) -> bool:
 
     enrich(spec_dict, provider)
 
-    my_config = client.Configuration()
-    config.load_config(client_configuration=my_config)
-    k8s_client = client.ApiClient(my_config)
+    k8s_client = CONFIGURATION.k8s_client
 
     kopf.adopt(spec_dict)
 
