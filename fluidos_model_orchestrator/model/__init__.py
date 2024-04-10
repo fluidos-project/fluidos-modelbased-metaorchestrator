@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 _model_instances: dict[str, ModelInterface] = {
     "CG": CG(),
-    "2T": TwoTowerOrchestrator(),
+#    "2T": TwoTowerOrchestrator(),
     "dummy": DummyOrchestrator()
 }
 
