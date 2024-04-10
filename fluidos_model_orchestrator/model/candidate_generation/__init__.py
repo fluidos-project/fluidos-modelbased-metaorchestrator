@@ -10,7 +10,7 @@ from typing import Dict, Any, List
 from sentence_transformers import SentenceTransformer
 
 from ...common import Resource, ModelInterface, ModelPredictRequest, ModelPredictResponse
-from utils import compute_embedding_for_sentence, find_matching_configs
+from .model_utils import compute_embedding_for_sentence, find_matching_configs
 
 import logging
 
