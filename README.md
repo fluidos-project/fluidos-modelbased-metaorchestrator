@@ -10,11 +10,11 @@ This repository contains the operator to perform model-based meta-orchestration 
 
 The operator assumes the following:
 * Kubernetes version >= 28.1.0
-* REAR (node) functionality version >= *MISSING*
+* REAR (as implemented in [node](https://github.com/fluidos-project/node)) functionality version >= 0.0.3
 * Liqo version >= 0.9.4
 
 Moreover, the interaction with the operator assumes:
-* fluidos-kubectl-plugin version >= *MISSING*
+* [kubectl-fluidos-plugin](https://github.com/fluidos-project/kubectl-fluidos-plugin) version >= 0.0.2
 
 To run the operator in development mode, the following is required:
 * python >= 3.11
