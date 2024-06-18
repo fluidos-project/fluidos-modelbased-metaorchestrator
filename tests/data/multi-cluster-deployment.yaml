@@ -1,33 +1,33 @@
-apiVersion: apps.eu/v1                                                                               
-kind: MultiClusterDeployment                                                                             
-metadata:                                                                                                
-  name: hello                                                                                            
-spec:                                                                                                    
-  numberOfLocations: 3                                                                                                                                                                                                                                                  
-  replicas: 2                                                                                            
-  template:                                                                                              
-    metadata:                                                                                            
-      labels:                                                                                            
-        app: hello                                                                                       
-        tier: backend                                                                                    
-        track: stable                                                                                    
-    spec:                                                                                                
-      containers:                                                                                        
-        - name: hello                                                                                       
-          image: "nginx:1.14.2"                                              
-          resources:                                                                                     
-            requests:                                                                                    
-              memory: 1024Mi                                                                             
-              cpu: 1000m                                                                                 
-            limits:                                                                                      
-              memory: 1024Mi                                                                             
-              cpu: 1000m 
+apiVersion: apps.eu/v1
+kind: MultiClusterDeployment
+metadata:
+  name: hello
+spec:
+  numberOfLocations: 3
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: hello
+        tier: backend
+        track: stable
+    spec:
+      containers:
+        - name: hello
+          image: "nginx:1.14.2"
+          resources:
+            requests:
+              memory: 1024Mi
+              cpu: 1000m
+            limits:
+              memory: 1024Mi
+              cpu: 1000m
             quality_intent:
               throughput: 1
               bandwith: 1
               latency: 1
               connectionSpeed: 1
-              location: 1                                                                                
-          ports:                                                                                         
-            - name: http                                                                                 
+              location: 1
+          ports:
+            - name: http
               containerPort: 80

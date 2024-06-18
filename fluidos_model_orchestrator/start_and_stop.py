@@ -1,20 +1,20 @@
 import datetime
-from typing import Any
-import kopf
-from asyncio import Lock
 import logging
+from asyncio import Lock
+from typing import Any
 
-from .common import CONFIGURATION
-from .common import Configuration
+import kopf  # type: ignore
+from kubernetes import client as k8s_client
+from kubernetes import config as k8s_config
 
-from kubernetes import client
-from kubernetes import config as k8config
+from .configuration import CONFIGURATION
+from .configuration import enrich_configuration
 
 
 LOCK: Lock
 
 
-@kopf.on.startup()  # type: ignore
+@kopf.on.startup()
 async def configure(settings: kopf.OperatorSettings, retry: int, started: datetime.datetime, runtime: datetime.timedelta, logger: logging.Logger, memo: Any, param: Any, **kwargs: Any) -> None:
     global LOCK
 
@@ -24,21 +24,13 @@ async def configure(settings: kopf.OperatorSettings, retry: int, started: dateti
 
     LOCK = Lock()
 
-    enrich_configuration(CONFIGURATION, settings, param, memo, kwargs)
+    my_config = k8s_client.Configuration()
+    k8s_config.load_config(client_configuration=my_config)
+
+    enrich_configuration(CONFIGURATION, settings, param, memo, kwargs, logger, my_config)
 
 
-def enrich_configuration(config: Configuration, settings: kopf.OperatorSettings, param: Any, memo: Any, kwargs: dict[str, Any]) -> None:
-    logging.info("Enrich default configuration with user provided information")
-
-    my_config = client.Configuration()
-    k8config.load_config(client_configuration=my_config)
-
-    config.k8s_client = client.ApiClient(my_config)
-
-    config.node_id = config.k8s_client
-
-
-@kopf.on.cleanup()  # type: ignore
+@kopf.on.cleanup()
 def cleanup_function(logger: logging.Logger, **kwargs: str) -> None:
     logger.info("Running clean up functionlity")
 

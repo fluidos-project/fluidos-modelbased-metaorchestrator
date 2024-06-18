@@ -1,16 +1,14 @@
+import logging
 from typing import Any
 
-from ..common import ContainerImageEmbedding, ModelInterface
-from ..common import ModelPredictRequest
 from ..common import Intent
 from ..common import KnownIntent
-from .dummy import DummyOrchestrator
+from ..common import ModelInterface
+from ..common import ModelPredictRequest
+from ..container import _extract_image_embedding
 from .candidate_generation import Orchestrator as CG
-from .two_tower_v1.orchestrator import TwoTowerOrchestrator
-
-from kopf import PermanentError
-
-import logging
+from .dummy import DummyOrchestrator
+# from .two_tower_v1.orchestrator import TwoTowerOrchestrator
 
 
 logger = logging.getLogger(__name__)
@@ -18,13 +16,13 @@ logger = logging.getLogger(__name__)
 
 _model_instances: dict[str, ModelInterface] = {
     "CG": CG(),
-#    "2T": TwoTowerOrchestrator(),
+    # "2T": TwoTowerOrchestrator(),
     "dummy": DummyOrchestrator()
 }
 
 _model_characteristics: list[tuple[set[KnownIntent], str]] = [
-    (set([known_intent for known_intent in KnownIntent]), "CG"),
-    (set([KnownIntent.latency, KnownIntent.location, KnownIntent.memory, KnownIntent.cpu]), "2T")
+    ({known_intent for known_intent in KnownIntent}, "CG"),
+    ({KnownIntent.latency, KnownIntent.location, KnownIntent.memory, KnownIntent.cpu}, "2T")
 ]
 
 
@@ -42,7 +40,7 @@ def _is_subset(s1: set[KnownIntent], s2: set[KnownIntent]) -> bool:
 def get_model_object(request: ModelPredictRequest) -> ModelInterface:
     logger.info(f"Retrieving model interface for {request}")
 
-    request_intent_signature = set(intent.name for intent in request.intents)
+    request_intent_signature = {intent.name for intent in request.intents}
 
     matching_models = [
         name for (model_signature, name) in _model_characteristics if _is_subset(request_intent_signature, model_signature)
@@ -51,18 +49,13 @@ def get_model_object(request: ModelPredictRequest) -> ModelInterface:
     if len(matching_models):
         # for now return the first one
         # ensable to follow!
+        logger.debug(f"Returning model {matching_models[0]}")
         return _model_instances[matching_models[0]]
 
     return _model_instances["dummy"]
 
 
-def _extract_image_embedding(image: str) -> ContainerImageEmbedding:
-    return ContainerImageEmbedding(
-        image=image
-    )
-
-
-def convert_to_model_request(spec: Any) -> ModelPredictRequest:
+def convert_to_model_request(spec: Any, namespace: str) -> ModelPredictRequest | None:
     logger.info("Converting incoming custom resource to model request")
 
     request: ModelPredictRequest | None = None
@@ -79,6 +72,7 @@ def convert_to_model_request(spec: Any) -> ModelPredictRequest:
 
         request = ModelPredictRequest(
             id=spec["metadata"]["name"],
+            namespace=namespace,
             pod_request=spec["spec"]["template"],
             intents=intents,
             container_image_embeddings=[_extract_image_embedding(container["image"]) for container in spec["spec"]["template"]["spec"]["containers"]]
@@ -97,6 +91,7 @@ def convert_to_model_request(spec: Any) -> ModelPredictRequest:
 
         request = ModelPredictRequest(
             id=spec["metadata"]["name"],
+            namespace=namespace,
             pod_request=spec,
             intents=intents,
             container_image_embeddings=[_extract_image_embedding(container["image"]) for container in spec["spec"]["containers"]]
@@ -106,7 +101,7 @@ def convert_to_model_request(spec: Any) -> ModelPredictRequest:
         return request
 
     logger.error(f"Unsupported kind {spec['kind']}")
-    raise PermanentError(f"Unsupported kind {spec['kind']}")
+    return None
 
 
 def _extract_resource_intents(requests: dict[str, str]) -> list[Intent]:
