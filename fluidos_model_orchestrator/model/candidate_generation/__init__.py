@@ -5,6 +5,8 @@ import json
 import logging
 import random  # TODO remove
 from typing import Any
+from pathlib import Path
+import io
 
 import pkg_resources
 import torch  # type: ignore
@@ -120,15 +122,25 @@ class OrchestrationModel(nn.Module):
 class Orchestrator(ModelInterface):
     embedding_model_name: str = "distiluse-base-multilingual-cased-v2"  # TODO read from metadata
 
-    def __init__(self, model_name: str = "orchestrator_cg_v0.0.1.pt", device: str = "cpu") -> None:
+    def __init__(self, model_name: str = "orchestrator_cg_v0.0.1", device: str = "cpu") -> None:
         self.sentence_transformer = SentenceTransformer(self.embedding_model_name)
         self.device = device
         with pkg_resources.resource_stream(__name__, "metadata_cg_v0.0.1.json") as metadata_stream:
             self.metadata: dict[str, Any] = json.load(metadata_stream)
 
         self.orchestrator: OrchestrationModel = OrchestrationModel(self.metadata["training_setup"])
-        with pkg_resources.resource_stream(__name__, model_name) as model_stream:
-            self.orchestrator.load_state_dict(torch.load(model_stream, map_location=self.device)["model_state_dict"])
+        self.orchestrator.load_state_dict(self.__load_from_bytes(model_name)["model_state_dict"])
+
+    def __load_from_bytes(self, model_name: str, chunks_num: int = 18) -> dict[str, Any]:
+        base_ckpt_path = Path(__file__).parent.joinpath(model_name)
+
+        orchestrator_ckpt_chunk = b''
+        for i in range(chunks_num):
+            with open(f"{base_ckpt_path.as_posix()}/{model_name}_{i+1}.pt_chunk", "rb") as chunk_file:
+                orchestrator_ckpt_chunk = orchestrator_ckpt_chunk + chunk_file.read()
+        buffer = io.BytesIO(orchestrator_ckpt_chunk)
+        orchestrator_ckpt = torch.load(buffer)
+        return orchestrator_ckpt
 
     def generate_configs_feature_set(self, intents_dict: dict[str, Any]) -> tuple[torch.Tensor, torch.Tensor]:
         # TODO: add default mode
