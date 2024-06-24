@@ -28,7 +28,7 @@ def test_solver_creation_and_check(k8s: AClusterManager) -> None:
 
     finder = REARResourceFinder(configuration)
 
-    body, _ = finder._resource_to_rear_request(
+    body, _ = finder._resource_to_solver_request(
         Resource(id="123", architecture="amd64"),
         "intent-123"
     )

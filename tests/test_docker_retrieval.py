@@ -1,8 +1,8 @@
 import pytest  # type: ignore
 
-from fluidos_model_orchestrator.container import _extract_image_embedding
 from fluidos_model_orchestrator.container import _get_image_name_parts
 from fluidos_model_orchestrator.container import _retrieve_image
+from fluidos_model_orchestrator.container import extract_image_embedding
 from fluidos_model_orchestrator.container import ImageData
 # from fluidos_model_orchestrator.container import _compute_embedding
 
@@ -55,6 +55,6 @@ def test_extract_image_embedding() -> None:
     ]
 
     for image in valid_docker_images:
-        assert _extract_image_embedding(image) is not None, image
+        assert extract_image_embedding(image) is not None, image
 
     raise NotImplementedError()
