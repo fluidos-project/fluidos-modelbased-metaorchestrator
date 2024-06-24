@@ -5,18 +5,30 @@ from dataclasses import dataclass
 from hashlib import sha256
 
 import docker
+from docker.errors import DockerException
 from docker.models.images import Image
 
 from .common import ContainerImageEmbedding
 
 
-def _extract_image_embedding(image: str) -> ContainerImageEmbedding:
-    return ContainerImageEmbedding(
-        image=_compute_embedding(_retrieve_image(image))
-    )
+def extract_image_embedding(image: str) -> ContainerImageEmbedding:
+    docker.errors.DockerException
+    image_data: ImageData = _retrieve_image(image)
+    if image_data.is_valid():
+        return ContainerImageEmbedding(
+            image=image,
+            embedding=_compute_embedding(image_data)
+        )
+    else:
+        return ContainerImageEmbedding(
+            image=image,
+        )
 
 
-def _compute_embedding(image_data: ImageData) -> str:
+def _compute_embedding(image_data: ImageData | None) -> str | None:
+    if not image_data:
+        return None
+
     digest = sha256(usedforsecurity=False)
 
     digest.update(image_data.metadata().encode())
@@ -37,19 +49,28 @@ def _get_image_name_parts(image_name: str) -> tuple[str, str | None]:
 def _retrieve_image(image_name: str) -> ImageData:
     image, tag = _get_image_name_parts(image_name)
 
-    client = docker.from_env()
+    try:
+        client = docker.from_env()
+        data: Image = client.images.pull(image, tag=tag)
 
-    data: Image = client.images.pull(image, tag=tag)
-
-    return ImageData(data)
+        return ImageData(data)
+    except DockerException:
+        return ImageData()
 
 
 @dataclass(frozen=True)
 class ImageData:
-    _image_obj: Image
+    _image_obj: Image | None = None
 
     def metadata(self) -> str:
-        return json.dumps(self._image_obj.attrs)
+        if self._image_obj is not None:
+            return json.dumps(self._image_obj.attrs)
+        raise ValueError()
 
     def layers(self) -> list[str]:
-        return [json.dumps(layer) for layer in self._image_obj.history()]
+        if self._image_obj is not None:
+            return [json.dumps(layer) for layer in self._image_obj.history()]
+        raise ValueError()
+
+    def is_valid(self) -> bool:
+        return self._image_obj is not None

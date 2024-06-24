@@ -5,7 +5,7 @@ from ..common import Intent
 from ..common import KnownIntent
 from ..common import ModelInterface
 from ..common import ModelPredictRequest
-from ..container import _extract_image_embedding
+from ..container import extract_image_embedding
 from .candidate_generation import Orchestrator as CG
 from .dummy import DummyOrchestrator
 # from .two_tower_v1.orchestrator import TwoTowerOrchestrator
@@ -75,7 +75,7 @@ def convert_to_model_request(spec: Any, namespace: str) -> ModelPredictRequest |
             namespace=namespace,
             pod_request=spec["spec"]["template"],
             intents=intents,
-            container_image_embeddings=[_extract_image_embedding(container["image"]) for container in spec["spec"]["template"]["spec"]["containers"]]
+            container_image_embeddings=[extract_image_embedding(container["image"]) for container in spec["spec"]["template"]["spec"]["containers"]]
         )
 
     if spec["kind"] == "Pod":
@@ -94,7 +94,7 @@ def convert_to_model_request(spec: Any, namespace: str) -> ModelPredictRequest |
             namespace=namespace,
             pod_request=spec,
             intents=intents,
-            container_image_embeddings=[_extract_image_embedding(container["image"]) for container in spec["spec"]["containers"]]
+            container_image_embeddings=[extract_image_embedding(container["image"]) for container in spec["spec"]["containers"]]
         )
 
     if request is not None:

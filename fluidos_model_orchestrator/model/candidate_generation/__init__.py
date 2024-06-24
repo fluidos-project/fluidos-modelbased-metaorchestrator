@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import ast
+import io
 import json
 import logging
 import random  # TODO remove
-from typing import Any
 from pathlib import Path
-import io
+from typing import Any
 
 import pkg_resources
 import torch  # type: ignore
@@ -136,7 +136,7 @@ class Orchestrator(ModelInterface):
 
         orchestrator_ckpt_chunk = b''
         for i in range(chunks_num):
-            with open(f"{base_ckpt_path.as_posix()}/{model_name}_{i+1}.pt_chunk", "rb") as chunk_file:
+            with open(f"{base_ckpt_path.as_posix()}/{model_name}_{i + 1}.pt_chunk", "rb") as chunk_file:
                 orchestrator_ckpt_chunk = orchestrator_ckpt_chunk + chunk_file.read()
         buffer = io.BytesIO(orchestrator_ckpt_chunk)
         orchestrator_ckpt = torch.load(buffer)

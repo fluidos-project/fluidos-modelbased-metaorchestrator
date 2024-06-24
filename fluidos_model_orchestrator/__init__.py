@@ -16,10 +16,10 @@ from .deployment import deploy
 from .healthz import healtz_get_current_timestamp  # noqa
 from .model import convert_to_model_request
 from .model import get_model_object
-from .rescheduler import rescheduler  # noqa
 from .resources import get_resource_finder
 from .start_and_stop import cleanup_function  # noqa
 from .start_and_stop import configure  # noqa
+# from .rescheduler import rescheduler
 
 
 @kopf.on.create("fluidosdeployments")

@@ -5,6 +5,7 @@ import pytest  # type: ignore
 from pytest_kubernetes.providers import select_provider_manager  # type: ignore
 from pytest_kubernetes.providers.base import AClusterManager  # type: ignore
 
+
 @pytest.fixture
 def tmp_test_path(tmp_path: Path) -> Path:
     """
