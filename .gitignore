@@ -163,8 +163,6 @@ dmypy.json
 
 # VSCode
 .vscode/
-node
 utils/logs
 .pytest-kind
 Pipfile
-node

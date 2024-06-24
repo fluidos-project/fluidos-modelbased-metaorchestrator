@@ -1,0 +1,41 @@
+apiVersion: nodecore.fluidos.eu/v1alpha1
+kind: Solver
+metadata:
+  creationTimestamp: "2024-05-01T07:18:38Z"
+  generation: 1
+  name: nginx-w-intent
+  namespace: fluidos
+  ownerReferences:
+  - apiVersion: fluidos.eu/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: FLUIDOSDeployment
+    name: nginx-w-intent
+    uid: d07d6388-6636-468f-adb1-4b76c5a86481
+  resourceVersion: "235700"
+  uid: 9973a21b-4499-4318-b37f-78e2e2101f4b
+spec:
+  enstablishPeering: false
+  findCandidate: true
+  intentID: nginx-w-intent
+  reserveAndBuy: false
+  selector:
+    architecture: amd64
+    rangeSelector:
+      minCpu: 1000m
+      minMemory: 509Mi
+    type: k8s-fluidos
+status:
+  allocation: {}
+  contract: {}
+  credentials:
+    clusterID: ""
+    clusterName: ""
+    endpoint: ""
+    token: ""
+  findCandidate: Solved
+  solverPhase:
+    endTime: "2024-05-01T07:18:39Z"
+    lastChangeTime: "2024-05-01T07:18:39Z"
+    message: No need to reserve and buy the resources
+    phase: Solved
