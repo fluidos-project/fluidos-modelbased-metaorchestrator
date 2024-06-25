@@ -153,7 +153,7 @@ class KnownIntent(Enum):
 
     # high order requests
     latency = "latency", False, always_true
-    location = "location", False
+    location = "location", False, always_true
     throughput = "throughput", False, always_true
     compliance = "compliance", False, always_true
     energy = "energy", False, always_true
