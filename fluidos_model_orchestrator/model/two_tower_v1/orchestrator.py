@@ -1,18 +1,16 @@
 from __future__ import annotations
 
-import tensorflow as tf
-import pandas as pd
+import logging
 from pathlib import Path
 
-from ...common import (
-    KnownIntent,
-    Resource,
-    ModelInterface,
-    ModelPredictRequest,
-    ModelPredictResponse,
-)
+import pandas as pd
+import tensorflow as tf
 
-import logging
+from ...common import KnownIntent
+from ...common import ModelInterface
+from ...common import ModelPredictRequest
+from ...common import ModelPredictResponse
+from ...common import Resource
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +40,7 @@ class TwoTowerOrchestrator(ModelInterface):
 
         self.machine_df = machine_df.drop("Unnamed: 0", axis=1)
 
-    def predict(self, data: ModelPredictRequest) -> ModelPredictResponse:
+    def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse:
         input_data = {
             "pod_id": tf.constant([data.id]),
             "machine_id": tf.constant(["machine_id"]),

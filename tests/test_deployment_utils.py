@@ -1,12 +1,12 @@
-import yaml
 import pkg_resources
-from kubernetes import client
+import yaml
+from kubernetes import client  # type: ignore
 from kubernetes import config
 from kubernetes import utils
-from pytest_kubernetes.providers.base import AClusterManager
+from pytest_kubernetes.providers.base import AClusterManager  # type: ignore
 
 
-def test_loading_of_objects(k8s: AClusterManager):
+def test_loading_of_objects(k8s: AClusterManager) -> None:
     k8s.create()
     myconfig = client.Configuration()
     config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))

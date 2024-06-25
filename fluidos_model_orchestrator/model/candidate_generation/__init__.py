@@ -1,20 +1,25 @@
 from __future__ import annotations
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import json
-import random  # TODO remove
-import pkg_resources  # noqa
+
 import ast
 import io
-from pathlib import Path
-from typing import Dict, Any, List
-from sentence_transformers import SentenceTransformer
-
-from ...common import Resource, ModelInterface, ModelPredictRequest, ModelPredictResponse
-from .model_utils import compute_embedding_for_sentence, find_matching_configs
-
+import json
 import logging
+import random  # TODO remove
+from pathlib import Path
+from typing import Any
+
+import pkg_resources
+import torch  # type: ignore
+import torch.nn as nn  # type: ignore
+import torch.nn.functional as F  # type: ignore
+from sentence_transformers import SentenceTransformer  # type: ignore
+
+from ...common import ModelInterface
+from ...common import ModelPredictRequest
+from ...common import ModelPredictResponse
+from ...common import Resource
+from fluidos_model_orchestrator.model.candidate_generation.model_utils import compute_embedding_for_sentence
+from fluidos_model_orchestrator.model.candidate_generation.model_utils import find_matching_configs
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +31,7 @@ class EmbeddingAggregation(nn.Module):
             raise NotImplementedError(f"mode {aggregation_mode} not implemented!")
         self.aggregation_mode = aggregation_mode
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor | None:
         if self.aggregation_mode == 'sum':
             aggregated = torch.sum(x, dim=1)  # axis
         elif self.aggregation_mode == 'mean':
@@ -36,8 +41,8 @@ class EmbeddingAggregation(nn.Module):
 
 
 class OrchestrationModel(nn.Module):
-    def __init__(self, config: Dict[str, Any]):
-        super(OrchestrationModel, self).__init__()
+    def __init__(self, config: dict[str, Any]):
+        super().__init__()
 
         self.device = config['device']
         self.config_embedding = nn.Embedding(num_embeddings=config['num_configs'], embedding_dim=8, device=self.device)
@@ -72,8 +77,7 @@ class OrchestrationModel(nn.Module):
         self.fc_layer3 = nn.Sequential(self.linear3, self.activation3, self.batch_norm, self.dropout3)
         self.head = torch.nn.Linear(in_features=self.fc3_size, out_features=config['num_configs'])
 
-    def forward(self, input):
-
+    def forward(self, input: list[torch.Tensor]) -> torch.Tensor:
         """
         Predicts relevant config id
         config = (cpu, memory, location, throughput)
@@ -122,7 +126,7 @@ class Orchestrator(ModelInterface):
         self.sentence_transformer = SentenceTransformer(self.embedding_model_name)
         self.device = device
         with pkg_resources.resource_stream(__name__, "metadata_cg_v0.0.1.json") as metadata_stream:
-            self.metadata: Dict[str, int] = json.load(metadata_stream)
+            self.metadata: dict[str, Any] = json.load(metadata_stream)
 
         self.orchestrator: OrchestrationModel = OrchestrationModel(self.metadata["training_setup"])
         self.orchestrator.load_state_dict(self.__load_from_bytes(model_name)["model_state_dict"])
@@ -132,16 +136,16 @@ class Orchestrator(ModelInterface):
 
         orchestrator_ckpt_chunk = b''
         for i in range(chunks_num):
-            with open(f"{base_ckpt_path.as_posix()}/{model_name}_{i+1}.pt_chunk", "rb") as chunk_file:
+            with open(f"{base_ckpt_path.as_posix()}/{model_name}_{i + 1}.pt_chunk", "rb") as chunk_file:
                 orchestrator_ckpt_chunk = orchestrator_ckpt_chunk + chunk_file.read()
         buffer = io.BytesIO(orchestrator_ckpt_chunk)
         orchestrator_ckpt = torch.load(buffer)
         return orchestrator_ckpt
 
-    def generate_configs_feature_set(self, intents_dict: Dict[str, Any]) -> tuple[torch.Tensor, torch.Tensor]:
+    def generate_configs_feature_set(self, intents_dict: dict[str, Any]) -> tuple[torch.Tensor, torch.Tensor]:
         # TODO: add default mode
-        relevant_configs: List[int] = []
-        non_relevant_configs: List[int] = []
+        relevant_configs: list[int] = []
+        non_relevant_configs: list[int] = []
 
         # relevant configs - some of those which satisfy all the intents
         # non_relevant configs - those which do not satisfy all the intents
@@ -162,11 +166,11 @@ class Orchestrator(ModelInterface):
 
         return relevant_configs, non_relevant_configs
 
-    def predict(self, data: ModelPredictRequest) -> ModelPredictResponse:
+    def predict(self, data: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse:
 
         logger.info("pod embedding generation")
         pod_embedding = compute_embedding_for_sentence(str(data.pod_request), self.sentence_transformer)
-        intents_dict: Dict[str, str] = {intent.name: intent.value for intent in data.intents}
+        intents_dict: dict[str, str] = {str(intent.name): intent.value for intent in data.intents}
 
         relevant_configs, non_relevant_configs = self.generate_configs_feature_set(intents_dict)
         relevant_configs = relevant_configs.type(torch.int32)
@@ -182,9 +186,9 @@ class Orchestrator(ModelInterface):
 
         predicted_config = self.metadata["id2configuration"][str(predicted_configuration_id)]
         if predicted_config == "none":
-            predicted_config_dict: Dict[str, str] = {}
+            predicted_config_dict: dict[str, str] = {}
             for item in data.intents:
-                predicted_config_dict[item.name] = "-1"
+                predicted_config_dict[str(item.name)] = "-1"
         else:
             predicted_config_dict = ast.literal_eval(predicted_config)
 
@@ -192,5 +196,5 @@ class Orchestrator(ModelInterface):
             data.id,
             resource_profile=Resource(
                 id=data.id, region=predicted_config_dict['fluidos-intent-location'], cpu=f"{predicted_config_dict['cpu']}",  # TODO: needs fixing, this is using fluidos-intent as per the manifest, not as represented in the request
-                memory=f"{predicted_config_dict['memory']}", architecture="arm64")  # TODO: fix requred, here we impose the architecture to be arm64, is it correct? arch is optional in Resource.
+                memory=f"{predicted_config_dict['memory']}", architecture=architecture)  # TODO: fix requred, here we impose the architecture to be arm64, is it correct? arch is optional in Resource.
         )

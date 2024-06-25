@@ -1,20 +1,28 @@
 from __future__ import annotations
 
+import logging
 from abc import ABC
 from abc import abstractmethod
-
 from dataclasses import dataclass
 from dataclasses import field
-from typing import Any
 from enum import Enum
 from enum import unique
-
-import kubernetes
-
-import logging
+from typing import Any
 
 
 logger = logging.getLogger(__name__)
+
+
+class ResourceProvider(ABC):
+    def __init__(self, id: str) -> None:
+        self.id = id
+
+    def acquire(self) -> bool:
+        return True
+
+    @abstractmethod
+    def get_label(self) -> str:
+        raise NotImplementedError("Abstract method")
 
 
 @dataclass(kw_only=True)
@@ -28,18 +36,18 @@ class Resource:
     persistent_storage: str | None = None
     region: str | None = None
 
-    def can_run_on(self, flavour: Flavour) -> bool:
-        logger.debug(f"Testing {self=} against {flavour=}")
-        if not _cpu_compatible(self.cpu, flavour.cpu):
+    def can_run_on(self, flavor: Flavor) -> bool:
+        logger.debug(f"Testing {self=} against {flavor=}")
+        if not _cpu_compatible(self.cpu, flavor.cpu):
             return False
 
-        if not _memory_compatible(self.memory, flavour.memory):
+        if not _memory_compatible(self.memory, flavor.memory):
             return False
 
-        if self.architecture is not None and self.architecture != flavour.architecture:
+        if self.architecture is not None and self.architecture != flavor.architecture:
             return False
 
-        if self.gpu is not None and int(self.gpu) > int(flavour.gpu):
+        if self.gpu is not None and int(self.gpu) > int(flavor.gpu):
             return False
 
         # TODO: add checks for storage
@@ -94,7 +102,7 @@ def _cpu_to_int(spec: str) -> int:
 
 
 @dataclass
-class Flavour:
+class Flavor:
     id: str
     cpu: str
     architecture: str
@@ -108,9 +116,10 @@ class ContainerImageEmbedding:
     embedding: str | None = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ModelPredictRequest:
     id: str
+    namespace: str
     pod_request: Any
     container_image_embeddings: list[ContainerImageEmbedding]
     intents: list[Intent] = field(default_factory=list)
@@ -127,7 +136,7 @@ class ModelPredictResponse:
 
 class ModelInterface(ABC):
     @abstractmethod
-    def predict(self, data: ModelPredictRequest) -> ModelPredictResponse:
+    def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse:
         raise NotImplementedError("Not implemented: abstract method")
 
 
@@ -193,12 +202,14 @@ class Intent:
         return self.name.has_external_requirement()
 
 
-@dataclass
-class Configuration:
-    local_node_key: str = "fluidos.eu/resource-node"
-    remote_node_key: str = "liqo.io/remote-cluster-id"
-    k8s_client: kubernetes.client.ApiClient | None = None
-    node_id: Any | None = None
+def find_best_validation(providers: list[ResourceProvider], intents: list[Intent]) -> ResourceProvider | None:
+    return providers[0]  # for now
 
 
-CONFIGURATION = Configuration()
+def validate_on_intent(resources: list[ResourceProvider], intent: Intent) -> ResourceProvider:
+    return resources[0]  # for now
+
+
+class ResourceFinder(ABC):
+    def find_best_match(self, resource: Resource | Intent, namespace: str) -> list[ResourceProvider]:
+        raise NotImplementedError()

@@ -1,14 +1,12 @@
+import logging
 from typing import Any
 
-import kopf
+import kopf  # type: ignore
+from kubernetes import utils  # type: ignore
 
-from .resources import ResourceProvider
-
-from kubernetes import utils
-
-from .common import CONFIGURATION, Intent
-
-import logging
+from .common import Intent
+from .common import ResourceProvider
+from .configuration import CONFIGURATION
 
 
 logger = logging.getLogger()
@@ -18,9 +16,6 @@ def deploy(spec: dict[str, Any], provider: ResourceProvider, expanding_resources
     spec_dict = {
         k: v for k, v in spec.items()
     }
-
-    if not provider.acquire():
-        return False
 
     enrich(spec_dict, provider)
 

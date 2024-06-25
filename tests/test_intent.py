@@ -3,7 +3,7 @@ from fluidos_model_orchestrator.common import KnownIntent
 
 
 def test_intent_values():
-    expected_intents = set([
+    expected_intents = {
         "fluidos-intent-cpu",
         "fluidos-intent-memory",
         "fluidos-intent-latency",
@@ -14,18 +14,18 @@ def test_intent_values():
         "fluidos-intent-energy",
         "fluidos-intent-battery",
         "fluidos-intent-service",
-    ])
+    }
 
     for intent in KnownIntent:
         assert intent.to_intent_key() in expected_intents
 
 
 def test_iternal_or_external():
-    external_intents = set([
+    external_intents = {
         "fluidos-intent-service",
-    ])
+    }
 
-    internal_intents = set([
+    internal_intents = {
         "fluidos-intent-cpu",
         "fluidos-intent-memory",
         "fluidos-intent-latency",
@@ -35,7 +35,7 @@ def test_iternal_or_external():
         "fluidos-intent-compliance",
         "fluidos-intent-energy",
         "fluidos-intent-battery",
-    ])
+    }
 
     for intent in KnownIntent:
         key = intent.to_intent_key()
