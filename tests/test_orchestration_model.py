@@ -1,3 +1,4 @@
+import shutil
 from os import environ
 
 import pkg_resources
@@ -9,6 +10,7 @@ from fluidos_model_orchestrator.model.two_tower_v1.orchestrator import TwoTowerO
 
 
 @pytest.mark.xfail(environ.get("CI", "false") == "true", reason="Not always running on Travis")
+@pytest.mark.skipif(shutil.which("docker") is None, reason="Missing docker command")
 def test_orchestration_model_two_towers():
     with pkg_resources.resource_stream(__name__, "k8s/pod_throughput_location.yaml") as pod_stream:
         pod_dict = yaml.safe_load(pod_stream)
