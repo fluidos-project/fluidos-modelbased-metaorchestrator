@@ -11,7 +11,8 @@ def test_request_satisfied():
         id="bar",
         type=FlavorType.K8SLICE,
         characteristics=FlavorCharacteristics(architecture="amd64", cpu="2000000n", memory="100Gi", gpu="0"),
-        owner={})
+        owner={},
+        providerID="foo")
 
     assert res.can_run_on(flavor)
 
@@ -23,9 +24,11 @@ def test_request_not_sastisfied():
         id="bar",
         type=FlavorType.K8SLICE,
         characteristics=FlavorCharacteristics(architecture="amd64", cpu="2000000n", memory="100Gi", gpu="0"),
-        owner={})), "Missing GPU"
+        owner={},
+        providerID="foo")), "Missing GPU"
     assert not res.can_run_on(Flavor(
         id="bar",
         type=FlavorType.K8SLICE,
         characteristics=FlavorCharacteristics(architecture="amd64", cpu="1n", memory="100Gi", gpu="1"),
-        owner={})), "Not enough CPU"
+        owner={},
+        providerID="foo")), "Not enough CPU"
