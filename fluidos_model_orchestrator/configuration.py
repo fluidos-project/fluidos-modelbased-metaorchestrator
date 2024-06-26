@@ -28,9 +28,12 @@ def enrich_configuration(config: Configuration,
                          my_config: client.Configuration) -> None:
     logger.info("Enrich default configuration with user provided information")
 
-    config.k8s_client = client.ApiClient(my_config)
-
+    config.k8s_client = _build_k8s_client(my_config)
     config.identity = _retrieve_node_identity(config, logger)
+
+
+def _build_k8s_client(config: client.Configuration) -> client.ApiClient:
+    return client.ApiClient(config)
 
 
 def _retrieve_node_identity(config: Configuration, logger: logging.Logger) -> dict[str, str]:

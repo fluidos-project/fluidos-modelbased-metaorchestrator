@@ -1,0 +1,28 @@
+apiVersion: reservation.fluidos.eu/v1alpha1
+kind: Reservation
+metadata:
+  name: reservation-test-sample
+  namespace: default
+spec:
+  buyer:
+    domain: fluidos.eu
+    ip: 172.18.0.2:30000
+    nodeID: l6936ty08l
+  partition:
+    architecture: amd64
+    cpu: "1"
+    ephemeral-storage: "0"
+    gpu: "0"
+    memory: 1Gi
+    pods: "50"
+    storage: "0"
+  peeringCandidate:
+    name: peeringcandidate-fluidos.eu-k8s-fluidos-mytest
+    namespace: fluidos
+  purchase: false
+  reserve: true
+  seller:
+    domain: fluidos.eu
+    ip: 172.18.0.7:30001
+    nodeID: r5ukumejgu
+  solverID: example-solver

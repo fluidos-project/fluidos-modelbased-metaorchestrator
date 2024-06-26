@@ -8,13 +8,13 @@ This repository contains the operator to perform model-based meta-orchestration 
 
 ## Requirements
 
-The operator assumes the following:
+The operator assumes the following to be available within the system:
 * Kubernetes version >= 28.1.0
-* REAR (as implemented in [node](https://github.com/fluidos-project/node)) functionality version >= 0.0.3
-* Liqo version >= 0.9.4
+* REAR (node) functionality version >= 0.0.4
+* Liqo version >= 0.10.2
 
 Moreover, the interaction with the operator assumes:
-* [kubectl-fluidos-plugin](https://github.com/fluidos-project/kubectl-fluidos-plugin) version >= 0.0.2
+* fluidos-kubectl-plugin version >= 0.0.3
 
 To run the operator in development mode, the following is required:
 * python >= 3.11
@@ -34,6 +34,9 @@ kind create cluster --name foo --config utils/cluster-multi-worker.yaml --kubeco
 
 # install CRD
 kubectl apply -f utils/fluidos-deployment-crd.yaml
+
+# optionally, install FLUIDOS node CRDs
+kubectl apply -f tests/node/crds
 
 # start FLUIDOS operator
 kopfs run --verbose -m fluidos_model_orchestrator
