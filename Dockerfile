@@ -4,6 +4,8 @@ ENV NAMESPACE=fluidos
 
 WORKDIR /app
 
+RUN apt-get update
+RUN apt-get install -y libhdf5-serial-dev
 ADD fluidos_model_orchestrator/ /app/fluidos_model_orchestrator
 ADD setup.cfg setup.py /app/
 

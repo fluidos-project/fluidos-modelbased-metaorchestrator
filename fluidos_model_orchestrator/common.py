@@ -6,6 +6,7 @@ from abc import abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
 from dataclasses import field
+from enum import auto
 from enum import Enum
 from enum import unique
 from typing import Any
@@ -39,16 +40,16 @@ class Resource:
 
     def can_run_on(self, flavor: Flavor) -> bool:
         logger.debug(f"Testing {self=} against {flavor=}")
-        if not _cpu_compatible(self.cpu, flavor.cpu):
+        if not _cpu_compatible(self.cpu, flavor.characteristics.cpu):
             return False
 
-        if not _memory_compatible(self.memory, flavor.memory):
+        if not _memory_compatible(self.memory, flavor.characteristics.memory):
             return False
 
-        if self.architecture is not None and self.architecture != flavor.architecture:
+        if self.architecture is not None and self.architecture != flavor.characteristics.architecture:
             return False
 
-        if self.gpu is not None and int(self.gpu) > int(flavor.gpu):
+        if self.gpu is not None and int(self.gpu) > int(flavor.characteristics.gpu):
             return False
 
         # TODO: add checks for storage
@@ -103,12 +104,27 @@ def _cpu_to_int(spec: str) -> int:
 
 
 @dataclass
-class Flavor:
-    id: str
+class FlavorCharacteristics:
     cpu: str
     architecture: str
     gpu: str
     memory: str
+
+
+@unique
+class FlavorType(Enum):
+    K8SLICE = auto()
+    VM = auto()
+    SERVICE = auto()
+    SENSOR = auto()
+
+
+@dataclass
+class Flavor:
+    id: str
+    type: FlavorType
+    characteristics: FlavorCharacteristics
+    owner: dict[str, Any]
 
 
 @dataclass

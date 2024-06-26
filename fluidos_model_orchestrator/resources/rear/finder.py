@@ -11,6 +11,8 @@ from kubernetes import client
 from kubernetes.client.exceptions import ApiException
 
 from fluidos_model_orchestrator.common import Flavor
+from fluidos_model_orchestrator.common import FlavorCharacteristics
+from fluidos_model_orchestrator.common import FlavorType
 from fluidos_model_orchestrator.common import Intent
 from fluidos_model_orchestrator.common import Resource
 from fluidos_model_orchestrator.common import ResourceFinder
@@ -301,36 +303,50 @@ class REARResourceFinder(ResourceFinder):
             logger.info("No flavours found locally")
             return fitting_resources
 
-        for flavour in local_flavours["items"]:
-            name = flavour["metadata"]["name"]
+        for k8s_flavor in local_flavours["items"]:
+            name = k8s_flavor["metadata"]["name"]
 
             logger.info(f"Processing flavour {name=}")
 
-            flavour_type = flavour["spec"]["type"]
-
-            if flavour_type != "k8s-fluidos":
-                logger.info(f"Skipping, wrong flavour type {flavour_type}")
-                continue
-
             flavor = _k8s_to_flavor(
-                flavour["metadata"]["uid"],
-                flavour["spec"]["characteristics"])
+                k8s_flavor["metadata"]["uid"],
+                k8s_flavor["spec"])
+
+            if flavor.type is not FlavorType.K8SLICE:
+                logger.info(f"Skipping, wrong flavour type {flavor.type}")
+                continue
 
             if resource.can_run_on(flavor):
                 logger.info("Local flavour is compatible, using it")
                 fitting_resources.append(
                     LocalResourceProvider(
                         flavor.id,
-                        flavour["spec"]["owner"]
+                        k8s_flavor["spec"]["owner"]
                     ))
 
         return fitting_resources
 
 
-def _k8s_to_flavor(uid: str, characteristics: dict[str, Any]) -> Flavor:
+def _k8s_to_flavor(uid: str, specs: dict[str, Any]) -> Flavor:
+    characteristics = specs["characteristics"]
     architecture = characteristics["architecture"]
     cpu = characteristics["cpu"]
     gpu = characteristics["gpu"]
     memory = characteristics["memory"]
 
-    return Flavor(uid, cpu, architecture, gpu, memory)
+    return Flavor(
+        id=uid,
+        type=_get_flavor_type(specs["type"]),
+        characteristics=FlavorCharacteristics(
+            architecture=architecture,
+            cpu=cpu,
+            memory=memory,
+            gpu=gpu,
+        ),
+        owner=specs["owner"])
+
+
+def _get_flavor_type(f_type: str) -> FlavorType:
+    if f_type == "k8s-fluidos":
+        return FlavorType.K8SLICE
+    raise NotImplementedError(f"{f_type} not supported yet")
