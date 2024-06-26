@@ -16,8 +16,9 @@ logger = logging.getLogger(__name__)
 
 
 class ResourceProvider(ABC):
-    def __init__(self, id: str) -> None:
+    def __init__(self, id: str, flavor: Flavor) -> None:
         self.id = id
+        self.flavor = flavor
 
     def acquire(self) -> bool:
         return True
@@ -63,13 +64,13 @@ def _memory_compatible(memory_a_spec: str | None, memory_b_spec: str | None) -> 
     if memory_b_spec is None:
         return False
 
-    memory_a: int = _memory_to_int(memory_a_spec)
-    memory_b: int = _memory_to_int(memory_b_spec)
+    memory_a: int = memory_to_int(memory_a_spec)
+    memory_b: int = memory_to_int(memory_b_spec)
 
     return memory_b >= memory_a
 
 
-def _memory_to_int(spec: str) -> int:
+def memory_to_int(spec: str) -> int:
     unit = spec[-2:]
     magnitude = int(spec[:-2])
 
@@ -88,13 +89,13 @@ def _cpu_compatible(cpu_a_spec: str | None, cpu_b_spec: str | None) -> bool:
         return False
     if cpu_b_spec is None:
         return False
-    cpu_a: int = _cpu_to_int(cpu_a_spec)
-    cpu_b: int = _cpu_to_int(cpu_b_spec)
+    cpu_a: int = cpu_to_int(cpu_a_spec)
+    cpu_b: int = cpu_to_int(cpu_b_spec)
 
     return cpu_b >= cpu_a
 
 
-def _cpu_to_int(spec: str) -> int:
+def cpu_to_int(spec: str) -> int:
     if spec[-1] == 'n':
         return int(spec[:-1])
     elif spec[-1] == "m":
@@ -155,6 +156,9 @@ class ModelInterface(ABC):
     @abstractmethod
     def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse:
         raise NotImplementedError("Not implemented: abstract method")
+
+    def rank(self, providers: list[ResourceProvider]) -> list[ResourceProvider]:
+        return providers
 
 
 def always_true(provider: ResourceProvider, value: str) -> bool:
