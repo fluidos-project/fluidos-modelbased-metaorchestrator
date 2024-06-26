@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from dataclasses import field
 from enum import auto
 from enum import Enum
-from enum import StrEnum
 from enum import unique
 from typing import Any
 
@@ -113,7 +112,7 @@ class FlavorCharacteristics:
 
 
 @unique
-class FlavorType(StrEnum):
+class FlavorType(Enum):
     K8SLICE = auto()
     VM = auto()
     SERVICE = auto()
