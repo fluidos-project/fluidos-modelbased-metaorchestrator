@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from abc import ABC
 from abc import abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass
 from dataclasses import field
 from enum import Enum
@@ -140,30 +141,35 @@ class ModelInterface(ABC):
         raise NotImplementedError("Not implemented: abstract method")
 
 
+def always_true(provider: ResourceProvider, value: str) -> bool:
+    return True
+
+
 @unique
 class KnownIntent(Enum):
     # k8s resources
-    cpu = "cpu", False
-    memory = "memory", False
+    cpu = "cpu", False, always_true
+    memory = "memory", False, always_true
 
     # high order requests
-    latency = "latency", False
-    location = "location", False
-    throughput = "throughput", False
-    compliance = "compliance", False
-    energy = "energy", False
-    battery = "battery", False
+    latency = "latency", False, always_true
+    location = "location", False, always_true
+    throughput = "throughput", False, always_true
+    compliance = "compliance", False, always_true
+    energy = "energy", False, always_true
+    battery = "battery", False, always_true
 
     # service
-    service = "service", True
+    service = "service", True, always_true
 
     def __new__(cls, *args: str, **kwds: str) -> KnownIntent:
         obj = object.__new__(cls)
         obj._value_ = args[0]
         return obj
 
-    def __init__(self, _: str, external: bool):
+    def __init__(self, _: str, external: bool, validator: Callable[[ResourceProvider, str], bool]):
         self._external = external
+        self._validator = validator
 
     def __repr__(self) -> str:
         return super().__repr__()
@@ -173,6 +179,9 @@ class KnownIntent(Enum):
 
     def has_external_requirement(self) -> bool:
         return self._external
+
+    def validate(self, provider: ResourceProvider, value: str) -> bool:
+        return self._validator(provider, value)
 
     @staticmethod
     def is_supported(intent_name: str) -> bool:
@@ -201,9 +210,8 @@ class Intent:
     def has_external_requirement(self) -> bool:
         return self.name.has_external_requirement()
 
-
-def find_best_validation(providers: list[ResourceProvider], intents: list[Intent]) -> ResourceProvider | None:
-    return providers[0]  # for now
+    def validate(self, provider: ResourceProvider) -> bool:
+        return self.name.validate(provider, self.value)
 
 
 def validate_on_intent(resources: list[ResourceProvider], intent: Intent) -> ResourceProvider:

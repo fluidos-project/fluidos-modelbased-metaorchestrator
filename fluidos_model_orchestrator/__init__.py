@@ -4,7 +4,6 @@ from typing import Any
 import kopf  # type: ignore
 from kopf import PermanentError
 
-from .common import find_best_validation
 from .common import Intent
 from .common import ModelInterface
 from .common import ModelPredictRequest
@@ -22,8 +21,8 @@ from .start_and_stop import configure  # noqa
 # from .rescheduler import rescheduler
 
 
-@kopf.on.create("fluidosdeployments")
-def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Logger, errors: kopf.ErrorsMode = kopf.ErrorsMode.PERMANENT, **kwargs: str) -> dict[str, dict[str, ResourceProvider | list[tuple[ResourceProvider, Intent]] | None] | str]:
+@kopf.on.create("fluidosdeployments")  # type: ignore
+def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Logger, errors: kopf.ErrorsMode = kopf.ErrorsMode.PERMANENT, **kwargs: str) -> dict[str, dict[str, ResourceProvider | list[tuple[ResourceProvider, Intent]] | None | str] | str]:
     logger.info("Processing incoming request")
     logger.debug(f"Received request: {spec}")
 
@@ -49,17 +48,20 @@ def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Lo
 
     finder: ResourceFinder = get_resource_finder(request, prediction)
 
-    best_match: ResourceProvider | None = find_best_validation(finder.find_best_match(prediction.to_resource(), namespace), request.intents)
+    best_matches: list[ResourceProvider] = validate_with_intents(finder.find_best_match(prediction.to_resource(), namespace), request.intents)
 
     # find other resources types based on the intents
     expanding_resources: list[tuple[ResourceProvider, Intent]] = _find_expanding_resources(finder, request.intents, namespace)
 
-    if best_match is None:
+    if not len(best_matches):
         logger.error("Unable to find resource matching requirement")
 
         return {
+            "status": "Failure",
             "msg": "Unable to find resource matching requirement"
         }
+
+    best_match = pick_a_best_match(best_matches)
 
     if not best_match.acquire():
         raise PermanentError(f"Unable to acquire {best_match}")
@@ -68,13 +70,26 @@ def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Lo
         raise PermanentError("Unable to deploy")
 
     return {
+        "status": "Success",
         "deployed": {
-            "resource_provider": best_match,
+            "resource_provider": str(best_match),
             "expandind_resources": expanding_resources or None,
             "validation": []
-        },
-        "msg": "Successful"
+        }
     }
+
+
+def validate_with_intents(providers: list[ResourceProvider], intents: list[Intent]) -> list[ResourceProvider]:
+    return [
+        provider for provider in providers if all(
+            intent.validate(provider) for intent in intents
+        )
+    ]
+
+
+def pick_a_best_match(matches: list[ResourceProvider]) -> ResourceProvider:
+    # return good match, or first for now
+    return matches[0]
 
 
 def _find_expanding_resources(finder: ResourceFinder, intents: list[Intent], namespace: str) -> list[tuple[ResourceProvider, Intent]]:

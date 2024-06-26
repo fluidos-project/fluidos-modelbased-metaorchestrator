@@ -6,9 +6,27 @@ import pkg_resources  # type: ignore
 from pytest_kubernetes.providers import AClusterManager  # type: ignore
 
 from fluidos_model_orchestrator.common import Resource
+from fluidos_model_orchestrator.configuration import _build_k8s_client
 from fluidos_model_orchestrator.configuration import Configuration
 from fluidos_model_orchestrator.configuration import enrich_configuration
 from fluidos_model_orchestrator.resources import REARResourceFinder
+
+
+def test_find_local_no_nodes(k8s: AClusterManager) -> None:
+    k8s.create()
+
+    myconfig = kubernetes.client.Configuration()
+    kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
+
+    configuration = Configuration(
+        k8s_client=_build_k8s_client(myconfig)
+    )
+
+    finder = REARResourceFinder(configuration)
+
+    res_providers = finder._find_local(Resource(id="123", architecture="amd64"), "default")
+
+    assert len(res_providers) == 0
 
 
 def test_solver_creation_and_check(k8s: AClusterManager) -> None:
