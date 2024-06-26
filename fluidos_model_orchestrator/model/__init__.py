@@ -23,7 +23,7 @@ _model_instances: dict[str, ModelInterface] = {
 
 _model_characteristics: list[tuple[set[KnownIntent], str]] = [
     ({known_intent for known_intent in KnownIntent}, "CG"),
-    ({KnownIntent.latency, KnownIntent.location, KnownIntent.memory, KnownIntent.cpu}, "2T")
+    # ({KnownIntent.latency, KnownIntent.location, KnownIntent.memory, KnownIntent.cpu}, "2T")
 ]
 
 

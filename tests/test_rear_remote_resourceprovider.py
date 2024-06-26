@@ -3,6 +3,8 @@ import pkg_resources  # type: ignore
 import pytest
 from pytest_kubernetes.providers.base import AClusterManager
 
+from fluidos_model_orchestrator.common import Flavor
+from fluidos_model_orchestrator.common import FlavorCharacteristics
 from fluidos_model_orchestrator.configuration import _build_k8s_client
 from fluidos_model_orchestrator.resources.rear.remote_resource_provider import RemoteResourceProvider
 
@@ -17,11 +19,15 @@ def test_basic_creation(k8s: AClusterManager) -> None:
 
     provider = RemoteResourceProvider(
         "id",
-        {
-            "domain": "fluidos.eu",
-            "ip": "172.18.0.2:30000",
-            "nodeID": "l6936ty08l",
-        },
+        Flavor(
+            "flavor_id",
+            FlavorCharacteristics("1", "amd", "0", "1000"),
+            {
+                "domain": "fluidos.eu",
+                "ip": "172.18.0.2:30000",
+                "nodeID": "l6936ty08l",
+            }
+        ),
         "peeringcandidate-fluidos.eu-k8s-fluidos-c3978e7c",
         "reservation-test-sample",
         "default",
