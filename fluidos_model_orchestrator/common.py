@@ -110,6 +110,9 @@ class FlavorCharacteristics:
     architecture: str
     gpu: str
     memory: str
+    pods: str | None = None
+    ephemeral_storage: str | None = None
+    persistent_storage: str | None = None
 
 
 @unique
@@ -119,6 +122,13 @@ class FlavorType(Enum):
     SERVICE = auto()
     SENSOR = auto()
 
+    @staticmethod
+    def factory(type_name: str) -> FlavorType:
+        if type_name == "k8s-fluidos":
+            return FlavorType.K8SLICE
+
+        raise ValueError(f"Not supported {type_name=}")
+
 
 @dataclass
 class Flavor:
@@ -126,6 +136,10 @@ class Flavor:
     type: FlavorType
     characteristics: FlavorCharacteristics
     owner: dict[str, Any]
+    providerID: str
+    policy: dict[str, Any] = field(default_factory=dict)
+    optional_fields: dict[str, Any] = field(default_factory=dict)
+    price: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

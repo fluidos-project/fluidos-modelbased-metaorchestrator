@@ -4,8 +4,8 @@ from asyncio import Lock
 from typing import Any
 
 import kopf  # type: ignore
-from kubernetes import client as k8s_client
-from kubernetes import config as k8s_config
+from kubernetes import client as k8s_client  # type: ignore
+from kubernetes import config as k8s_config  # type: ignore
 
 from .configuration import CONFIGURATION
 from .configuration import enrich_configuration

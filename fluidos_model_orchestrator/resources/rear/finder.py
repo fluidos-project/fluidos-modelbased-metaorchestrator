@@ -7,8 +7,8 @@ import uuid
 from typing import Any
 
 import kopf  # type: ignore
-from kubernetes import client
-from kubernetes.client.exceptions import ApiException
+from kubernetes import client  # type: ignore
+from kubernetes.client.exceptions import ApiException  # type: ignore
 
 from fluidos_model_orchestrator.common import Flavor
 from fluidos_model_orchestrator.common import FlavorCharacteristics
@@ -23,6 +23,27 @@ from fluidos_model_orchestrator.resources.rear.local_resource_provider import Lo
 from fluidos_model_orchestrator.resources.rear.remote_resource_provider import RemoteResourceProvider
 
 logger = logging.getLogger(__name__)
+
+
+def build_flavor(flavor: dict[str, Any]) -> Flavor:
+    return Flavor(
+        id=flavor["metadata"]["name"],
+        type=FlavorType.factory(flavor["spec"]["type"]),
+        providerID=flavor["spec"]["providerID"],
+        characteristics=FlavorCharacteristics(
+            cpu=flavor["spec"]["characteristics"]["cpu"],
+            architecture=flavor["spec"]["characteristics"]["architecture"],
+            memory=flavor["spec"]["characteristics"]["memory"],
+            gpu=flavor["spec"]["characteristics"]["gpu"],
+            pods=flavor["spec"]["characteristics"]["pods"],
+            ephemeral_storage=flavor["spec"]["characteristics"]["ephemeral-storage"],
+            persistent_storage=flavor["spec"]["characteristics"]["persistent-storage"]
+        ),
+        owner=flavor["spec"]["owner"],
+        optional_fields=flavor["spec"]["optionalFields"],
+        policy=flavor["spec"]["policy"],
+        price=flavor["spec"]["price"],
+    )
 
 
 class REARResourceFinder(ResourceFinder):
@@ -154,7 +175,7 @@ class REARResourceFinder(ResourceFinder):
 
         logger.debug(f"{peering_candidates=}")
 
-        matching_resources = self._reserve_all(solver_name, peering_candidates, namespace)
+        matching_resources: list[ResourceProvider] = self._reserve_all(solver_name, peering_candidates, namespace)
 
         logger.debug(f"{matching_resources=}")
 
@@ -226,6 +247,8 @@ class REARResourceFinder(ResourceFinder):
                 body=body,
                 async_req=False
             )
+
+            logger.debug(f"{response=}")
         except ApiException as e:
             logger.error(f"Unable to reserve {candidate['metadata']['name']}")
             logger.debug(f"Reason: {e=}")
@@ -233,8 +256,8 @@ class REARResourceFinder(ResourceFinder):
 
         return RemoteResourceProvider(
             id=solver_name,
+            flavor=build_flavor(candidate["spec"]["flavour"]),
             peering_candidate=candidate["metadata"]["name"],
-            local_cluster=self.identity,
             reservation=response["metadata"]["name"],
             namespace=namespace,
             api_client=self.api_client
@@ -308,9 +331,7 @@ class REARResourceFinder(ResourceFinder):
 
             logger.info(f"Processing flavour {name=}")
 
-            flavor = _k8s_to_flavor(
-                k8s_flavor["metadata"]["uid"],
-                k8s_flavor["spec"])
+            flavor = build_flavor(k8s_flavor)
 
             if flavor.type is not FlavorType.K8SLICE:
                 logger.info(f"Skipping, wrong flavour type {flavor.type}")
@@ -321,32 +342,7 @@ class REARResourceFinder(ResourceFinder):
                 fitting_resources.append(
                     LocalResourceProvider(
                         flavor.id,
-                        k8s_flavor["spec"]["owner"]
+                        flavor
                     ))
 
         return fitting_resources
-
-
-def _k8s_to_flavor(uid: str, specs: dict[str, Any]) -> Flavor:
-    characteristics = specs["characteristics"]
-    architecture = characteristics["architecture"]
-    cpu = characteristics["cpu"]
-    gpu = characteristics["gpu"]
-    memory = characteristics["memory"]
-
-    return Flavor(
-        id=uid,
-        type=_get_flavor_type(specs["type"]),
-        characteristics=FlavorCharacteristics(
-            architecture=architecture,
-            cpu=cpu,
-            memory=memory,
-            gpu=gpu,
-        ),
-        owner=specs["owner"])
-
-
-def _get_flavor_type(f_type: str) -> FlavorType:
-    if f_type == "k8s-fluidos":
-        return FlavorType.K8SLICE
-    raise NotImplementedError(f"{f_type} not supported yet")

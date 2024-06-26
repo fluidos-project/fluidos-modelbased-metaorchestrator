@@ -5,8 +5,8 @@ import uuid
 from typing import Any
 
 import kopf  # type: ignore
-from kubernetes import client
-from kubernetes.client.exceptions import ApiException
+from kubernetes import client  # type: ignore
+from kubernetes.client.exceptions import ApiException  # type: ignore
 
 from fluidos_model_orchestrator.common import Flavor
 from fluidos_model_orchestrator.common import ResourceProvider
