@@ -13,18 +13,18 @@ repos:
     -   id: trailing-whitespace
     -   id: check-shebang-scripts-are-executable
     # -   id: fix-encoding-pragma
-    # -   id: name-tests-test
-        # args: [ --pytest-test-first ]
+    -   id: name-tests-test
+        args: [ --pytest-test-first ]
 -   repo: https://github.com/asottile/reorder-python-imports
     rev: v3.12.0
     hooks:
     -   id: reorder-python-imports
         args: [--application-directories, '.:src', --py38-plus]
-# -   repo: https://github.com/pre-commit/mirrors-mypy
-#     rev: 'v1.10.0'
-#     hooks:
-#     -   id: mypy
-#         args: [--exclude, '^tests/data_pipeline/.+\.py$']
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v1.10.0'
+    hooks:
+    -   id: mypy
+        args: [--exclude, '^tests/data_pipeline/.+\.py$']
 -   repo: https://github.com/PyCQA/flake8
     rev: '7.0.0'
     hooks:
