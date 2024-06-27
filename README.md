@@ -38,6 +38,9 @@ kubectl apply -f utils/fluidos-deployment-crd.yaml
 # optionally, install FLUIDOS node CRDs
 kubectl apply -f tests/node/crds
 
+# locally install the fluidos package, in editing mode
+pip install -e .
+
 # start FLUIDOS operator
 kopfs run --verbose -m fluidos_model_orchestrator
 ```

@@ -8,3 +8,4 @@ bandit
 mypy
 flake8
 types-PyYAML
+kubernetes-stubs

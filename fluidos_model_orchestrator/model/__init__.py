@@ -8,6 +8,7 @@ from ..common import ModelPredictRequest
 from ..container import extract_image_embedding
 from .candidate_generation import Orchestrator as CG
 from .dummy import DummyOrchestrator
+from .ensemble import FluidosModelEnsemble
 # from .two_tower_v1.orchestrator import TwoTowerOrchestrator
 
 
@@ -22,7 +23,7 @@ _model_instances: dict[str, ModelInterface] = {
 
 _model_characteristics: list[tuple[set[KnownIntent], str]] = [
     ({known_intent for known_intent in KnownIntent}, "CG"),
-    ({KnownIntent.latency, KnownIntent.location, KnownIntent.memory, KnownIntent.cpu}, "2T")
+    # ({KnownIntent.latency, KnownIntent.location, KnownIntent.memory, KnownIntent.cpu}, "2T")
 ]
 
 
@@ -46,11 +47,14 @@ def get_model_object(request: ModelPredictRequest) -> ModelInterface:
         name for (model_signature, name) in _model_characteristics if _is_subset(request_intent_signature, model_signature)
     ]
 
-    if len(matching_models):
-        # for now return the first one
-        # ensable to follow!
+    if 1 == len(matching_models):
         logger.debug(f"Returning model {matching_models[0]}")
         return _model_instances[matching_models[0]]
+    elif 1 < len(matching_models):
+        logger.debug(f"Regurning an ensemble of the models {matching_models}")
+        return FluidosModelEnsemble(
+            _model_instances[model_name] for model_name in matching_models
+        )
 
     return _model_instances["dummy"]
 

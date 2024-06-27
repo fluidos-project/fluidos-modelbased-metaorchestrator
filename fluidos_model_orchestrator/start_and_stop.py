@@ -4,8 +4,8 @@ from asyncio import Lock
 from typing import Any
 
 import kopf  # type: ignore
-from kubernetes import client as k8s_client
-from kubernetes import config as k8s_config
+from kubernetes import client as k8s_client  # type: ignore
+from kubernetes import config as k8s_config  # type: ignore
 
 from .configuration import CONFIGURATION
 from .configuration import enrich_configuration
@@ -14,7 +14,7 @@ from .configuration import enrich_configuration
 LOCK: Lock
 
 
-@kopf.on.startup()
+@kopf.on.startup()  # type: ignore
 async def configure(settings: kopf.OperatorSettings, retry: int, started: datetime.datetime, runtime: datetime.timedelta, logger: logging.Logger, memo: Any, param: Any, **kwargs: Any) -> None:
     global LOCK
 
@@ -30,7 +30,7 @@ async def configure(settings: kopf.OperatorSettings, retry: int, started: dateti
     enrich_configuration(CONFIGURATION, settings, param, memo, kwargs, logger, my_config)
 
 
-@kopf.on.cleanup()
+@kopf.on.cleanup()  # type: ignore
 def cleanup_function(logger: logging.Logger, **kwargs: str) -> None:
     logger.info("Running clean up functionlity")
 

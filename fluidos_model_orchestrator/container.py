@@ -4,9 +4,9 @@ import json
 from dataclasses import dataclass
 from hashlib import sha256
 
-import docker
-from docker.errors import DockerException
-from docker.models.images import Image
+import docker  # type: ignore
+from docker.errors import DockerException  # type: ignore
+from docker.models.images import Image  # type: ignore
 
 from .common import ContainerImageEmbedding
 

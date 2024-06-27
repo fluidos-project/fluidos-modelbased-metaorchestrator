@@ -5,18 +5,18 @@ import uuid
 from typing import Any
 
 import kopf  # type: ignore
-from kubernetes import client
-from kubernetes.client.exceptions import ApiException
+from kubernetes import client  # type: ignore
+from kubernetes.client.exceptions import ApiException  # type: ignore
 
+from fluidos_model_orchestrator.common import Flavor
 from fluidos_model_orchestrator.common import ResourceProvider
 
 logger = logging.getLogger(__name__)
 
 
 class RemoteResourceProvider(ResourceProvider):
-    def __init__(self, id: str, local_cluster: Any, peering_candidate: str, reservation: str, namespace: str, api_client: client.CustomObjectsApi) -> None:
-        super().__init__(id)
-        self.local_cluster = local_cluster
+    def __init__(self, id: str, flavor: Flavor, peering_candidate: str, reservation: str, namespace: str, api_client: client.CustomObjectsApi) -> None:
+        super().__init__(id, flavor)
         self.peering_candidate = peering_candidate
         self.reservation = reservation
         self.namespace = namespace
