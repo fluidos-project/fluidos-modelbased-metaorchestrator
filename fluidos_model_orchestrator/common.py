@@ -171,7 +171,7 @@ class ModelInterface(ABC):
     def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse:
         raise NotImplementedError("Not implemented: abstract method")
 
-    def rank(self, providers: list[ResourceProvider]) -> list[ResourceProvider]:
+    def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse) -> list[ResourceProvider]:
         return providers
 
 
