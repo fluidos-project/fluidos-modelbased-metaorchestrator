@@ -2,7 +2,6 @@ from logging import Logger
 from typing import Any
 
 import kopf  # type: ignore
-from kopf import PermanentError
 
 from .common import Intent
 from .common import ModelInterface
@@ -50,24 +49,34 @@ def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Lo
 
     best_matches: list[ResourceProvider] = validate_with_intents(finder.find_best_match(prediction.to_resource(), namespace), request.intents)
 
+    best_match = pick_a_best_match(best_matches, predictor, prediction)
+
     # find other resources types based on the intents
     expanding_resources: list[tuple[ResourceProvider, Intent]] = _find_expanding_resources(finder, request.intents, namespace)
 
     if not len(best_matches):
-        logger.error("Unable to find resource matching requirement")
+        logger.info("Unable to find resource matching requirement")
 
         return {
             "status": "Failure",
             "msg": "Unable to find resource matching requirement"
         }
 
-    best_match = pick_a_best_match(best_matches)
-
     if not best_match.acquire():
-        raise PermanentError(f"Unable to acquire {best_match}")
+        logger.info(f"Unable to acquire {best_match}")
+
+        return {
+            "status": "Failure",
+            "msg": "Unable to find resource matching requirement"
+        }
 
     if not deploy(spec, best_match, expanding_resources):
-        raise PermanentError("Unable to deploy")
+        logger.info("Unable to deploy")
+
+        return {
+            "status": "Failure",
+            "msg": "Unable to find resource matching requirement"
+        }
 
     return {
         "status": "Success",
@@ -87,9 +96,9 @@ def validate_with_intents(providers: list[ResourceProvider], intents: list[Inten
     ]
 
 
-def pick_a_best_match(matches: list[ResourceProvider]) -> ResourceProvider:
+def pick_a_best_match(matches: list[ResourceProvider], predictor: ModelInterface, prediction: ModelPredictResponse) -> ResourceProvider:
     # return good match, or first for now
-    return matches[0]
+    return predictor.rank_resource(matches, prediction)[0]
 
 
 def _find_expanding_resources(finder: ResourceFinder, intents: list[Intent], namespace: str) -> list[tuple[ResourceProvider, Intent]]:

@@ -21,9 +21,9 @@ class FluidosModelEnsemble(ModelInterface):
             model.predict(data, architecture) for model in self.models
         )
 
-    def rank(self, providers: list[ResourceProvider]) -> list[ResourceProvider]:
+    def rank_resources(self, providers: list[ResourceProvider], prediction: ModelPredictResponse) -> list[ResourceProvider]:
         for model in self.models:
-            providers = model.rank(providers)
+            providers = model.rank_resource(providers, prediction)
 
         return providers
 
