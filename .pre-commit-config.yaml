@@ -7,12 +7,12 @@ repos:
     -   id: check-case-conflict
     -   id: check-json
     -   id: check-yaml
+        exclude: ^deployment/fluidos-meta-orchestrator/templates/
         args: [ -m ]
     -   id: debug-statements
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
     -   id: check-shebang-scripts-are-executable
-    # -   id: fix-encoding-pragma
     -   id: name-tests-test
         args: [ --pytest-test-first ]
 -   repo: https://github.com/asottile/reorder-python-imports
