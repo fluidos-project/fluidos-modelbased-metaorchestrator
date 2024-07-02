@@ -8,55 +8,44 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: fluidos/fluidos-metaorchestrator
   IMAGE_BASE_NAME: fluidos-metaorchestrator
   ORG_NAME: fluidos
   BASE_BRANCH: github
 
 jobs:
   push_to_registry:
-    name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the repo
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Check out code
         uses: actions/checkout@v4
+      - name: Cache Docker layers
+        uses: actions/cache@v3
         with:
-          fetch-depth: 0
-          fetch-tags: true
-
-      - name: Set running Git tag
-        run: echo "GIT_TAG=$(git describe --tags --always)" >> $GITHUB_ENV
-
-      - name: Set last version Git tag
-        run: echo "VERSION=$(git describe --tags --always --abbrev=0)" >> $GITHUB_ENV
-
-      - name: Log in to Docker Hub
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-fluidos-mbmo-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-fluidos-mbmo-buildx-
+      - name: Login to Container registry
         uses: docker/login-action@v3
         with:
-          username: fluidos
-          password: ${{ secrets.DOCKER_HUB_WRITE_TOKEN }}
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
-        with:
-          images: ${{ env.IMAGE_NAME }}
-
-      - name: Push README to Docker Hub
-        uses: christian-korneck/update-container-description-action@v1
-        env:
-          DOCKER_USER: ${{ secrets.DOCKER_HUB_USER }}
-          DOCKER_PASS: ${{ secrets.DOCKER_HUB_README_TOKEN }}
-        with:
-          destination_container_repo: ${{ env.IMAGE_NAME }}
-          provider: dockerhub
-          short_description: 'FLUIDOS model-based meta-orchestrator'
-          readme_file: 'README.md'
-
-      - name: Build and push Docker image
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build (and Publish) fluidos-metaorchestrator image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_BASE_NAME }}:latest
+            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_BASE_NAME }}:$GITHUB_SHA
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BASE_BRANCH }} , ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.GIT_TAG }} , ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
-          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
