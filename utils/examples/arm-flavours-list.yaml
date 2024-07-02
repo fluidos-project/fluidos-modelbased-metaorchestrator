@@ -1,0 +1,75 @@
+apiVersion: nodecore.fluidos.eu/v1alpha1
+kind: Flavour
+metadata:
+  name: fluidos.eu-k8s-fluidos-9183040a
+spec:
+  characteristics:
+    architecture: arm64
+    cpu: 1970997205n
+    ephemeral-storage: "0"
+    gpu: "0"
+    memory: 3794616Ki
+    persistent-storage: "0"
+    pods: "110"
+  optionalFields:
+    availability: true
+    workerID: fluidos-consumer-worker
+  owner:
+    domain: fluidos.eu
+    ip: 172.18.0.2:30000
+    nodeID: l6936ty08l
+  policy:
+    aggregatable:
+      maxCount: 0
+      minCount: 0
+    partitionable:
+      cpuMin: "0"
+      cpuStep: "1"
+      memoryMin: "0"
+      memoryStep: 100Mi
+      podsMin: "0"
+      podsStep: "0"
+  price:
+    amount: ""
+    currency: ""
+    period: ""
+  providerID: l6936ty08l
+  type: k8s-fluidos
+---
+apiVersion: nodecore.fluidos.eu/v1alpha1
+kind: Flavour
+metadata:
+  name: fluidos.eu-k8s-fluidos-cea36274
+spec:
+  characteristics:
+    architecture: arm64
+    cpu: 1980938668n
+    ephemeral-storage: "0"
+    gpu: "0"
+    memory: 3835200Ki
+    persistent-storage: "0"
+    pods: "110"
+  optionalFields:
+    availability: true
+    workerID: fluidos-consumer-worker2
+  owner:
+    domain: fluidos.eu
+    ip: 172.18.0.2:30000
+    nodeID: l6936ty08l
+  policy:
+    aggregatable:
+      maxCount: 0
+      minCount: 0
+    partitionable:
+      cpuMin: "0"
+      cpuStep: "1"
+      memoryMin: "0"
+      memoryStep: 100Mi
+      podsMin: "0"
+      podsStep: "0"
+  price:
+    amount: ""
+    currency: ""
+    period: ""
+  providerID: l6936ty08l
+  type: k8s-fluidos

@@ -47,6 +47,7 @@ def get_model_object(request: ModelPredictRequest) -> OrchestratorInterface:
         name for (model_signature, name) in _model_characteristics if _is_subset(request_intent_signature, model_signature)
     ]
 
+    """
     if 1 == len(matching_models):
         logger.debug(f"Returning model {matching_models[0]}")
         return _model_instances[matching_models[0]]
@@ -55,8 +56,9 @@ def get_model_object(request: ModelPredictRequest) -> OrchestratorInterface:
         return FluidosModelEnsemble(
             _model_instances[model_name] for model_name in matching_models
         )
-
+    """
     return _model_instances["dummy"]
+
 
 
 def convert_to_model_request(spec: Any, namespace: str) -> ModelPredictRequest | None:
