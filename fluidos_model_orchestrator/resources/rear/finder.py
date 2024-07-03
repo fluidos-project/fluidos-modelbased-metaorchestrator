@@ -77,6 +77,20 @@ class REARResourceFinder(ResourceFinder):
 
         return local + remote
 
+    def retrieve_all_flavors(self, namespace: str) -> list[Flavor]:
+        logger.info("Retrieving all flavours")
+
+        locally_available_flavours = self._get_locally_available_flavors(namespace)
+        logger.debug(f"Retrieved {len(locally_available_flavours)} local flavors")
+
+        remotely_available_flavours = self._get_remotely_available_flavors(namespace)
+        logger.debug(f"Retrieved {len(remotely_available_flavours)} remote flavors")
+
+        return locally_available_flavours + remotely_available_flavours
+
+    def update_local_flavor(self, flavor: Flavor, data: Any) -> None:
+        logger.info(f"Updating {flavor=} with {data=}")
+
     def _initiate_search(self, body: dict[str, Any], namespace: str) -> str:
         logger.info("Initiating remote search")
         logger.debug(f"Solver body: {body}")
@@ -307,31 +321,12 @@ class REARResourceFinder(ResourceFinder):
 
         fitting_resources: list[ResourceProvider] = []
 
-        try:
-            local_flavours = self.api_client.list_namespaced_custom_object(
-                group="nodecore.fluidos.eu",
-                version="v1alpha1",
-                plural="flavours",
-                namespace=namespace,
-            )
-        except ApiException:
-            logger.warn("Failed to retrieve local flavours, is node available?")
-            return fitting_resources
+        local_flavours = self._get_locally_available_flavors(namespace)
 
-        if local_flavours is None:
-            logger.info("Unable to retrieve flavours locally")
-            return fitting_resources
-
-        if not len(local_flavours["items"]):
-            logger.info("No flavours found locally")
-            return fitting_resources
-
-        for k8s_flavor in local_flavours["items"]:
-            name = k8s_flavor["metadata"]["name"]
+        for flavor in local_flavours:
+            name = flavor.id
 
             logger.info(f"Processing flavour {name=}")
-
-            flavor = build_flavor(k8s_flavor)
 
             if flavor.type is not FlavorType.K8SLICE:
                 logger.info(f"Skipping, wrong flavour type {flavor.type}")
@@ -346,3 +341,24 @@ class REARResourceFinder(ResourceFinder):
                     ))
 
         return fitting_resources
+
+    def _get_locally_available_flavors(self, namespace: str) -> list[Flavor]:
+        try:
+            local_flavours = self.api_client.list_namespaced_custom_object(
+                group="nodecore.fluidos.eu",
+                version="v1alpha1",
+                plural="flavours",
+                namespace=namespace,
+            )
+
+            if local_flavours is None:
+                return []
+
+            return [build_flavor(flavor) for flavor in local_flavours.get("items", [])]
+
+        except ApiException:
+            logger.warn("Failed to retrieve local flavours, is node available?")
+            return []
+
+    def _get_remotely_available_flavors(self, namespace: str) -> list[Flavor]:
+        return []  # TODO: waiting for REAR 2
