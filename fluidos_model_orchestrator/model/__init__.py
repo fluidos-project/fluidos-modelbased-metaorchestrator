@@ -7,7 +7,7 @@ from ..common import OrchestratorInterface
 from ..common import ModelPredictRequest
 from ..container import extract_image_embedding
 from .candidate_generation import Orchestrator as CG
-from .dummy import DummyOrchestrator
+from fluidos_model_orchestrator.model.carbon_aware.orchestrator import CarbonAwareOrchestrator
 from .ensemble import FluidosModelEnsemble
 # from .two_tower_v1.orchestrator import TwoTowerOrchestrator
 
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 _model_instances: dict[str, OrchestratorInterface] = {
     "CG": CG(),
     # "2T": TwoTowerOrchestrator(),
-    "dummy": DummyOrchestrator()
+    "carbonaware": CarbonAwareOrchestrator()
 }
 
 _model_characteristics: list[tuple[set[KnownIntent], str]] = [
@@ -57,7 +57,7 @@ def get_model_object(request: ModelPredictRequest) -> OrchestratorInterface:
             _model_instances[model_name] for model_name in matching_models
         )
     """
-    return _model_instances["dummy"]
+    return _model_instances["carbonaware"]
 
 
 
