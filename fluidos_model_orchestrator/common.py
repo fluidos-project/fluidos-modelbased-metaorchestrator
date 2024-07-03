@@ -255,3 +255,9 @@ def validate_on_intent(resources: list[ResourceProvider], intent: Intent) -> Res
 class ResourceFinder(ABC):
     def find_best_match(self, resource: Resource | Intent, namespace: str) -> list[ResourceProvider]:
         raise NotImplementedError()
+
+    def retrieve_all_flavors(self, namespace: str) -> list[Flavor]:
+        raise NotImplementedError()
+
+    def update_flavor(self, flavor: Flavor, data: Any) -> None:
+        raise NotImplementedError()
