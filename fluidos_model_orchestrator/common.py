@@ -259,5 +259,5 @@ class ResourceFinder(ABC):
     def retrieve_all_flavors(self, namespace: str) -> list[Flavor]:
         raise NotImplementedError()
 
-    def update_flavor(self, flavor: Flavor, data: Any) -> None:
+    def update_local_flavor(self, flavor: Flavor, data: Any) -> None:
         raise NotImplementedError()

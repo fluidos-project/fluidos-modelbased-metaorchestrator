@@ -88,7 +88,7 @@ class REARResourceFinder(ResourceFinder):
 
         return locally_available_flavours + remotely_available_flavours
 
-    def update_flavor(self, flavor: Flavor, data: Any) -> None:
+    def update_local_flavor(self, flavor: Flavor, data: Any) -> None:
         logger.info(f"Updating {flavor=} with {data=}")
 
     def _initiate_search(self, body: dict[str, Any], namespace: str) -> str:
