@@ -4,16 +4,18 @@ from fluidos_model_orchestrator.common import KnownIntent
 
 def test_intent_values():
     expected_intents = {
+        "fluidos-intent-architecture",
+        "fluidos-intent-battery",
+        "fluidos-intent-compliance",
         "fluidos-intent-cpu",
-        "fluidos-intent-memory",
+        "fluidos-intent-energy",
+        "fluidos-intent-gpu",
         "fluidos-intent-latency",
         "fluidos-intent-location",
+        "fluidos-intent-memory",
         "fluidos-intent-resource",
-        "fluidos-intent-throughput",
-        "fluidos-intent-compliance",
-        "fluidos-intent-energy",
-        "fluidos-intent-battery",
         "fluidos-intent-service",
+        "fluidos-intent-throughput",
     }
 
     for intent in KnownIntent:
@@ -26,15 +28,17 @@ def test_iternal_or_external():
     }
 
     internal_intents = {
+        "fluidos-intent-architecture",
+        "fluidos-intent-battery",
+        "fluidos-intent-compliance",
         "fluidos-intent-cpu",
-        "fluidos-intent-memory",
+        "fluidos-intent-energy",
+        "fluidos-intent-gpu",
         "fluidos-intent-latency",
         "fluidos-intent-location",
+        "fluidos-intent-memory",
         "fluidos-intent-resource",
         "fluidos-intent-throughput",
-        "fluidos-intent-compliance",
-        "fluidos-intent-energy",
-        "fluidos-intent-battery",
     }
 
     for intent in KnownIntent:

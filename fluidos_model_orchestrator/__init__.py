@@ -92,7 +92,7 @@ def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Lo
 def validate_with_intents(providers: list[ResourceProvider], intents: list[Intent]) -> list[ResourceProvider]:
     return [
         provider for provider in providers if all(
-            intent.validate(provider) for intent in intents
+            intent.validates(provider) for intent in intents
         )
     ]
 

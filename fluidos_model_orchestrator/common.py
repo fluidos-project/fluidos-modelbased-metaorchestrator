@@ -216,7 +216,7 @@ class KnownIntent(Enum):
     def has_external_requirement(self) -> bool:
         return self._external
 
-    def validate(self, provider: ResourceProvider, value: str) -> bool:
+    def validates(self, provider: ResourceProvider, value: str) -> bool:
         return self._validator(provider, value)
 
     @staticmethod
@@ -246,8 +246,8 @@ class Intent:
     def has_external_requirement(self) -> bool:
         return self.name.has_external_requirement()
 
-    def validate(self, provider: ResourceProvider) -> bool:
-        return self.name.validate(provider, self.value)
+    def validates(self, provider: ResourceProvider) -> bool:
+        return self.name.validates(provider, self.value)
 
 
 def validate_on_intent(resources: list[ResourceProvider], intent: Intent) -> ResourceProvider:
