@@ -184,6 +184,7 @@ class KnownIntent(Enum):
     # k8s resources
     cpu = "cpu", False, always_true
     memory = "memory", False, always_true
+    gpu = "gpu", False, always_true
 
     # high order requests
     latency = "latency", False, always_true
