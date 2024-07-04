@@ -58,14 +58,14 @@ class Resource:
         return True
 
 
-def _memory_compatible(memory_a_spec: str | None, memory_b_spec: str | None) -> bool:
-    if memory_a_spec is None:
+def _memory_compatible(req_spec: str | None, offer_spec: str | None) -> bool:
+    if req_spec is None:
         return False
-    if memory_b_spec is None:
+    if offer_spec is None:
         return False
 
-    memory_a: int = memory_to_int(memory_a_spec)
-    memory_b: int = memory_to_int(memory_b_spec)
+    memory_a: int = memory_to_int(req_spec)
+    memory_b: int = memory_to_int(offer_spec)
 
     return memory_b >= memory_a
 
@@ -84,13 +84,13 @@ def memory_to_int(spec: str) -> int:
     raise ValueError(f"Not known {unit=}")
 
 
-def _cpu_compatible(cpu_a_spec: str | None, cpu_b_spec: str | None) -> bool:
-    if cpu_a_spec is None:
+def _cpu_compatible(req_spec: str | None, offer_spec: str | None) -> bool:
+    if req_spec is None:
         return False
-    if cpu_b_spec is None:
+    if offer_spec is None:
         return False
-    cpu_a: int = cpu_to_int(cpu_a_spec)
-    cpu_b: int = cpu_to_int(cpu_b_spec)
+    cpu_a: int = cpu_to_int(req_spec)
+    cpu_b: int = cpu_to_int(offer_spec)
 
     return cpu_b >= cpu_a
 
@@ -182,10 +182,10 @@ def always_true(provider: ResourceProvider, value: str) -> bool:
 @unique
 class KnownIntent(Enum):
     # k8s resources
-    cpu = "cpu", False, always_true
-    memory = "memory", False, always_true
-    gpu = "gpu", False, always_true
-    architecture = "architecture", False, always_true
+    cpu = "cpu", False, lambda provider, value: _cpu_compatible(value, provider.flavor.characteristics.cpu)
+    memory = "memory", False, lambda provider, value: _memory_compatible(value, provider.flavor.characteristics.memory)
+    gpu = "gpu", False, lambda provider, value: int(value) <= int(provider.flavor.characteristics.gpu)
+    architecture = "architecture", False, lambda provider, value: value == provider.flavor.characteristics.architecture
 
     # high order requests
     latency = "latency", False, always_true
