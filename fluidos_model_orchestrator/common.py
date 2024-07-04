@@ -179,6 +179,21 @@ def always_true(provider: ResourceProvider, value: str) -> bool:
     return True
 
 
+def validate_regulations(provider: ResourceProvider, value: str) -> bool:
+    """
+    Assumes values of the form:
+    GDPR
+    DORA
+    or such
+    """
+    value = value.casefold()
+    for field_name, field_value in provider.flavor.optional_fields.items():
+        if str(field_value).casefold() == value:
+            return True
+
+    return False
+
+
 @unique
 class KnownIntent(Enum):
     # k8s resources
@@ -191,7 +206,7 @@ class KnownIntent(Enum):
     latency = "latency", False, always_true
     location = "location", False, always_true
     throughput = "throughput", False, always_true
-    compliance = "compliance", False, always_true
+    compliance = "compliance", False, validate_regulations
     energy = "energy", False, always_true
     battery = "battery", False, always_true
 
