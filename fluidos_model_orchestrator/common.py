@@ -140,6 +140,7 @@ class Flavor:
     policy: dict[str, Any] = field(default_factory=dict)
     optional_fields: dict[str, Any] = field(default_factory=dict)
     price: dict[str, Any] = field(default_factory=dict)
+    location: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

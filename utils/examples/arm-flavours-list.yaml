@@ -35,6 +35,9 @@ spec:
     period: ""
   providerID: l6936ty08l
   type: k8s-fluidos
+  location:
+    latitude: 48.864716
+    longitude: 2.349014
 ---
 apiVersion: nodecore.fluidos.eu/v1alpha1
 kind: Flavour
@@ -73,3 +76,6 @@ spec:
     period: ""
   providerID: l6936ty08l
   type: k8s-fluidos
+  location:
+    latitude: -122.4194
+    longitude: 37.7749
