@@ -2,7 +2,7 @@ name: Publish Docker image on FLUIDOS Docker Hub
 
 on:
   push:
-    branches: [ "fluidos", "dev", "main" ]
+    branches: [ "dev" ]
 
 env:
   REGISTRY: docker.io
@@ -49,5 +49,5 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:fluidos, ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.base_ref }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev
           labels: ${{ steps.meta.outputs.labels }}
