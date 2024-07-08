@@ -33,16 +33,16 @@ jobs:
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-      - name: Push README to Docker Hub
-        uses: christian-korneck/update-container-description-action@v1
-        env:
-          DOCKER_USER: fluidos
-          DOCKER_PASS: ${{ secrets.DOCKER_HUB_README_TOKEN }}
-        with:
-          destination_container_repo: ${{ env.IMAGE_NAME }}
-          provider: dockerhub
-          short_description: 'FLUIDOS model based metaorchestrator'
-          readme_file: 'README.md'
+    #   - name: Push README to Docker Hub
+    #     uses: christian-korneck/update-container-description-action@v1
+    #     env:
+    #       DOCKER_USER: fluidos
+    #       DOCKER_PASS: ${{ secrets.DOCKER_HUB_README_TOKEN }}
+    #     with:
+    #       destination_container_repo: ${{ env.IMAGE_NAME }}
+    #       provider: dockerhub
+    #       short_description: 'FLUIDOS model-based metaorchestrator'
+    #       readme_file: 'README.md'
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
