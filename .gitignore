@@ -166,3 +166,4 @@ dmypy.json
 utils/logs
 .pytest-kind
 Pipfile
+.env
