@@ -215,6 +215,9 @@ class KnownIntent(Enum):
     energy = "energy", False, _always_true
     battery = "battery", False, _always_true
 
+    # carbon aware requests
+    deadline = "deadline", False, always_true
+
     # service
     service = "service", True, _always_true
 
