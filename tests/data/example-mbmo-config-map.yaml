@@ -1,6 +1,6 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: mbmo-configmap
+  name: fluidos-mbmo-configmap
 data:
-  ELECTRICITY_MAP_API_KEY: "TEST_KEY_123!"
+  ELECTRICITY_MAP_API_KEY: TEST_KEY_123!
