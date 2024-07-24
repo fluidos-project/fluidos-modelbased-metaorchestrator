@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: "fluidos/fluidos-metaorchestrator"
-  pullPolicy: Never
+  pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
@@ -79,3 +79,6 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+WP6:
+  electricity_map_API_KEY:  "<MY KEY TO BE REPLACED WITH SOMETHING MEANINGFULL>" # ElectricityMap API KEY <COMPLETE>

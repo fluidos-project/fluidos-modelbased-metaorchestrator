@@ -29,6 +29,7 @@ def test_configuration_enrichment_with_k8s(k8s: AClusterManager) -> None:
     k8s.create()
 
     k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/fluidos-network-manager-identity-config-map.yaml"))
+    k8s.apply(pkg_resources.resource_filename(__name__, "data/example-mbmo-config-map.yaml"))
 
     myconfig = kubernetes.client.Configuration()
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
@@ -44,5 +45,6 @@ def test_configuration_enrichment_with_k8s(k8s: AClusterManager) -> None:
     assert config.identity["domain"] == "ibm.fluidos.eu"
     assert config.identity["ip"] == "9.2.3.4:30000"
     assert config.identity["nodeID"] == "my_amazing_node_ID"
+    assert config.api_keys["ELECTRICITY_MAP_API_KEY"] == "TEST_KEY_123!"
 
     k8s.delete()
