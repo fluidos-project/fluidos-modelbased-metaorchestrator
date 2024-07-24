@@ -18,6 +18,7 @@ class Configuration:
     k8s_client: client.ApiClient | None = None
     identity: dict[str, str] = field(default_factory=dict)
     api_keys: dict[str, str] = field(default_factory=dict)
+    DAEMON_SLEEP_TIME: float = 60. * 60.  # 1h in seconds
 
 
 def enrich_configuration(config: Configuration,
