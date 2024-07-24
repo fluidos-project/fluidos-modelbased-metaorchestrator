@@ -34,6 +34,7 @@ def test_solver_creation_and_check(k8s: AClusterManager) -> None:
 
     k8s.apply(pkg_resources.resource_filename(__name__, "node/crds/nodecore.fluidos.eu_solvers.yaml"))
     k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/fluidos-network-manager-identity-config-map.yaml"))
+    k8s.apply(pkg_resources.resource_filename(__name__, "data/example-mbmo-config-map.yaml"))
 
     myconfig = kubernetes.client.Configuration()
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
@@ -74,6 +75,7 @@ def test_retrieve_peering_candidate_list(k8s: AClusterManager) -> None:
 
     k8s.apply(pkg_resources.resource_filename(__name__, "node/crds/advertisement.fluidos.eu_discoveries.yaml"))
     k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/fluidos-network-manager-identity-config-map.yaml"))
+    k8s.apply(pkg_resources.resource_filename(__name__, "data/example-mbmo-config-map.yaml"))
 
     k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/nginx-w-intent-discovery.yaml"))
 
