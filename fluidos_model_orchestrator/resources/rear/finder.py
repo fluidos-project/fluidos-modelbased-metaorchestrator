@@ -75,6 +75,7 @@ class REARResourceFinder(ResourceFinder):
             version="v1alpha1",
             namespace=namespace,
             plural="flavours",
+            name=flavor.id,
             body={
                 "optionalFields": data
             }
