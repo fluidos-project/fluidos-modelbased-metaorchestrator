@@ -77,7 +77,9 @@ class REARResourceFinder(ResourceFinder):
             plural="flavours",
             name=flavor.id,
             body={
-                "optionalFields": data
+                "spec": {
+                    "optionalFields": data
+                }
             }
         )
 
