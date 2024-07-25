@@ -25,6 +25,25 @@ def test_failing_missing_config_map(k8s: AClusterManager) -> None:
     k8s.delete()
 
 
+def test_check_identity() -> None:
+    config = Configuration()
+    config.identity["domain"] = "ibm.fluidos.eu"
+    config.identity["ip"] = "9.2.3.4:30000"
+    config.identity["nodeID"] = "my_amazing_node_ID"
+
+    assert config.check_identity({
+        "domain": "ibm.fluidos.eu",
+        "ip": "9.2.3.4:30000",
+        "nodeID": "my_amazing_node_ID",
+    })
+
+    assert not config.check_identity({
+        "domain": "ibm.fluidos.eu",
+        "ip": "9.2.3.4:30001",
+        "nodeID": "my_amazing_node_ID",
+    })
+
+
 def test_configuration_enrichment_with_k8s(k8s: AClusterManager) -> None:
     k8s.create()
 
