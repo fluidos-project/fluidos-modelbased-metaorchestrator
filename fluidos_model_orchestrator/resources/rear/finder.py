@@ -70,13 +70,18 @@ class REARResourceFinder(ResourceFinder):
     def update_local_flavor(self, flavor: Flavor, data: Any, namespace: str) -> None:
         logger.info(f"Updating {flavor=} with {data=}")
 
-        self.api_client.patch_namespaced_custom_object(
-            group="",
-            version="",
+        response = self.api_client.patch_namespaced_custom_object(
+            group="nodecore.fluidos.eu",
+            version="v1alpha1",
             namespace=namespace,
-            name="",
-            body=""
+            plural="flavours",
+            body={
+                "optionalFields": data
+            }
         )
+
+        if response is None:
+            raise ValueError()
 
     def _initiate_search(self, body: dict[str, Any], namespace: str) -> str:
         logger.info("Initiating remote search")
