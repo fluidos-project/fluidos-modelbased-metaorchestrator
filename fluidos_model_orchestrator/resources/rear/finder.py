@@ -10,8 +10,8 @@ import kopf  # type: ignore
 from kubernetes import client  # type: ignore
 from kubernetes.client.exceptions import ApiException  # type: ignore
 
+from fluidos_model_orchestrator.common import build_flavor
 from fluidos_model_orchestrator.common import Flavor
-from fluidos_model_orchestrator.common import FlavorCharacteristics
 from fluidos_model_orchestrator.common import FlavorType
 from fluidos_model_orchestrator.common import Intent
 from fluidos_model_orchestrator.common import Resource
@@ -23,27 +23,6 @@ from fluidos_model_orchestrator.resources.rear.local_resource_provider import Lo
 from fluidos_model_orchestrator.resources.rear.remote_resource_provider import RemoteResourceProvider
 
 logger = logging.getLogger(__name__)
-
-
-def build_flavor(flavor: dict[str, Any]) -> Flavor:
-    return Flavor(
-        id=flavor["metadata"]["name"],
-        type=FlavorType.factory(flavor["spec"]["type"]),
-        providerID=flavor["spec"]["providerID"],
-        characteristics=FlavorCharacteristics(
-            cpu=flavor["spec"]["characteristics"]["cpu"],
-            architecture=flavor["spec"]["characteristics"]["architecture"],
-            memory=flavor["spec"]["characteristics"]["memory"],
-            gpu=flavor["spec"]["characteristics"]["gpu"],
-            pods=flavor["spec"]["characteristics"]["pods"],
-            ephemeral_storage=flavor["spec"]["characteristics"]["ephemeral-storage"],
-            persistent_storage=flavor["spec"]["characteristics"]["persistent-storage"]
-        ),
-        owner=flavor["spec"]["owner"],
-        optional_fields=flavor["spec"]["optionalFields"],
-        policy=flavor["spec"]["policy"],
-        price=flavor["spec"]["price"],
-    )
 
 
 class REARResourceFinder(ResourceFinder):
@@ -88,8 +67,16 @@ class REARResourceFinder(ResourceFinder):
 
         return locally_available_flavours + remotely_available_flavours
 
-    def update_local_flavor(self, flavor: Flavor, data: Any) -> None:
+    def update_local_flavor(self, flavor: Flavor, data: Any, namespace: str) -> None:
         logger.info(f"Updating {flavor=} with {data=}")
+
+        self.api_client.patch_namespaced_custom_object(
+            group="",
+            version="",
+            namespace=namespace,
+            name="",
+            body=""
+        )
 
     def _initiate_search(self, body: dict[str, Any], namespace: str) -> str:
         logger.info("Initiating remote search")
