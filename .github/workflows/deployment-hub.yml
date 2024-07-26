@@ -2,7 +2,9 @@ name: Publish Docker image on FLUIDOS Docker Hub
 
 on:
   push:
-    branches: [ "dev" ]
+    tags: [ 'v*.*.*' ]
+  release:
+    types: [published]
 
 env:
   REGISTRY: docker.io
