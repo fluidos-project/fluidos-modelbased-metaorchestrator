@@ -259,5 +259,26 @@ class ResourceFinder(ABC):
     def retrieve_all_flavors(self, namespace: str) -> list[Flavor]:
         raise NotImplementedError()
 
-    def update_local_flavor(self, flavor: Flavor, data: Any) -> None:
+    def update_local_flavor(self, flavor: Flavor, data: Any, namespace: str) -> None:
         raise NotImplementedError()
+
+
+def build_flavor(flavor: dict[str, Any]) -> Flavor:
+    return Flavor(
+        id=flavor["metadata"]["name"],
+        type=FlavorType.factory(flavor["spec"]["type"]),
+        providerID=flavor["spec"]["providerID"],
+        characteristics=FlavorCharacteristics(
+            cpu=flavor["spec"]["characteristics"]["cpu"],
+            architecture=flavor["spec"]["characteristics"]["architecture"],
+            memory=flavor["spec"]["characteristics"]["memory"],
+            gpu=flavor["spec"]["characteristics"]["gpu"],
+            pods=flavor["spec"]["characteristics"]["pods"],
+            ephemeral_storage=flavor["spec"]["characteristics"]["ephemeral-storage"],
+            persistent_storage=flavor["spec"]["characteristics"]["persistent-storage"]
+        ),
+        owner=flavor["spec"]["owner"],
+        optional_fields=flavor["spec"]["optionalFields"],
+        policy=flavor["spec"]["policy"],
+        price=flavor["spec"]["price"],
+    )

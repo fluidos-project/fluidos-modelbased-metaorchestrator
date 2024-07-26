@@ -106,3 +106,38 @@ def test_retrieve_peering_candidate_list(k8s: AClusterManager) -> None:
     assert len(candidates) == 1
 
     k8s.delete()
+
+
+def test_temporary_flavor_update(k8s: AClusterManager) -> None:
+    k8s.create()
+
+    k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/fluidos-network-manager-identity-config-map.yaml"))
+    k8s.apply(pkg_resources.resource_filename(__name__, "data/example-mbmo-config-map.yaml"))
+    k8s.apply(pkg_resources.resource_filename(__name__, "node/crds/nodecore.fluidos.eu_flavours.yaml"))
+    k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/example-flavor.yaml"))
+
+    myconfig = kubernetes.client.Configuration()
+    kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
+
+    configuration = Configuration()
+    logger = logging.getLogger(__name__)
+
+    enrich_configuration(configuration, kopf.OperatorSettings(), None, None, {}, logger, myconfig)
+
+    finder = REARResourceFinder(configuration)
+
+    flavors = finder._get_locally_available_flavors("default")
+
+    assert len(flavors) == 1
+
+    flavor = flavors[0]
+
+    finder.update_local_flavor(flavor, {"carbon": ["test", "123"]}, "default")
+
+    after_flavors = finder._get_locally_available_flavors("default")
+
+    assert len(after_flavors) == 1
+
+    assert "carbon" in after_flavors[0].optional_fields
+
+    k8s.delete()

@@ -140,6 +140,10 @@ spec:
                     description: WorkerID is the ID of the worker that provides the
                       Flavour.
                     type: string
+                  carbon:
+                    type: array
+                    items:
+                      type: string
                 type: object
               owner:
                 description: Owner contains the identity info of the owner of the
