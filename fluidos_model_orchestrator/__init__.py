@@ -22,7 +22,7 @@ from .start_and_stop import configure  # noqa
 
 
 @kopf.on.create("fluidosdeployments")  # type: ignore
-def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Logger, errors: kopf.ErrorsMode = kopf.ErrorsMode.PERMANENT, **kwargs: str) -> dict[str, dict[str, ResourceProvider | list[tuple[ResourceProvider, Intent]] | None | str] | str]:
+async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Logger, errors: kopf.ErrorsMode = kopf.ErrorsMode.PERMANENT, **kwargs: str) -> dict[str, dict[str, ResourceProvider | list[tuple[ResourceProvider, Intent]] | None | str] | str]:
     logger.info("Processing incoming request")
     logger.debug(f"Received request: {spec}")
 
@@ -36,7 +36,7 @@ def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Lo
 
     predictor: ModelInterface = get_model_object(request)
 
-    prediction: ModelPredictResponse = predictor.predict(request, "amd64")
+    prediction: ModelPredictResponse | None = predictor.predict(request, "amd64")
 
     if prediction is None:
         logger.error("Model unable to provide valid prediction")
@@ -48,12 +48,11 @@ def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Lo
 
     finder: ResourceFinder = get_resource_finder(request, prediction)
 
-    best_matches: list[ResourceProvider] = validate_with_intents(finder.find_best_match(prediction.to_resource(), namespace), request.intents)
-
-    best_match = pick_a_best_match(best_matches, predictor, prediction)
-
-    # find other resources types based on the intents
-    expanding_resources: list[tuple[ResourceProvider, Intent]] = _find_expanding_resources(finder, request.intents, namespace)
+    best_matches: list[ResourceProvider] = validate_with_intents(
+        predictor.rank_resource(
+            finder.find_best_match(prediction.to_resource(), namespace),
+            prediction
+        ), request.intents)
 
     if not len(best_matches):
         logger.info("Unable to find resource matching requirement")
@@ -63,6 +62,8 @@ def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Lo
             "msg": "Unable to find resource matching requirement"
         }
 
+    best_match = best_matches[0]
+
     if not best_match.acquire():
         logger.info(f"Unable to acquire {best_match}")
 
@@ -71,7 +72,10 @@ def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Lo
             "msg": "Unable to find resource matching requirement"
         }
 
-    if not deploy(spec, best_match, expanding_resources):
+    # find other resources types based on the intents
+    expanding_resources: list[tuple[ResourceProvider, Intent]] = _find_expanding_resources(finder, request.intents, namespace)
+
+    if not deploy(spec, best_match, expanding_resources, prediction):
         logger.info("Unable to deploy")
 
         return {
@@ -92,14 +96,9 @@ def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Lo
 def validate_with_intents(providers: list[ResourceProvider], intents: list[Intent]) -> list[ResourceProvider]:
     return [
         provider for provider in providers if all(
-            intent.validate(provider) for intent in intents
+            intent.validates(provider) for intent in intents
         )
     ]
-
-
-def pick_a_best_match(matches: list[ResourceProvider], predictor: ModelInterface, prediction: ModelPredictResponse) -> ResourceProvider:
-    # return good match, or first for now
-    return predictor.rank_resource(matches, prediction)[0]
 
 
 def _find_expanding_resources(finder: ResourceFinder, intents: list[Intent], namespace: str) -> list[tuple[ResourceProvider, Intent]]:

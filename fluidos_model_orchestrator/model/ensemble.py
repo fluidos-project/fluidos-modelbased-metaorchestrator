@@ -16,7 +16,7 @@ class FluidosModelEnsemble(ModelInterface):
     def __init__(self, models: Iterable[ModelInterface]):
         self.models = list(models)
 
-    def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse:
+    def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse | None:
         return _merge_prediction_responses(
             model.predict(data, architecture) for model in self.models
         )
@@ -28,10 +28,12 @@ class FluidosModelEnsemble(ModelInterface):
         return providers
 
 
-def _merge_prediction_responses(responses: Iterable[ModelPredictResponse]) -> ModelPredictResponse:
+def _merge_prediction_responses(responses: Iterable[ModelPredictResponse | None]) -> ModelPredictResponse:
     merged_response: ModelPredictResponse | None = None
 
     for response in responses:
+        if response is None:
+            continue
         if merged_response is None:
             merged_response = response
         else:

@@ -58,14 +58,14 @@ class Resource:
         return True
 
 
-def _memory_compatible(memory_a_spec: str | None, memory_b_spec: str | None) -> bool:
-    if memory_a_spec is None:
+def _memory_compatible(req_spec: str | None, offer_spec: str | None) -> bool:
+    if req_spec is None:
         return False
-    if memory_b_spec is None:
+    if offer_spec is None:
         return False
 
-    memory_a: int = memory_to_int(memory_a_spec)
-    memory_b: int = memory_to_int(memory_b_spec)
+    memory_a: int = memory_to_int(req_spec)
+    memory_b: int = memory_to_int(offer_spec)
 
     return memory_b >= memory_a
 
@@ -84,13 +84,13 @@ def memory_to_int(spec: str) -> int:
     raise ValueError(f"Not known {unit=}")
 
 
-def _cpu_compatible(cpu_a_spec: str | None, cpu_b_spec: str | None) -> bool:
-    if cpu_a_spec is None:
+def _cpu_compatible(req_spec: str | None, offer_spec: str | None) -> bool:
+    if req_spec is None:
         return False
-    if cpu_b_spec is None:
+    if offer_spec is None:
         return False
-    cpu_a: int = cpu_to_int(cpu_a_spec)
-    cpu_b: int = cpu_to_int(cpu_b_spec)
+    cpu_a: int = cpu_to_int(req_spec)
+    cpu_b: int = cpu_to_int(offer_spec)
 
     return cpu_b >= cpu_a
 
@@ -161,6 +161,7 @@ class ModelPredictRequest:
 class ModelPredictResponse:
     id: str
     resource_profile: Resource
+    delay: int = 0  # time in hours
 
     def to_resource(self) -> Resource:
         return self.resource_profile
@@ -168,33 +169,49 @@ class ModelPredictResponse:
 
 class ModelInterface(ABC):
     @abstractmethod
-    def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse:
+    def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse | None:
         raise NotImplementedError("Not implemented: abstract method")
 
     def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse) -> list[ResourceProvider]:
         return providers
 
 
-def always_true(provider: ResourceProvider, value: str) -> bool:
-    return True
+_always_true: Callable[[ResourceProvider, str], bool] = lambda provider, value: True
+
+
+def _validate_regulations(provider: ResourceProvider, value: str) -> bool:
+    """
+    Assumes values of the form:
+    GDPR
+    DORA
+    or such
+    """
+    value = value.casefold()
+    for field_name, field_value in provider.flavor.optional_fields.items():
+        if str(field_value).casefold() == value:
+            return True
+
+    return False
 
 
 @unique
 class KnownIntent(Enum):
     # k8s resources
-    cpu = "cpu", False, always_true
-    memory = "memory", False, always_true
+    cpu = "cpu", False, lambda provider, value: _cpu_compatible(value, provider.flavor.characteristics.cpu)
+    memory = "memory", False, lambda provider, value: _memory_compatible(value, provider.flavor.characteristics.memory)
+    gpu = "gpu", False, lambda provider, value: int(value) <= int(provider.flavor.characteristics.gpu)
+    architecture = "architecture", False, lambda provider, value: value == provider.flavor.characteristics.architecture
 
     # high order requests
-    latency = "latency", False, always_true
-    location = "location", False, always_true
-    throughput = "throughput", False, always_true
-    compliance = "compliance", False, always_true
-    energy = "energy", False, always_true
-    battery = "battery", False, always_true
+    latency = "latency", False, _always_true
+    location = "location", False, _always_true
+    throughput = "throughput", False, _always_true
+    compliance = "compliance", False, _validate_regulations
+    energy = "energy", False, _always_true
+    battery = "battery", False, _always_true
 
     # service
-    service = "service", True, always_true
+    service = "service", True, _always_true
 
     def __new__(cls, *args: str, **kwds: str) -> KnownIntent:
         obj = object.__new__(cls)
@@ -214,7 +231,7 @@ class KnownIntent(Enum):
     def has_external_requirement(self) -> bool:
         return self._external
 
-    def validate(self, provider: ResourceProvider, value: str) -> bool:
+    def validates(self, provider: ResourceProvider, value: str) -> bool:
         return self._validator(provider, value)
 
     @staticmethod
@@ -244,8 +261,8 @@ class Intent:
     def has_external_requirement(self) -> bool:
         return self.name.has_external_requirement()
 
-    def validate(self, provider: ResourceProvider) -> bool:
-        return self.name.validate(provider, self.value)
+    def validates(self, provider: ResourceProvider) -> bool:
+        return self.name.validates(provider, self.value)
 
 
 def validate_on_intent(resources: list[ResourceProvider], intent: Intent) -> ResourceProvider:
