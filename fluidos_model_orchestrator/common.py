@@ -161,6 +161,7 @@ class ModelPredictRequest:
 class ModelPredictResponse:
     id: str
     resource_profile: Resource
+    delay: int = 0  # time in hours
 
     def to_resource(self) -> Resource:
         return self.resource_profile
@@ -168,18 +169,17 @@ class ModelPredictResponse:
 
 class ModelInterface(ABC):
     @abstractmethod
-    def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse:
+    def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse | None:
         raise NotImplementedError("Not implemented: abstract method")
 
     def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse) -> list[ResourceProvider]:
         return providers
 
 
-def always_true(provider: ResourceProvider, value: str) -> bool:
-    return True
+_always_true: Callable[[ResourceProvider, str], bool] = lambda provider, value: True
 
 
-def validate_regulations(provider: ResourceProvider, value: str) -> bool:
+def _validate_regulations(provider: ResourceProvider, value: str) -> bool:
     """
     Assumes values of the form:
     GDPR
@@ -203,15 +203,15 @@ class KnownIntent(Enum):
     architecture = "architecture", False, lambda provider, value: value == provider.flavor.characteristics.architecture
 
     # high order requests
-    latency = "latency", False, always_true
-    location = "location", False, always_true
-    throughput = "throughput", False, always_true
-    compliance = "compliance", False, validate_regulations
-    energy = "energy", False, always_true
-    battery = "battery", False, always_true
+    latency = "latency", False, _always_true
+    location = "location", False, _always_true
+    throughput = "throughput", False, _always_true
+    compliance = "compliance", False, _validate_regulations
+    energy = "energy", False, _always_true
+    battery = "battery", False, _always_true
 
     # service
-    service = "service", True, always_true
+    service = "service", True, _always_true
 
     def __new__(cls, *args: str, **kwds: str) -> KnownIntent:
         obj = object.__new__(cls)

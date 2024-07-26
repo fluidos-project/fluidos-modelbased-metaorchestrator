@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Any
 
@@ -5,6 +6,7 @@ import kopf  # type: ignore
 from kubernetes import utils  # type: ignore
 
 from .common import Intent
+from .common import ModelPredictResponse
 from .common import ResourceProvider
 from .configuration import CONFIGURATION
 
@@ -12,12 +14,14 @@ from .configuration import CONFIGURATION
 logger = logging.getLogger()
 
 
-def deploy(spec: dict[str, Any], provider: ResourceProvider, expanding_resources: list[tuple[ResourceProvider, Intent]]) -> bool:
+async def deploy(spec: dict[str, Any], provider: ResourceProvider, expanding_resources: list[tuple[ResourceProvider, Intent]], response: ModelPredictResponse) -> bool:
     spec_dict = {
         k: v for k, v in spec.items()
     }
 
     enrich(spec_dict, provider)
+
+    await asyncio.sleep(response.delay * 60 * 60)
 
     k8s_client = CONFIGURATION.k8s_client
 
