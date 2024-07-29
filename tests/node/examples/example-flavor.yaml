@@ -4,7 +4,7 @@ metadata:
   name: fluidos.eu-k8s-fluidos-cea36274
 spec:
   characteristics:
-    architecture: amd64
+    architecture: arm64
     cpu: 1980938668n
     ephemeral-storage: "0"
     gpu: "0"

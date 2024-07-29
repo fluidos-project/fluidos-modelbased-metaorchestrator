@@ -36,7 +36,7 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
 
     predictor: OrchestratorInterface = get_model_object(request)
 
-    prediction: ModelPredictResponse | None = predictor.predict(request, "amd64")
+    prediction: ModelPredictResponse | None = predictor.predict(request, "arm64")
 
     if prediction is None:
         logger.error("Model unable to provide valid prediction")

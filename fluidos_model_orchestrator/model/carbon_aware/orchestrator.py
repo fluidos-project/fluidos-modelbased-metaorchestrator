@@ -11,6 +11,7 @@ from fluidos_model_orchestrator.common import ModelPredictResponse
 from fluidos_model_orchestrator.common import Resource
 from fluidos_model_orchestrator.common import cpu_to_int
 from fluidos_model_orchestrator.common import memory_to_int
+from fluidos_model_orchestrator.common import ResourceProvider
 from fluidos_model_orchestrator.model.carbon_aware.classes.carbon_aware_flavour import CarbonAwareFlavour
 from fluidos_model_orchestrator.model.carbon_aware.classes.carbon_aware_pod import CarbonAwarePod
 from fluidos_model_orchestrator.model.carbon_aware.classes.carbon_aware_timeslot import CarbonAwareTimeslot
@@ -53,7 +54,9 @@ def _check_node_resource(flavour: CarbonAwareFlavour, timeslot: CarbonAwareTimes
 
 
 class CarbonAwareOrchestrator(ModelInterface):
-    def predict(self, req: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse:
+
+    def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse) -> list[ResourceProvider]:
+        logging.debug("Hello world!")
 
         deadline = np.nan
         cpuRequest = np.nan
@@ -95,23 +98,26 @@ class CarbonAwareOrchestrator(ModelInterface):
         _debug(f"resources: {resources}")
 
         flavours = []
-        for resource in resources:
+        for provider in providers:
+            flavor = provider.flavor
+            _debug(f"provider ID: {provider.id}")
+            _debug(f"flavor ID: {provider.flavor.id}")
             flavours.append(
                 CarbonAwareFlavour(
-                    resource.id,
-                    random.randint(455000, 2502000), # embodiedEmissions (g)
+                    flavor.id,
+                    random.randint(455000, 2502000),  # embodiedEmissions (g)
                     4,
-                    cpu_to_int(resource.characteristics.cpu),
-                    memory_to_int(resource.characteristics.memory),
-                    resource.characteristics.persistent_storage,
+                    cpu_to_int(flavor.characteristics.cpu),
+                    memory_to_int(flavor.characteristics.memory),
+                    flavor.characteristics.persistent_storage,
                     generate_electricity_maps_forecast(deadline)
                 ))
-
 
         _debug(f"flavours: {flavours}")
 
         for flavour in flavours:
-            _debug(f"flavour x: {flavour.id} {flavour.embodiedCarbon} {flavour.lifetime} {flavour.totalCpu} {flavour.totalRam} {flavour.totalStorage}")
+            _debug(
+                f"flavour x: {flavour.id} {flavour.embodiedCarbon} {flavour.lifetime} {flavour.totalCpu} {flavour.totalRam} {flavour.totalStorage}")
 
         podToSchedule = CarbonAwarePod(req.id, deadline, 2, 0.03, cpuRequest, ramRequest, 0)
 
@@ -131,8 +137,10 @@ class CarbonAwareOrchestrator(ModelInterface):
                     _debug(f"forecast for this timeslot and this node: {flavour.forecast[ts.id]}")
                     if _check_node_resource(flavour, ts, podToSchedule):
                         forecast = flavour
-                        operationalEmissions = (flavour.forecast[ts.id]) * podToSchedule.duration * podToSchedule.powerConsumption # grams, hours, kW
-                        embodiedEmissions = ((flavour.embodiedCarbon / (365 * flavour.lifetime * 24)) / (1 + 1)) * podToSchedule.duration
+                        operationalEmissions = (flavour.forecast[
+                            ts.id]) * podToSchedule.duration * podToSchedule.powerConsumption  # grams, hours, kW
+                        embodiedEmissions = ((flavour.embodiedCarbon / (365 * flavour.lifetime * 24)) / (
+                                    1 + 1)) * podToSchedule.duration
 
                         totalEmissions = operationalEmissions + embodiedEmissions
 
@@ -158,7 +166,6 @@ class CarbonAwareOrchestrator(ModelInterface):
                             _debug(f"Total emissions for this iteration: {totalEmissions} gCO2")
                             _debug(f"Current minimum found : {minimal_emissions} gCO2")
 
-
         # total_emissions_per_node = np.zeros((2, len(timeslots)))  # 2 nodes, 24 timeslots
 
         if best_timeslot is None:
@@ -167,13 +174,8 @@ class CarbonAwareOrchestrator(ModelInterface):
             logging.exception("No available node found.")
 
         _debug(f"Best node: {best_node.id}")
-        _debug(f"Best timeslot: {best_timeslot.id}")
-
-
-        update_local_flavours_forecasted_data(req.namespace)
-
-        response = ModelPredictResponse(
-            req.id,
-            Resource(id=f"carbonaware-{str(uuid4())}", cpu="2n", memory="20Mi", architecture="arm64"))
-
-        return response
+        _debug(f"Best timeslot (and prediction delay): {best_timeslot.id}")
+        prediction.delay = best_timeslot.id
+        return providers # return list of 1 element with best node
+    def predict(self, req: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse:
+        return None

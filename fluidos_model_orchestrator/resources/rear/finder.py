@@ -296,7 +296,7 @@ class REARResourceFinder(ResourceFinder):
     def _build_flavour_selector(self, resource: Resource) -> dict[str, Any]:
         return {
             "type": "k8s-fluidos",
-            "architecture": resource.architecture if resource.architecture is not None else "amd64",
+            "architecture": resource.architecture if resource.architecture is not None else "arm64",
             "rangeSelector": self._build_range_selector(resource)
         }
 

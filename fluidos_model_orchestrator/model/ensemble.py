@@ -16,7 +16,7 @@ class FluidosModelEnsemble(OrchestratorInterface):
     def __init__(self, models: Iterable[OrchestratorInterface]):
         self.models = list(models)
 
-    def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse | None:
+    def predict(self, data: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse | None:
         return _merge_prediction_responses(
             model.predict(data, architecture) for model in self.models
         )
