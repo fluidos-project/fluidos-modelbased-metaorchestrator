@@ -1,24 +1,25 @@
 import logging
-from datetime import datetime, timedelta
+import random
+from datetime import datetime
+from datetime import timedelta
 from uuid import uuid4
 
 import numpy as np
-import random
 
+from fluidos_model_orchestrator.common import cpu_to_int
+from fluidos_model_orchestrator.common import memory_to_int
 from fluidos_model_orchestrator.common import ModelInterface
 from fluidos_model_orchestrator.common import ModelPredictRequest
 from fluidos_model_orchestrator.common import ModelPredictResponse
 from fluidos_model_orchestrator.common import Resource
-from fluidos_model_orchestrator.common import cpu_to_int
-from fluidos_model_orchestrator.common import memory_to_int
 from fluidos_model_orchestrator.common import ResourceProvider
 from fluidos_model_orchestrator.model.carbon_aware.classes.carbon_aware_flavour import CarbonAwareFlavour
 from fluidos_model_orchestrator.model.carbon_aware.classes.carbon_aware_pod import CarbonAwarePod
 from fluidos_model_orchestrator.model.carbon_aware.classes.carbon_aware_timeslot import CarbonAwareTimeslot
-from fluidos_model_orchestrator.model.carbon_aware.forecast_updater import update_local_flavours_forecasted_data
-from fluidos_model_orchestrator.resources import get_resource_finder
 from fluidos_model_orchestrator.model.carbon_aware.fakers.weather_forecast_generator import generate_electricity_maps_forecast
 from fluidos_model_orchestrator.model.carbon_aware.fakers.workload_prediction_generator import generate_resource_prediction
+from fluidos_model_orchestrator.model.carbon_aware.forecast_updater import update_local_flavours_forecasted_data
+from fluidos_model_orchestrator.resources import get_resource_finder
 
 debug = True
 
@@ -55,7 +56,7 @@ def _check_node_resource(flavour: CarbonAwareFlavour, timeslot: CarbonAwareTimes
 
 class CarbonAwareOrchestrator(ModelInterface):
 
-    def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse) -> list[ResourceProvider]:
+    def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse, request: ModelPredictRequest) -> list[ResourceProvider]:
         logging.debug("Hello world!")
 
         deadline = np.nan
