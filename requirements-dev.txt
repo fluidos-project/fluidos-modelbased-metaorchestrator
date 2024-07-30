@@ -9,3 +9,5 @@ mypy
 flake8
 types-PyYAML
 kubernetes-stubs
+requests
+numpy

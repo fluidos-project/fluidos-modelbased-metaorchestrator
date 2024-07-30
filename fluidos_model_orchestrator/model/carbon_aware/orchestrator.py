@@ -2,7 +2,6 @@ import logging
 import random
 from datetime import datetime
 from datetime import timedelta
-from uuid import uuid4
 
 import numpy as np
 
@@ -11,21 +10,22 @@ from fluidos_model_orchestrator.common import memory_to_int
 from fluidos_model_orchestrator.common import ModelInterface
 from fluidos_model_orchestrator.common import ModelPredictRequest
 from fluidos_model_orchestrator.common import ModelPredictResponse
-from fluidos_model_orchestrator.common import Resource
 from fluidos_model_orchestrator.common import ResourceProvider
 from fluidos_model_orchestrator.model.carbon_aware.classes.carbon_aware_flavour import CarbonAwareFlavour
 from fluidos_model_orchestrator.model.carbon_aware.classes.carbon_aware_pod import CarbonAwarePod
 from fluidos_model_orchestrator.model.carbon_aware.classes.carbon_aware_timeslot import CarbonAwareTimeslot
-from fluidos_model_orchestrator.model.carbon_aware.fakers.weather_forecast_generator import generate_electricity_maps_forecast
-from fluidos_model_orchestrator.model.carbon_aware.fakers.workload_prediction_generator import generate_resource_prediction
-from fluidos_model_orchestrator.model.carbon_aware.forecast_updater import update_local_flavours_forecasted_data
-from fluidos_model_orchestrator.resources import get_resource_finder
+from fluidos_model_orchestrator.model.carbon_aware.fakers.weather_forecast_generator import \
+    generate_electricity_maps_forecast
+from fluidos_model_orchestrator.model.carbon_aware.fakers.workload_prediction_generator import \
+    generate_resource_prediction
 
 debug = True
 
+
 def _debug(message):
     if debug:
-        logging.debug(message)
+        print(message)
+
 
 def _is_timeslot_valid(timeslot: CarbonAwareTimeslot, pod: CarbonAwarePod) -> bool:
     return (pod.deadline > timeslot.getStart()) & (datetime.now() <= timeslot.getEnd())
@@ -34,7 +34,6 @@ def _is_timeslot_valid(timeslot: CarbonAwareTimeslot, pod: CarbonAwarePod) -> bo
 def _check_node_resource(flavour: CarbonAwareFlavour, timeslot: CarbonAwareTimeslot, pod: CarbonAwarePod):
     # todo getResourceUtilizationPrediction(flavour, timeslot) --> Call prediction model to
     # check if there is enough resource left on flavour x at timeslot y for the pod z
-
     # Temporary implementation:
     cpu_used_prediction = generate_resource_prediction(flavour.totalCpu)
     ram_used_prediction = generate_resource_prediction(flavour.totalRam)
@@ -47,7 +46,8 @@ def _check_node_resource(flavour: CarbonAwareFlavour, timeslot: CarbonAwareTimes
     _debug(f"CPU request: {pod.cpuRequest}")
     _debug(f"RAM request: {pod.ramRequest}")
 
-    if (flavour.totalCpu - cpu_used_prediction) < pod.cpuRequest or (flavour.totalRam - ram_used_prediction) < pod.ramRequest:
+    if (flavour.totalCpu - cpu_used_prediction) < pod.cpuRequest or (
+            flavour.totalRam - ram_used_prediction) < pod.ramRequest:
         _debug("Node does not have enough resources to accommodate the pod.")
         return False
     _debug("Node has enough resources to accommodate the pod.")
@@ -56,17 +56,20 @@ def _check_node_resource(flavour: CarbonAwareFlavour, timeslot: CarbonAwareTimes
 
 class CarbonAwareOrchestrator(ModelInterface):
 
-    def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse, request: ModelPredictRequest) -> list[ResourceProvider]:
-        logging.debug("Hello world!")
+    def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse,
+                      request: ModelPredictRequest) -> list[ResourceProvider]:
+
+        _debug(f"ModelPredictRequest pod_request: {request.pod_request}")
 
         deadline = np.nan
         cpuRequest = np.nan
         ramRequest = np.nan
-        for intent in req.intents:
+        for intent in request.intents:
             match intent.name.name:
                 case "deadline":
                     deadline = int(intent.value)
-                    _debug(f"Found deadline from intent file: {deadline}")
+                    deadline += 1
+                    _debug(f"Found deadline from intent file (+1): {deadline}")
                 case "cpu":
                     cpuRequest = cpu_to_int(intent.value)
                     _debug(f"Found cpu request from intent file: {cpuRequest}")
@@ -76,51 +79,49 @@ class CarbonAwareOrchestrator(ModelInterface):
                 case _:
                     _debug(f"Intent {intent.name.name} not recognized in Carbon-Aware orchestrator")
         if deadline == np.nan or deadline <= 0 or deadline > 24:
-            deadline = np.nan
             logging.exception("Deadline must be provided between ]0;24]")
+            return []
         if cpuRequest == np.nan or cpuRequest <= 0:
-            cpuRequest = np.nan
             logging.exception("CPU request must be provided greater than 0")
+            return []
         if ramRequest == np.nan or ramRequest <= 0:
-            ramRequest = np.nan
             logging.exception("RAM request must be provided greater than 0")
+            return []
 
         timeslots = []
         now = datetime.now()
         start_time = now.replace(minute=0, second=0, microsecond=0)
-        for i in range(deadline):
+        for i in range(int(deadline)):
             slot_time = start_time + timedelta(hours=i)
             timeslot = CarbonAwareTimeslot(i, slot_time.year, slot_time.month, slot_time.day, slot_time.hour, 2)
             timeslots.append(timeslot)
 
         _debug(f"Generated timeslots from deadline: {len(timeslots)}")
 
-        resources = get_resource_finder(req.namespace, None).retrieve_all_flavors(req.namespace)
-        _debug(f"resources: {resources}")
-
         flavours = []
         for provider in providers:
             flavor = provider.flavor
             _debug(f"provider ID: {provider.id}")
             _debug(f"flavor ID: {provider.flavor.id}")
+            _debug(f"flavor optional_fields: {flavor.optional_fields}")
             flavours.append(
                 CarbonAwareFlavour(
                     flavor.id,
-                    random.randint(455000, 2502000),  # embodiedEmissions (g)
+                    flavor.optional_fields.get("embodied"),
                     4,
                     cpu_to_int(flavor.characteristics.cpu),
                     memory_to_int(flavor.characteristics.memory),
                     flavor.characteristics.persistent_storage,
-                    generate_electricity_maps_forecast(deadline)
+                    flavor.optional_fields.get("operational")
                 ))
 
-        _debug(f"flavours: {flavours}")
+        logging.debug(f"flavours: {flavours}")
 
         for flavour in flavours:
             _debug(
                 f"flavour x: {flavour.id} {flavour.embodiedCarbon} {flavour.lifetime} {flavour.totalCpu} {flavour.totalRam} {flavour.totalStorage}")
 
-        podToSchedule = CarbonAwarePod(req.id, deadline, 2, 0.03, cpuRequest, ramRequest, 0)
+        podToSchedule = CarbonAwarePod(request.id, deadline, 2, np.nan, cpuRequest, ramRequest, 0)
 
         # --------------------------------- CORE ---------------------------------
 
@@ -137,11 +138,14 @@ class CarbonAwareOrchestrator(ModelInterface):
                     _debug(f"Checking node {flavour.id}")
                     _debug(f"forecast for this timeslot and this node: {flavour.forecast[ts.id]}")
                     if _check_node_resource(flavour, ts, podToSchedule):
-                        forecast = flavour
+                        podToSchedule.powerConsumption = (podToSchedule.cpuRequest / flavour.totalCpu) * 0.3
+                        _debug(f"cpuRequest: {podToSchedule.cpuRequest}")
+                        _debug(f"totalCpu: {flavour.totalCpu}")
+                        _debug(f"powerConsumption of pod: {podToSchedule.powerConsumption}")
                         operationalEmissions = (flavour.forecast[
                             ts.id]) * podToSchedule.duration * podToSchedule.powerConsumption  # grams, hours, kW
                         embodiedEmissions = ((flavour.embodiedCarbon / (365 * flavour.lifetime * 24)) / (
-                                    1 + 1)) * podToSchedule.duration
+                                1 + 1)) * podToSchedule.duration
 
                         totalEmissions = operationalEmissions + embodiedEmissions
 
@@ -167,8 +171,6 @@ class CarbonAwareOrchestrator(ModelInterface):
                             _debug(f"Total emissions for this iteration: {totalEmissions} gCO2")
                             _debug(f"Current minimum found : {minimal_emissions} gCO2")
 
-        # total_emissions_per_node = np.zeros((2, len(timeslots)))  # 2 nodes, 24 timeslots
-
         if best_timeslot is None:
             logging.exception("No available timeslot found.")
         if best_node is None:
@@ -177,6 +179,13 @@ class CarbonAwareOrchestrator(ModelInterface):
         _debug(f"Best node: {best_node.id}")
         _debug(f"Best timeslot (and prediction delay): {best_timeslot.id}")
         prediction.delay = best_timeslot.id
-        return providers # return list of 1 element with best node
+
+        bestProvider = []
+        for provider in providers:
+            if provider.id == best_node.id:
+                bestProvider.append(provider)
+                return bestProvider  # return list of 1 element with best node
+        return []
+
     def predict(self, req: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse:
         return None

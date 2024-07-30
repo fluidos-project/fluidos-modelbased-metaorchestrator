@@ -1,13 +1,10 @@
 import logging
 
 import requests
-import datetime
 
-from fluidos_model_orchestrator import ModelPredictRequest
 from fluidos_model_orchestrator.resources import get_resource_finder
 from fluidos_model_orchestrator.configuration import Configuration
 from fluidos_model_orchestrator.common import Flavor
-import os
 
 config = Configuration()
 API_KEY = config.api_keys.get("ELECTRICITY_MAP_API_KEY")
@@ -40,15 +37,17 @@ def _get_forecasted_carbon_intensity(lat, lon):
         return None
 
 
-def update_local_flavours_forecasted_data(flavor: Flavor):
+def update_local_flavor_forecasted_data(flavor: Flavor, namespace: str) -> None:
     lat = flavor.location.get("latitude")
     lon = flavor.location.get("longitude")
     new_forecast = _get_forecasted_carbon_intensity(lat, lon)
-    new_forecast.insert(0, _get_live_carbon_intensity(lat, lon)) # index 0 = current intensity. Forecast starts at index 1
+    new_forecast.insert(0,
+                        _get_live_carbon_intensity(lat, lon))  # index 0 = current intensity. Forecast starts at index 1
     new_forecast_timeslots = []
     for i in range(len(new_forecast) - 1):
         average = (new_forecast[i] + new_forecast[i + 1]) / 2
         new_forecast_timeslots.append(average)
     logging.debug("new_forecast from external API: ", new_forecast)
     logging.debug("new_forecast_timeslots: ", new_forecast_timeslots)
-    get_resource_finder(None, None).update_local_flavor(resource, new_forecast_timeslots)
+    optionalField = {"operational": new_forecast_timeslots}
+    get_resource_finder(None, None).update_local_flavor(flavor, optionalField, namespace)

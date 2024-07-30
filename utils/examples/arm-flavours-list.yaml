@@ -14,6 +14,7 @@ spec:
   optionalFields:
     availability: true
     workerID: fluidos-consumer-worker
+    embodied: 1200
   owner:
     domain: fluidos.eu
     ip: 172.18.0.2:30000
@@ -55,6 +56,7 @@ spec:
   optionalFields:
     availability: true
     workerID: fluidos-consumer-worker2
+    embodied: 1300
   owner:
     domain: fluidos.eu
     ip: 172.18.0.2:30000
