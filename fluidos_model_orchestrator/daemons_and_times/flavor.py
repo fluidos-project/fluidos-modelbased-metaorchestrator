@@ -25,7 +25,6 @@ async def daemons_for_flavours_observation(
         meta: bodies.Meta,
         spec: dict[str, Any],  # bodies.Spec
         status: bodies.Status,
-        resources: references.Resource,
         uid: str | None,
         name: str | None,
         namespace: str | None,
