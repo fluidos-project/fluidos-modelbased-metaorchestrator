@@ -306,4 +306,5 @@ def build_flavor(flavor: dict[str, Any]) -> Flavor:
         optional_fields=flavor["spec"]["optionalFields"],
         policy=flavor["spec"]["policy"],
         price=flavor["spec"]["price"],
+        location=flavor["spec"].get("location", {'latitude': -122.4194, 'longitude': 37.7749})
     )
