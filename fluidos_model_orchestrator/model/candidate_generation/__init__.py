@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 import ast
-import io
 import json
 import logging
 import random  # TODO remove
-from pathlib import Path
 from typing import Any
 
-import pkg_resources
+import pkg_resources  # type: ignore
 import torch  # type: ignore
 import torch.nn as nn  # type: ignore
 import torch.nn.functional as F  # type: ignore
+from huggingface_hub import PyTorchModelHubMixin  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 
 from ...common import ModelInterface
@@ -20,6 +19,8 @@ from ...common import ModelPredictResponse
 from ...common import Resource
 from fluidos_model_orchestrator.model.candidate_generation.model_utils import compute_embedding_for_sentence
 from fluidos_model_orchestrator.model.candidate_generation.model_utils import find_matching_configs
+# import io
+# from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ class EmbeddingAggregation(nn.Module):
         return aggregated
 
 
-class OrchestrationModel(nn.Module):
+class OrchestrationModel(nn.Module, PyTorchModelHubMixin):
     def __init__(self, config: dict[str, Any]):
         super().__init__()
 
@@ -122,25 +123,12 @@ class OrchestrationModel(nn.Module):
 class Orchestrator(ModelInterface):
     embedding_model_name: str = "distiluse-base-multilingual-cased-v2"  # TODO read from metadata
 
-    def __init__(self, model_name: str = "orchestrator_cg_v0.0.1", device: str = "cpu") -> None:
+    def __init__(self, model_name: str = "fluidos/candidate-generation", device: str = "cpu") -> None:
         self.sentence_transformer = SentenceTransformer(self.embedding_model_name)
         self.device = device
         with pkg_resources.resource_stream(__name__, "metadata_cg_v0.0.1.json") as metadata_stream:
             self.metadata: dict[str, Any] = json.load(metadata_stream)
-
-        self.orchestrator: OrchestrationModel = OrchestrationModel(self.metadata["training_setup"])
-        self.orchestrator.load_state_dict(self.__load_from_bytes(model_name)["model_state_dict"])
-
-    def __load_from_bytes(self, model_name: str, chunks_num: int = 18) -> dict[str, Any]:
-        base_ckpt_path = Path(__file__).parent.joinpath(model_name)
-
-        orchestrator_ckpt_chunk = b''
-        for i in range(chunks_num):
-            with open(f"{base_ckpt_path.as_posix()}/{model_name}_{i + 1}.pt_chunk", "rb") as chunk_file:
-                orchestrator_ckpt_chunk = orchestrator_ckpt_chunk + chunk_file.read()
-        buffer = io.BytesIO(orchestrator_ckpt_chunk)
-        orchestrator_ckpt = torch.load(buffer)
-        return orchestrator_ckpt
+        self.orchestrator: OrchestrationModel = OrchestrationModel.from_pretrained(model_name)
 
     def generate_configs_feature_set(self, intents_dict: dict[str, Any]) -> tuple[torch.Tensor, torch.Tensor]:
         # TODO: add default mode
