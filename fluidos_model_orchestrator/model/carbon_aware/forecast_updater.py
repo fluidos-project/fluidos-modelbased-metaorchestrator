@@ -3,26 +3,36 @@ import logging
 import requests
 
 from fluidos_model_orchestrator.resources import get_resource_finder
-from fluidos_model_orchestrator.configuration import Configuration
+from fluidos_model_orchestrator.configuration import CONFIGURATION
 from fluidos_model_orchestrator.common import Flavor
 
-config = Configuration()
-API_KEY = config.api_keys.get("ELECTRICITY_MAP_API_KEY")
-HEADERS = {'auth-token': API_KEY}
-BASE_URL = 'https://api.electricitymap.org/v3'
 
 def _get_live_carbon_intensity(lat, lon):
+    BASE_URL = 'https://api.electricitymap.org/v3'
+    API_KEY = CONFIGURATION.api_keys['ELECTRICITY_MAP_API_KEY']
+    HEADERS = {'auth-token': str(API_KEY)}
     url = f"{BASE_URL}/carbon-intensity/latest"
     params = {'lat': lat, 'lon': lon}
+
+    logging.debug(f"Request URL: {url}")
+    logging.debug(f"Request params: {params}")
+
     response = requests.get(url, headers=HEADERS, params=params)
+
+    logging.debug(f"Response status code: {response.status_code}")
+    logging.debug(f"Response content: {response.content}")
+
     if response.status_code == 200:
         return response.json()["carbonIntensity"]
     else:
-        logging.debug(f"Error fetching live data: {response.status_code}")
+        logging.exception(f"Error fetching live data: {response.status_code} - {response.text}")
         return None
 
 
 def _get_forecasted_carbon_intensity(lat, lon):
+    BASE_URL = 'https://api.electricitymap.org/v3'
+    API_KEY = CONFIGURATION.api_keys['ELECTRICITY_MAP_API_KEY']
+    HEADERS = {'auth-token': str(API_KEY)}
     url = f"{BASE_URL}/carbon-intensity/forecast"
     params = {'lat': lat, 'lon': lon}
     response = requests.get(url, headers=HEADERS, params=params)
@@ -32,14 +42,16 @@ def _get_forecasted_carbon_intensity(lat, lon):
             forecast_values.append(forecast_item['carbonIntensity'])
         return forecast_values
     else:
-        logging.debug(f"Error fetching forecasted data: {response.status_code}")
-        logging.debug(f"Error: {response.reason}")
+        logging.exception(f"Error fetching forecasted data: {response.status_code}")
+        logging.exception(f"Error: {response.reason}")
         return None
 
 
 def update_local_flavor_forecasted_data(flavor: Flavor, namespace: str) -> None:
     lat = flavor.location.get("latitude")
     lon = flavor.location.get("longitude")
+    logging.debug(f"Found latitude: {flavor.location}")
+    logging.debug(f"Found longitude: {flavor.location.values()}")
     new_forecast = _get_forecasted_carbon_intensity(lat, lon)
     new_forecast.insert(0,
                         _get_live_carbon_intensity(lat, lon))  # index 0 = current intensity. Forecast starts at index 1
