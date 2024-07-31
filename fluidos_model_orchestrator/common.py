@@ -41,16 +41,16 @@ class Resource:
 
     def can_run_on(self, flavor: Flavor) -> bool:
         logger.debug(f"Testing {self=} against {flavor=}")
-        if not _cpu_compatible(self.cpu, flavor.characteristics.cpu):
+        if not _cpu_compatible(self.cpu, flavor.spec.flavor_type.type_data.characteristics.cpu):
             return False
 
-        if not _memory_compatible(self.memory, flavor.characteristics.memory):
+        if not _memory_compatible(self.memory, flavor.spec.flavor_type.type_data.characteristics.memory):
             return False
 
-        if self.architecture is not None and self.architecture != flavor.characteristics.architecture:
+        if self.architecture is not None and self.architecture != flavor.spec.flavor_type.type_data.characteristics.architecture:
             return False
 
-        if self.gpu is not None and int(self.gpu) > int(flavor.characteristics.gpu):
+        if self.gpu is not None and int(self.gpu) > int(flavor.spec.flavor_type.type_data.characteristics.gpu):
             return False
 
         # TODO: add checks for storage
@@ -124,22 +124,46 @@ class FlavorType(Enum):
 
     @staticmethod
     def factory(type_name: str) -> FlavorType:
-        if type_name == "k8s-fluidos":
+        if type_name == "K8Slice":
             return FlavorType.K8SLICE
 
         raise ValueError(f"Not supported {type_name=}")
 
 
-@dataclass
-class Flavor:
-    id: str
-    type: FlavorType
+@dataclass(kw_only=True)
+class FlavorMetadata:
+    name: str
+    owner_references: dict[str, Any]
+
+
+@dataclass(kw_only=True)
+class FlavorK8SliceData:
     characteristics: FlavorCharacteristics
+    policies: dict[str, Any]
+    properties: dict[str, Any]
+
+
+@dataclass(kw_only=True)
+class FlavorTypeData:
+    type_identifier: FlavorType
+    type_data: FlavorK8SliceData
+
+
+@dataclass
+class FlavorSpec:
+    availability: bool
+    flavor_type: FlavorTypeData
+    location: dict[str, Any]
+    network_property_type: str
     owner: dict[str, Any]
     providerID: str
-    policy: dict[str, Any] = field(default_factory=dict)
-    optional_fields: dict[str, Any] = field(default_factory=dict)
     price: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(kw_only=True)
+class Flavor:
+    metadata: FlavorMetadata
+    spec: FlavorSpec
 
 
 @dataclass
@@ -191,7 +215,7 @@ def _validate_regulations(provider: ResourceProvider, value: str) -> bool:
     or such
     """
     value = value.casefold()
-    for field_name, field_value in provider.flavor.optional_fields.items():
+    for field_name, field_value in provider.flavor.spec.flavor_type.type_data.properties.items():
         if str(field_value).casefold() == value:
             return True
 
@@ -285,21 +309,55 @@ class ResourceFinder(ABC):
 
 
 def build_flavor(flavor: dict[str, Any]) -> Flavor:
+    if flavor["kind"] != "Flavor":
+        raise ValueError(f"Unable to process {flavor['kind']}")
+
     return Flavor(
-        id=flavor["metadata"]["name"],
-        type=FlavorType.factory(flavor["spec"]["type"]),
-        providerID=flavor["spec"]["providerID"],
-        characteristics=FlavorCharacteristics(
-            cpu=flavor["spec"]["characteristics"]["cpu"],
-            architecture=flavor["spec"]["characteristics"]["architecture"],
-            memory=flavor["spec"]["characteristics"]["memory"],
-            gpu=flavor["spec"]["characteristics"]["gpu"],
-            pods=flavor["spec"]["characteristics"]["pods"],
-            ephemeral_storage=flavor["spec"]["characteristics"]["ephemeral-storage"],
-            persistent_storage=flavor["spec"]["characteristics"]["persistent-storage"]
-        ),
-        owner=flavor["spec"]["owner"],
-        optional_fields=flavor["spec"]["optionalFields"],
-        policy=flavor["spec"]["policy"],
-        price=flavor["spec"]["price"],
+        metadata=_build_metadata(flavor["metadata"]),
+        spec=_build_spec(flavor["spec"]),
     )
+
+
+def _build_metadata(metadata: dict[str, Any]) -> FlavorMetadata:
+    return FlavorMetadata(
+        name=metadata["name"],
+        owner_references=metadata["ownerReferences"],
+    )
+
+
+def _build_spec(spec: dict[str, Any]) -> FlavorSpec:
+    return FlavorSpec(
+        availability=spec["availability"],
+        flavor_type=_build_flavor_type(spec["flavorType"]),
+        location=spec["location"],
+        network_property_type=spec["networkProperty"],
+        owner=spec["owner"],
+        price=spec["price"],
+        providerID=spec["providerID"],
+    )
+
+
+def _build_flavor_type(flavor_type_data: dict[str, Any]) -> FlavorTypeData:
+    flavor_type = FlavorType.factory(flavor_type_data["typeIdentifier"])
+    return FlavorTypeData(
+        type_identifier=flavor_type,
+        type_data=_build_flavor_type_data(flavor_type, flavor_type_data["typeData"])
+    )
+
+
+def _build_flavor_type_data(flavor_type: FlavorType, data: dict[str, Any]) -> FlavorK8SliceData:
+    if flavor_type is FlavorType.K8SLICE:
+        return FlavorK8SliceData(
+            characteristics=FlavorCharacteristics(
+                cpu=data["characteristics"]["cpu"],
+                architecture=data["characteristics"]["architecture"],
+                memory=data["characteristics"]["memory"],
+                gpu=data["characteristics"]["gpu"],
+                pods=data["characteristics"]["pods"],
+                ephemeral_storage=data["characteristics"]["ephemeral-storage"],
+                persistent_storage=data["characteristics"]["persistent-storage"]
+            ),
+            policies=data.get("policies", {}),
+            properties=data.get("properties", {})
+        )
+    raise ValueError(f"Unsupported flavor type: {flavor_type}")

@@ -1,5 +1,5 @@
 apiVersion: nodecore.fluidos.eu/v1alpha1
-kind: Flavour
+kind: Flavor
 metadata:
   name: fluidos.eu-k8s-fluidos-cea36274
 spec:
