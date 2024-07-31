@@ -50,7 +50,7 @@ class Resource:
         if self.architecture is not None and self.architecture != flavor.spec.flavor_type.type_data.characteristics.architecture:
             return False
 
-        if self.gpu is not None and int(self.gpu) > int(flavor.spec.flavor_type.type_data.characteristics.gpu):
+        if self.gpu is not None and int(self.gpu) > int(flavor.spec.flavor_type.type_data.characteristics.gpu.cores):
             return False
 
         # TODO: add checks for storage
@@ -105,14 +105,20 @@ def cpu_to_int(spec: str) -> int:
 
 
 @dataclass
+class GPUData:
+    cores: int | str
+    memory: int | str
+    model: str
+
+
+@dataclass(kw_only=True)
 class FlavorCharacteristics:
     cpu: str
     architecture: str
-    gpu: str
+    gpu: GPUData
     memory: str
     pods: str | None = None
-    ephemeral_storage: str | None = None
-    persistent_storage: str | None = None
+    storage: str | None = None
 
 
 @unique
@@ -330,7 +336,7 @@ def _build_spec(spec: dict[str, Any]) -> FlavorSpec:
         availability=spec["availability"],
         flavor_type=_build_flavor_type(spec["flavorType"]),
         location=spec["location"],
-        network_property_type=spec["networkProperty"],
+        network_property_type=spec["networkPropertyType"],
         owner=spec["owner"],
         price=spec["price"],
         providerID=spec["providerID"],
@@ -354,8 +360,7 @@ def _build_flavor_type_data(flavor_type: FlavorType, data: dict[str, Any]) -> Fl
                 memory=data["characteristics"]["memory"],
                 gpu=data["characteristics"]["gpu"],
                 pods=data["characteristics"]["pods"],
-                ephemeral_storage=data["characteristics"]["ephemeral-storage"],
-                persistent_storage=data["characteristics"]["persistent-storage"]
+                storage=data["characteristics"]["storage"],
             ),
             policies=data.get("policies", {}),
             properties=data.get("properties", {})
