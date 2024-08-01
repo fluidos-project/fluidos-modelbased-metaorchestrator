@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 from abc import ABC
 from abc import abstractmethod
@@ -228,13 +229,34 @@ def _validate_regulations(provider: ResourceProvider, value: str) -> bool:
     return False
 
 
+def _check_cpu(provider: ResourceProvider, value: str) -> bool:
+    return _cpu_compatible(value, provider.flavor.spec.flavor_type.type_data.characteristics.cpu)
+
+
+def _check_memory(provider: ResourceProvider, value: str) -> bool:
+    return _memory_compatible(value, provider.flavor.spec.flavor_type.type_data.characteristics.memory)
+
+
+def _check_gpu(provider: ResourceProvider, value: str) -> bool:
+    data = json.loads(value)
+
+    gpu = provider.flavor.spec.flavor_type.type_data.characteristics.gpu
+
+    if type(data) is dict:
+        return int(gpu.cores) >= int(data.get("cores", 0)) and int(gpu.memory) >= int(data.get("memory", 0))  # very basic matching, should be improved
+    elif type(data) is int:
+        return int(gpu.cores) >= data
+
+    return False
+
+
 @unique
 class KnownIntent(Enum):
     # k8s resources
-    cpu = "cpu", False, lambda provider, value: _cpu_compatible(value, provider.flavor.characteristics.cpu)
-    memory = "memory", False, lambda provider, value: _memory_compatible(value, provider.flavor.characteristics.memory)
-    gpu = "gpu", False, lambda provider, value: int(value) <= int(provider.flavor.characteristics.gpu)
-    architecture = "architecture", False, lambda provider, value: value == provider.flavor.characteristics.architecture
+    cpu = "cpu", False, _check_cpu
+    memory = "memory", False, _check_memory
+    gpu = "gpu", False, _check_gpu
+    architecture = "architecture", False, lambda provider, value: value == provider.flavor.spec.flavor_type.type_data.characteristics.architecture
 
     # high order requests
     latency = "latency", False, _always_true
