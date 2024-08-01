@@ -32,7 +32,23 @@ def test_find_local_no_nodes(k8s: AClusterManager) -> None:
 
 def test_find_local(k8s: AClusterManager) -> None:
     k8s.create()
-    raise ValueError("Not implemented yet")
+
+    k8s.apply(pkg_resources.resource_filename(__name__, "node/crds/nodecore.fluidos.eu_flavors.yaml"))
+    k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/example-flavor.yaml"))
+
+    myconfig = kubernetes.client.Configuration()
+    kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
+
+    configuration = Configuration(
+        k8s_client=_build_k8s_client(myconfig)
+    )
+
+    finder = REARResourceFinder(configuration)
+
+    local = finder._find_local(Resource(id="123", architecture="amd64"), "default")
+
+    assert local is not None
+    assert len(local) == 1
 
 
 def test_solver_creation_and_check(k8s: AClusterManager) -> None:
@@ -116,7 +132,7 @@ def test_retrieve_peering_candidate_list(k8s: AClusterManager) -> None:
     k8s.delete()
 
 
-def test_temporary_flavor_update(k8s: AClusterManager) -> None:
+def test_flavor_update(k8s: AClusterManager) -> None:
     k8s.create()
 
     k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/fluidos-network-manager-identity-config-map.yaml"))
@@ -137,6 +153,7 @@ def test_temporary_flavor_update(k8s: AClusterManager) -> None:
     flavors = finder._get_locally_available_flavors("default")
 
     assert len(flavors) == 1
+    assert "carbon" not in flavors[0].spec.flavor_type.type_data.properties
 
     flavor = flavors[0]
 

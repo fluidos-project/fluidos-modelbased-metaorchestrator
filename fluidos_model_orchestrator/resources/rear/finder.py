@@ -74,7 +74,7 @@ class REARResourceFinder(ResourceFinder):
             group="nodecore.fluidos.eu",
             version="v1alpha1",
             namespace=namespace,
-            plural="flavours",
+            plural="flavors",
             name=flavor.metadata.name,
             body={
                 "spec": {
