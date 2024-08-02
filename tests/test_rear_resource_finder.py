@@ -103,11 +103,12 @@ def test_retrieve_peering_candidate_list(k8s: AClusterManager) -> None:
 
     k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/nginx-w-intent-discovery.yaml"))
 
-    k8s.kubectl(["patch", "discovery", "discovery-nginx-w-intent-solver",
+    solver_id = "solver-sample"
+    k8s.kubectl(["patch", "discovery", f"discovery-{solver_id}",
                  "--patch-file", pkg_resources.resource_filename(__name__, "node/examples/nginx-w-intent-discovery-patch.yaml"),
                  "--type", "merge", "--subresource", "status"])
 
-    res = k8s.kubectl(["get", "discovery/discovery-nginx-w-intent-solver"])
+    res = k8s.kubectl(["get", f"discovery/discovery-{solver_id}"])
 
     assert "status" in res
 
@@ -122,12 +123,10 @@ def test_retrieve_peering_candidate_list(k8s: AClusterManager) -> None:
 
     finder = REARResourceFinder(configuration)
 
-    solver_id = "nginx-w-intent-solver"
-
     candidates = finder._retrieve_peering_candidates(solver_id, "default")
 
     assert candidates is not None
-    assert len(candidates) == 1
+    assert len(candidates) == 2
 
     k8s.delete()
 
