@@ -103,8 +103,6 @@ def test_retrieve_peering_candidate_list(k8s: AClusterManager) -> None:
 
     k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/nginx-w-intent-discovery.yaml"))
 
-    assert False, k8s.kubectl(["get", "discovery"], True)
-
     k8s.kubectl(["patch", "discovery", "discovery-nginx-w-intent-solver",
                  "--patch-file", pkg_resources.resource_filename(__name__, "node/examples/nginx-w-intent-discovery-patch.yaml"),
                  "--type", "merge", "--subresource", "status"])
