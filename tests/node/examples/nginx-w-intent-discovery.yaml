@@ -1,0 +1,154 @@
+apiVersion: advertisement.fluidos.eu/v1alpha1
+kind: Discovery
+metadata:
+  name: discovery-solver-sample
+spec:
+  selector:
+    filters:
+      architectureFilter:
+        data:
+          value: amd64
+        name: Match
+      cpuFilter:
+        data:
+          min: 1000m
+        name: Range
+      memoryFilter:
+        data:
+          max: 100Gi
+          min: 1Gi
+        name: Range
+      podsFilter:
+        data:
+          value: 110
+        name: Match
+    flavorType: K8Slice
+  solverID: solver-sample
+  subscribe: false
+status:
+  peeringCandidateList:
+    items:
+    - metadata:
+        name: peeringcandidate-fluidos.eu-k8slice-03e661bacabc0c84a04822d00f1ed5eb
+        namespace: fluidos
+      spec:
+        available: true
+        flavor:
+          metadata:
+            name: fluidos.eu-k8slice-03e661bacabc0c84a04822d00f1ed5eb
+            namespace: fluidos
+          spec:
+            availability: true
+            flavorType:
+              typeData:
+                characteristics:
+                  architecture: amd64
+                  cpu: 1901493132n
+                  gpu:
+                    cores: "0"
+                    memory: "0"
+                    model: ""
+                  memory: 3737388Ki
+                  pods: "110"
+                  storage: "0"
+                policies:
+                  partitionability:
+                    cpuMin: "0"
+                    cpuStep: "1"
+                    gpuMin: "0"
+                    gpuStep: "0"
+                    memoryMin: "0"
+                    memoryStep: 100Mi
+                    podsMin: "0"
+                    podsStep: "0"
+                properties: {}
+              typeIdentifier: K8Slice
+            location:
+              additionalNotes: None
+              city: Turin
+              country: Italy
+              latitude: "10"
+              longitude: "58"
+            networkPropertyType: networkProperty
+            owner:
+              domain: fluidos.eu
+              ip: 172.18.0.3:30001
+              nodeID: ce5olrpi8v
+            price:
+              amount: ""
+              currency: ""
+              period: ""
+            providerID: ce5olrpi8v
+          status:
+            creationTime: ""
+            expirationTime: ""
+            lastUpdateTime: ""
+        solverID: solver-sample
+      status:
+        creationTime: "2024-08-02T12:57:56Z"
+        lastUpdateTime: ""
+    - metadata:
+        name: peeringcandidate-fluidos.eu-k8slice-dd6931b7c9e649fc658e887140a48ce4
+        namespace: fluidos
+      spec:
+        available: true
+        flavor:
+          metadata:
+            name: fluidos.eu-k8slice-dd6931b7c9e649fc658e887140a48ce4
+            namespace: fluidos
+          spec:
+            availability: true
+            flavorType:
+              typeData:
+                characteristics:
+                  architecture: amd64
+                  cpu: 1713092459n
+                  gpu:
+                    cores: "0"
+                    memory: "0"
+                    model: ""
+                  memory: 3664248Ki
+                  pods: "110"
+                  storage: "0"
+                policies:
+                  partitionability:
+                    cpuMin: "0"
+                    cpuStep: "1"
+                    gpuMin: "0"
+                    gpuStep: "0"
+                    memoryMin: "0"
+                    memoryStep: 100Mi
+                    podsMin: "0"
+                    podsStep: "0"
+                properties: {}
+              typeIdentifier: K8Slice
+            location:
+              additionalNotes: None
+              city: Turin
+              country: Italy
+              latitude: "10"
+              longitude: "58"
+            networkPropertyType: networkProperty
+            owner:
+              domain: fluidos.eu
+              ip: 172.18.0.3:30001
+              nodeID: ce5olrpi8v
+            price:
+              amount: ""
+              currency: ""
+              period: ""
+            providerID: ce5olrpi8v
+          status:
+            creationTime: ""
+            expirationTime: ""
+            lastUpdateTime: ""
+        solverID: solver-sample
+      status:
+        creationTime: "2024-08-02T12:57:56Z"
+        lastUpdateTime: ""
+    metadata: {}
+  phase:
+    lastChangeTime: "2024-08-02T12:57:56Z"
+    message: 'Discovery Solved: Peering Candidate found'
+    phase: Solved
+    startTime: "2024-08-02T12:57:56Z"
