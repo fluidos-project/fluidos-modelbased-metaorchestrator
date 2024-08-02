@@ -301,9 +301,9 @@ class REARResourceFinder(ResourceFinder):
         selector: dict[str, Any] = {
             # The flavorType is the type of the Flavor (FLUIDOS node) that the solver should find
             "flavorType": "K8Slice",
-            # The filters are used to filter the Flavors (FLUIDOS nodes) that the solver should consider
         }
 
+        # The filters are used to filter the Flavors (FLUIDOS nodes) that the solver should consider
         selector_filters: dict[str, Any] = {}
 
         if resource.architecture is not None:
