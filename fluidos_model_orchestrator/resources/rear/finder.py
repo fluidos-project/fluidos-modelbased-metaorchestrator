@@ -327,7 +327,7 @@ class REARResourceFinder(ResourceFinder):
 
             logger.info(f"Processing flavor {name=}")
 
-            if flavor.spec.flavor_type is not FlavorType.K8SLICE:
+            if flavor.spec.flavor_type.type_identifier is not FlavorType.K8SLICE:
                 logger.info(f"Skipping, wrong flavour type {flavor.spec.flavor_type}")
                 continue
 

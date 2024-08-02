@@ -42,17 +42,20 @@ class Resource:
 
     def can_run_on(self, flavor: Flavor) -> bool:
         logger.debug(f"Testing {self=} against {flavor=}")
-        if not _cpu_compatible(self.cpu, flavor.spec.flavor_type.type_data.characteristics.cpu):
+        if self.cpu is not None and not _cpu_compatible(self.cpu, flavor.spec.flavor_type.type_data.characteristics.cpu):
             return False
 
-        if not _memory_compatible(self.memory, flavor.spec.flavor_type.type_data.characteristics.memory):
+        if self.memory is not None and not _memory_compatible(self.memory, flavor.spec.flavor_type.type_data.characteristics.memory):
             return False
 
         if self.architecture is not None and self.architecture != flavor.spec.flavor_type.type_data.characteristics.architecture:
             return False
 
-        if self.gpu is not None and int(self.gpu) > int(flavor.spec.flavor_type.type_data.characteristics.gpu.cores):
-            return False
+        if self.gpu is not None:
+            our_gpu = _convert_to_gpudata(self.gpu)
+            their_gpu = _convert_to_gpudata(flavor.spec.flavor_type.type_data.characteristics.gpu)
+
+            return our_gpu.can_run_on(their_gpu)
 
         # TODO: add checks for storage
 
@@ -111,13 +114,16 @@ class GPUData:
     memory: int | str = 0
     model: str = ""
 
+    def can_run_on(self, other: GPUData) -> bool:
+        return int(other.cores) >= int(self.cores) and int(other.memory) >= int(self.memory)
+
 
 @dataclass(kw_only=True)
 class FlavorCharacteristics:
     cpu: str
     architecture: str
-    gpu: GPUData
     memory: str
+    gpu: GPUData | str | int = "0"
     pods: str | None = None
     storage: str | None = None
 
@@ -146,8 +152,8 @@ class FlavorMetadata:
 @dataclass(kw_only=True)
 class FlavorK8SliceData:
     characteristics: FlavorCharacteristics
-    policies: dict[str, Any]
-    properties: dict[str, Any]
+    policies: dict[str, Any] = field(default_factory=dict)
+    properties: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(kw_only=True)
@@ -156,7 +162,7 @@ class FlavorTypeData:
     type_data: FlavorK8SliceData
 
 
-@dataclass
+@dataclass(kw_only=True)
 class FlavorSpec:
     availability: bool
     flavor_type: FlavorTypeData
@@ -237,13 +243,32 @@ def _check_memory(provider: ResourceProvider, value: str) -> bool:
     return _memory_compatible(value, provider.flavor.spec.flavor_type.type_data.characteristics.memory)
 
 
+def _convert_to_gpudata(gpu: GPUData | str | int | dict[str, Any]) -> GPUData:
+    if type(gpu) is GPUData:
+        return gpu
+    if type(gpu) is dict:
+        # loads of faith required here:
+        return GPUData(
+            cores=gpu.get("core", "0"),
+            memory=gpu.get("memory", "0"),
+            model=gpu.get("model", "")
+        )
+
+    if type(gpu) is str:
+        gpu = int(gpu)
+    if type(gpu) is int:
+        return GPUData(cores=gpu)
+
+    raise ValueError(f"Unable to convert value '{gpu}' of type {type(gpu)}")
+
+
 def _check_gpu(provider: ResourceProvider, value: str) -> bool:
     data = json.loads(value)
 
-    gpu = provider.flavor.spec.flavor_type.type_data.characteristics.gpu
+    gpu: GPUData = _convert_to_gpudata(provider.flavor.spec.flavor_type.type_data.characteristics.gpu)
 
     if type(data) is dict:
-        return int(gpu.cores) >= int(data.get("cores", 0)) and int(gpu.memory) >= int(data.get("memory", 0))  # very basic matching, should be improved
+        return gpu.can_run_on(_convert_to_gpudata(data))
     elif type(data) is int:
         return int(gpu.cores) >= data
 

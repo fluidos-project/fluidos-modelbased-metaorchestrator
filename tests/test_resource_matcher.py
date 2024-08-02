@@ -89,3 +89,37 @@ def test_request_not_sastisfied():
             owner={},
             price={}
         ))), "Not enough CPU"
+
+
+def test_should_match() -> None:
+    flavor = Flavor(
+        metadata=FlavorMetadata(
+            name='fluidos.eu-k8slice-2f1640fd4dfb151b4d81ad9590dcb6cc',
+            owner_references={'apiVersion': 'nodecore.fluidos.eu/v1alpha1', 'kind': 'Node', 'name': 'fluidos-consumer-1-worker', 'uid': 'bcbc5b65-3de6-434a-aef9-a329317a189d'}
+        ),
+        spec=FlavorSpec(
+            availability=True,
+            flavor_type=FlavorTypeData(
+                type_identifier=FlavorType.K8SLICE,
+                type_data=FlavorK8SliceData(
+                    characteristics=FlavorCharacteristics(
+                        cpu='1947481697n',
+                        architecture='amd64',
+                        gpu=GPUData(cores=0, memory=0, model=''),
+                        memory='3735836Ki', pods='110', storage='0'
+                    ),
+                    policies={'partitionability': {'cpuMin': '0', 'cpuStep': '1', 'gpuMin': '0', 'gpuStep': '0', 'memoryMin': '0', 'memoryStep': '100Mi', 'podsMin': '0', 'podsStep': '0'}},
+                    properties={}
+                )
+            ),
+            location={'additionalNotes': 'None', 'city': 'Turin', 'country': 'Italy', 'latitude': '10', 'longitude': '58'},
+            network_property_type='networkProperty',
+            owner={'domain': 'fluidos.eu', 'ip': '172.18.0.7:30000', 'nodeID': 'ekvjnuvsel'},
+            providerID='ekvjnuvsel',
+            price={'amount': '', 'currency': '', 'period': ''}
+        )
+    )
+
+    req = Resource(id="123", architecture="amd64")
+
+    assert req.can_run_on(flavor)
