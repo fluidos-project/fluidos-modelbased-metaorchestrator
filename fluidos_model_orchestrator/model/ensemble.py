@@ -5,15 +5,15 @@ from collections.abc import Iterable
 
 from fluidos_model_orchestrator.common import cpu_to_int
 from fluidos_model_orchestrator.common import memory_to_int
-from fluidos_model_orchestrator.common import ModelInterface
+from fluidos_model_orchestrator.common import OrchestratorInterface
 from fluidos_model_orchestrator.common import ModelPredictRequest
 from fluidos_model_orchestrator.common import ModelPredictResponse
 from fluidos_model_orchestrator.common import Resource
 from fluidos_model_orchestrator.common import ResourceProvider
 
 
-class FluidosModelEnsemble(ModelInterface):
-    def __init__(self, models: Iterable[ModelInterface]):
+class FluidosModelEnsemble(OrchestratorInterface):
+    def __init__(self, models: Iterable[OrchestratorInterface]):
         self.models = list(models)
 
     def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse | None:

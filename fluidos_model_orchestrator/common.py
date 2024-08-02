@@ -167,7 +167,11 @@ class ModelPredictResponse:
         return self.resource_profile
 
 
-class ModelInterface(ABC):
+class OrchestratorInterface(ABC):
+
+    def load(self) -> Any:
+        raise NotImplementedError("Not implemented: abstract method")
+
     @abstractmethod
     def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse | None:
         raise NotImplementedError("Not implemented: abstract method")

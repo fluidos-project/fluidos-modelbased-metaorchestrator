@@ -7,7 +7,7 @@ import pandas as pd
 import tensorflow as tf
 
 from ...common import KnownIntent
-from ...common import ModelInterface
+from ...common import OrchestratorInterface
 from ...common import ModelPredictRequest
 from ...common import ModelPredictResponse
 from ...common import Resource
@@ -15,7 +15,7 @@ from ...common import Resource
 logger = logging.getLogger(__name__)
 
 
-class TwoTowerOrchestrator(ModelInterface):
+class TwoTowerOrchestrator(OrchestratorInterface):
     def __init__(
         self,
         model_path: Path = Path(Path(__file__).parent, "resources"),

@@ -3,7 +3,7 @@ from typing import Any
 
 from ..common import Intent
 from ..common import KnownIntent
-from ..common import ModelInterface
+from ..common import OrchestratorInterface
 from ..common import ModelPredictRequest
 from ..container import extract_image_embedding
 from .candidate_generation import Orchestrator as CG
@@ -15,7 +15,7 @@ from .ensemble import FluidosModelEnsemble
 logger = logging.getLogger(__name__)
 
 
-_model_instances: dict[str, ModelInterface] = {
+_model_instances: dict[str, OrchestratorInterface] = {
     "CG": CG(),
     # "2T": TwoTowerOrchestrator(),
     "dummy": DummyOrchestrator()
@@ -38,7 +38,7 @@ def _is_subset(s1: set[KnownIntent], s2: set[KnownIntent]) -> bool:
     return True
 
 
-def get_model_object(request: ModelPredictRequest) -> ModelInterface:
+def get_model_object(request: ModelPredictRequest) -> OrchestratorInterface:
     logger.info(f"Retrieving model interface for {request}")
 
     request_intent_signature = {intent.name for intent in request.intents}

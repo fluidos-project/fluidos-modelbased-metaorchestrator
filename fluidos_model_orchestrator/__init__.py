@@ -4,7 +4,7 @@ from typing import Any
 import kopf  # type: ignore
 
 from .common import Intent
-from .common import ModelInterface
+from .common import OrchestratorInterface
 from .common import ModelPredictRequest
 from .common import ModelPredictResponse
 from .common import ResourceFinder
@@ -34,7 +34,7 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
             "msg": "Invalid request"
         }
 
-    predictor: ModelInterface = get_model_object(request)
+    predictor: OrchestratorInterface = get_model_object(request)
 
     prediction: ModelPredictResponse | None = predictor.predict(request, "amd64")
 
