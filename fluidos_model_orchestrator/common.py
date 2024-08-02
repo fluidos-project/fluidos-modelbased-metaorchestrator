@@ -338,7 +338,7 @@ class ResourceFinder(ABC):
 
 def build_flavor(flavor: dict[str, Any]) -> Flavor:
     if flavor["kind"] != "Flavor":
-        raise ValueError(f"Unable to process {flavor['kind']}")
+        raise ValueError(f"Unable to process kind {flavor['kind']}")
 
     return Flavor(
         metadata=_build_metadata(flavor["metadata"]),
