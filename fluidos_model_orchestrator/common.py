@@ -107,9 +107,9 @@ def cpu_to_int(spec: str) -> int:
 
 @dataclass
 class GPUData:
-    cores: int | str
-    memory: int | str
-    model: str
+    cores: int | str = 0
+    memory: int | str = 0
+    model: str = ""
 
 
 @dataclass(kw_only=True)
