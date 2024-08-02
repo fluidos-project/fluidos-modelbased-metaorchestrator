@@ -13,7 +13,7 @@ import torch.nn.functional as F  # type: ignore
 from huggingface_hub import PyTorchModelHubMixin  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 
-from ...common import ModelInterface
+from ...common import OrchestratorInterface
 from ...common import ModelPredictRequest
 from ...common import ModelPredictResponse
 from ...common import Resource
@@ -120,7 +120,7 @@ class OrchestrationModel(nn.Module, PyTorchModelHubMixin):
         return x
 
 
-class Orchestrator(ModelInterface):
+class Orchestrator(OrchestratorInterface):
     embedding_model_name: str = "distiluse-base-multilingual-cased-v2"  # TODO read from metadata
 
     def __init__(self, model_name: str = "fluidos/candidate-generation", device: str = "cpu") -> None:
