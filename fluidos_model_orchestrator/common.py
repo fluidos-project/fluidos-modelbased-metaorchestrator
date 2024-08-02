@@ -36,9 +36,9 @@ class Resource:
     memory: str | None = None
     architecture: str | None = None
     gpu: str | None = None
-    ephemeral_storage: str | None = None
-    persistent_storage: str | None = None
+    storage: str | None = None
     region: str | None = None
+    pods: str | int | None = None
 
     def can_run_on(self, flavor: Flavor) -> bool:
         logger.debug(f"Testing {self=} against {flavor=}")
@@ -56,6 +56,9 @@ class Resource:
             their_gpu = _convert_to_gpudata(flavor.spec.flavor_type.type_data.characteristics.gpu)
 
             return our_gpu.can_run_on(their_gpu)
+
+        if self.pods is not None:
+            return int(self.pods) == int(flavor.spec.flavor_type.type_data.characteristics.pods if flavor.spec.flavor_type.type_data.characteristics.pods is not None else 0)
 
         # TODO: add checks for storage
 

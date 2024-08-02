@@ -298,11 +298,48 @@ class REARResourceFinder(ResourceFinder):
         return (solver_request, intent_id)
 
     def _build_flavour_selector(self, resource: Resource) -> dict[str, Any]:
-        return {
-            "type": "k8s-fluidos",
-            "architecture": resource.architecture if resource.architecture is not None else "amd64",
-            "rangeSelector": self._build_range_selector(resource)
+        selector: dict[str, Any] = {
+            # The flavorType is the type of the Flavor (FLUIDOS node) that the solver should find
+            "flavorType": "K8Slice",
+            # The filters are used to filter the Flavors (FLUIDOS nodes) that the solver should consider
         }
+
+        selector_filters: dict[str, Any] = {}
+
+        if resource.architecture is not None:
+            selector_filters["architectureFilter"] = {
+                "name": "Match",
+                "data": {
+                    "value": resource.architecture
+                }
+            }
+
+        if resource.cpu is not None:
+            selector_filters["cpuFilter"] = {
+                "name": "Range",
+                "data": {
+                    "min": resource.cpu
+                }
+            }
+        if resource.memory is not None:
+            selector_filters["memoryFilter"] = {
+                "name": "Range",
+                "data": {
+                    "min": resource.memory
+                }
+            }
+        if resource.pods is not None:
+            selector_filters["modsFilter"] = {
+                "name": "Match",
+                "data": {
+                    "value": resource.pods
+                }
+            }
+
+        if len(selector_filters):
+            selector["filters"] = selector_filters
+
+        return selector
 
     def _build_range_selector(self, resource: Resource) -> dict[str, str]:
         selector: dict[str, str] = {
