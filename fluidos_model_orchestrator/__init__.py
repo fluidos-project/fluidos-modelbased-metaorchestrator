@@ -4,9 +4,9 @@ from typing import Any
 import kopf  # type: ignore
 
 from .common import Intent
-from .common import OrchestratorInterface
 from .common import ModelPredictRequest
 from .common import ModelPredictResponse
+from .common import OrchestratorInterface
 from .common import ResourceFinder
 from .common import ResourceProvider
 from .common import validate_on_intent
@@ -51,7 +51,8 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
     best_matches: list[ResourceProvider] = validate_with_intents(
         predictor.rank_resource(
             finder.find_best_match(prediction.to_resource(), namespace),
-            prediction
+            prediction,
+            request
         ), request.intents)
 
     if not len(best_matches):

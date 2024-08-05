@@ -1,5 +1,8 @@
+from typing import Any
+
+
 class CarbonAwareFlavour:
-    def __init__(self, id, embodiedCarbon, lifetime, totalCpu, totalRam, totalStorage, forecast):
+    def __init__(self, id: str, embodiedCarbon: Any, lifetime: Any, totalCpu: Any, totalRam: Any, totalStorage: Any, forecast: Any) -> None:
         self.id = id
         self.embodiedCarbon = embodiedCarbon
         self.lifetime = lifetime

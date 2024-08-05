@@ -1,28 +1,24 @@
 import logging
-import random
 from datetime import datetime
 from datetime import timedelta
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from fluidos_model_orchestrator.common import cpu_to_int
 from fluidos_model_orchestrator.common import memory_to_int
-from fluidos_model_orchestrator.common import ModelInterface
 from fluidos_model_orchestrator.common import ModelPredictRequest
 from fluidos_model_orchestrator.common import ModelPredictResponse
+from fluidos_model_orchestrator.common import OrchestratorInterface
 from fluidos_model_orchestrator.common import ResourceProvider
 from fluidos_model_orchestrator.model.carbon_aware.classes.carbon_aware_flavour import CarbonAwareFlavour
 from fluidos_model_orchestrator.model.carbon_aware.classes.carbon_aware_pod import CarbonAwarePod
 from fluidos_model_orchestrator.model.carbon_aware.classes.carbon_aware_timeslot import CarbonAwareTimeslot
-from fluidos_model_orchestrator.model.carbon_aware.fakers.weather_forecast_generator import \
-    generate_electricity_maps_forecast
-from fluidos_model_orchestrator.model.carbon_aware.fakers.workload_prediction_generator import \
-    generate_resource_prediction
+from fluidos_model_orchestrator.model.carbon_aware.fakers.workload_prediction_generator import generate_resource_prediction
 
 debug = True
 
 
-def _debug(message):
+def _debug(message: str) -> None:
     if debug:
         print(message)
 
@@ -31,7 +27,7 @@ def _is_timeslot_valid(timeslot: CarbonAwareTimeslot, pod: CarbonAwarePod) -> bo
     return (pod.deadline > timeslot.getStart()) & (datetime.now() <= timeslot.getEnd())
 
 
-def _check_node_resource(flavour: CarbonAwareFlavour, timeslot: CarbonAwareTimeslot, pod: CarbonAwarePod):
+def _check_node_resource(flavour: CarbonAwareFlavour, timeslot: CarbonAwareTimeslot, pod: CarbonAwarePod) -> bool:
     # todo getResourceUtilizationPrediction(flavour, timeslot) --> Call prediction model to
     # check if there is enough resource left on flavour x at timeslot y for the pod z
     # Temporary implementation:
@@ -54,8 +50,7 @@ def _check_node_resource(flavour: CarbonAwareFlavour, timeslot: CarbonAwareTimes
     return True
 
 
-class CarbonAwareOrchestrator(ModelInterface):
-
+class CarbonAwareOrchestrator(OrchestratorInterface):
     def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse,
                       request: ModelPredictRequest) -> list[ResourceProvider]:
 
@@ -88,7 +83,7 @@ class CarbonAwareOrchestrator(ModelInterface):
             logging.exception("RAM request must be provided greater than 0")
             return []
 
-        timeslots = []
+        timeslots: list[CarbonAwareTimeslot] = []
         now = datetime.now()
         start_time = now.replace(minute=0, second=0, microsecond=0)
         for i in range(int(deadline)):
@@ -127,7 +122,7 @@ class CarbonAwareOrchestrator(ModelInterface):
 
         minimal_emissions = np.inf
         best_node = None
-        best_timeslot = None
+        best_timeslot: CarbonAwareTimeslot | None = None
 
         for ts in timeslots:
             _debug("-------------------- New timeslot iteration --------------------")
@@ -142,10 +137,8 @@ class CarbonAwareOrchestrator(ModelInterface):
                         _debug(f"cpuRequest: {podToSchedule.cpuRequest}")
                         _debug(f"totalCpu: {flavour.totalCpu}")
                         _debug(f"powerConsumption of pod: {podToSchedule.powerConsumption}")
-                        operationalEmissions = (flavour.forecast[
-                            ts.id]) * podToSchedule.duration * podToSchedule.powerConsumption  # grams, hours, kW
-                        embodiedEmissions = ((flavour.embodiedCarbon / (365 * flavour.lifetime * 24)) / (
-                                1 + 1)) * podToSchedule.duration
+                        operationalEmissions = (flavour.forecast[ts.id]) * podToSchedule.duration * podToSchedule.powerConsumption  # grams, hours, kW
+                        embodiedEmissions = ((flavour.embodiedCarbon / (365 * flavour.lifetime * 24)) / (1 + 1)) * podToSchedule.duration
 
                         totalEmissions = operationalEmissions + embodiedEmissions
 
@@ -154,7 +147,7 @@ class CarbonAwareOrchestrator(ModelInterface):
                         _debug(f"Total emissions: {totalEmissions} gCO2")
 
                         if totalEmissions < minimal_emissions:
-                            _debug(f"Updating best node and timeslot.")
+                            _debug("Updating best node and timeslot.")
                             if best_node is not None and best_timeslot is not None:
                                 _debug(f"Previous minimal emissions: {minimal_emissions} gCo2")
                                 _debug(f"Previous best timeslot: {best_timeslot.id}")
@@ -167,14 +160,16 @@ class CarbonAwareOrchestrator(ModelInterface):
                             best_node = flavour
                             best_timeslot = ts
                         else:
-                            _debug(f"Total emissions for this iteration higher than current minimal emissions.")
+                            _debug("Total emissions for this iteration higher than current minimal emissions.")
                             _debug(f"Total emissions for this iteration: {totalEmissions} gCO2")
                             _debug(f"Current minimum found : {minimal_emissions} gCO2")
 
         if best_timeslot is None:
             logging.exception("No available timeslot found.")
+            raise RuntimeError("Failing")
         if best_node is None:
             logging.exception("No available node found.")
+            raise RuntimeError("Failing")
 
         _debug(f"Best node: {best_node.id}")
         _debug(f"Best timeslot (and prediction delay): {best_timeslot.id}")
@@ -187,5 +182,5 @@ class CarbonAwareOrchestrator(ModelInterface):
                 return bestProvider  # return list of 1 element with best node
         return []
 
-    def predict(self, req: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse:
+    def predict(self, req: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse | None:
         return None

@@ -4,9 +4,8 @@ from logging import Logger
 from typing import Any
 
 import kopf  # type: ignore
-from kopf._cogs.structs import bodies
-from kopf._cogs.structs import patches
-from kopf._cogs.structs import references
+from kopf._cogs.structs import bodies  # type: ignore
+from kopf._cogs.structs import patches  # type: ignore
 
 from fluidos_model_orchestrator.common import build_flavor
 from fluidos_model_orchestrator.configuration import CONFIGURATION
