@@ -3,6 +3,7 @@ import yaml
 
 from fluidos_model_orchestrator.model import convert_to_model_request
 from fluidos_model_orchestrator.model import get_model_object
+from fluidos_model_orchestrator.model.candidate_generation import Orchestrator as CandidateGeneration
 from fluidos_model_orchestrator.model.carbon_aware.orchestrator import CarbonAwareOrchestrator
 
 
@@ -19,4 +20,4 @@ def test_returns_most_matching():
         spec = convert_to_model_request(yaml.safe_load(stream), "fluidos")
     assert spec is not None
 
-    assert type(get_model_object(spec)) is not CarbonAwareOrchestrator
+    assert type(get_model_object(spec)) is CandidateGeneration

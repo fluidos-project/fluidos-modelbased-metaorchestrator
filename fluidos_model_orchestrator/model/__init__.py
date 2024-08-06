@@ -3,27 +3,35 @@ from typing import Any
 
 from ..common import Intent
 from ..common import KnownIntent
-from ..common import OrchestratorInterface
 from ..common import ModelPredictRequest
+from ..common import OrchestratorInterface
 from ..container import extract_image_embedding
 from .candidate_generation import Orchestrator as CG
-from fluidos_model_orchestrator.model.carbon_aware.orchestrator import CarbonAwareOrchestrator
 from .ensemble import FluidosModelEnsemble
+from .model_basic_ranker.model import Orchestrator as BasicRanker
+from fluidos_model_orchestrator.model.carbon_aware.orchestrator import CarbonAwareOrchestrator
+
 # from .two_tower_v1.orchestrator import TwoTowerOrchestrator
 
 
 logger = logging.getLogger(__name__)
 
 
-_model_instances: dict[str, OrchestratorInterface] = {
-    "CG": CG(),
-    # "2T": TwoTowerOrchestrator(),
-    "carbonaware": CarbonAwareOrchestrator()
-}
+_model_instances: dict[type[OrchestratorInterface], OrchestratorInterface] = {}
 
-_model_characteristics: list[tuple[set[KnownIntent], str]] = [
-    ({known_intent for known_intent in KnownIntent}, "CG"),
-    # ({KnownIntent.latency, KnownIntent.location, KnownIntent.memory, KnownIntent.cpu}, "2T")
+_model_characteristics: list[tuple[set[KnownIntent], type[OrchestratorInterface]]] = [
+    ({
+        KnownIntent.architecture,
+        KnownIntent.compliance,
+        KnownIntent.cpu,
+        KnownIntent.gpu,
+        KnownIntent.latency,
+        KnownIntent.location,
+        KnownIntent.memory,
+        KnownIntent.throughput,
+    }, CG),
+    ({KnownIntent.latency, KnownIntent.location, KnownIntent.memory, KnownIntent.cpu}, BasicRanker),
+    ({KnownIntent.deadline, KnownIntent.energy}, CarbonAwareOrchestrator)
 ]
 
 
@@ -38,6 +46,13 @@ def _is_subset(s1: set[KnownIntent], s2: set[KnownIntent]) -> bool:
     return True
 
 
+def _get_model(model_type: type[OrchestratorInterface]) -> OrchestratorInterface:
+    if model_type not in _model_instances:
+        _model_instances[model_type] = model_type()
+
+    return _model_instances[model_type]
+
+
 def get_model_object(request: ModelPredictRequest) -> OrchestratorInterface:
     logger.info(f"Retrieving model interface for {request}")
 
@@ -47,18 +62,17 @@ def get_model_object(request: ModelPredictRequest) -> OrchestratorInterface:
         name for (model_signature, name) in _model_characteristics if _is_subset(request_intent_signature, model_signature)
     ]
 
-    """
     if 1 == len(matching_models):
         logger.debug(f"Returning model {matching_models[0]}")
-        return _model_instances[matching_models[0]]
+        return _get_model(matching_models[0])
     elif 1 < len(matching_models):
         logger.debug(f"Regurning an ensemble of the models {matching_models}")
         return FluidosModelEnsemble(
-            _model_instances[model_name] for model_name in matching_models
+            _get_model(model_name) for model_name in matching_models
         )
-    """
-    return _model_instances["carbonaware"]
 
+    logger.debug("No matching models, returning what? Dummy? or CG as default?")
+    return _get_model(CG)
 
 
 def convert_to_model_request(spec: Any, namespace: str) -> ModelPredictRequest | None:
