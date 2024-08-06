@@ -5,7 +5,7 @@ from datetime import timedelta
 
 
 class CarbonAwarePod:
-    def __init__(self, id: str, deadline_hours: int, duration: int, powerConsumption: int, cpuRequest: int, ramRequest: int, storageRequest: int):
+    def __init__(self, id: str, deadline_hours: float, duration: int, powerConsumption: float, cpuRequest: float, ramRequest: float, storageRequest: int):
         self.id = id
         self.deadline = processDeadline(deadline_hours)
         self.duration = duration
@@ -15,7 +15,7 @@ class CarbonAwarePod:
         self.storageRequest = storageRequest
 
 
-def processDeadline(deadline_hours: int) -> datetime:
+def processDeadline(deadline_hours: float) -> datetime:
     now = datetime.now()
     delta = timedelta(hours=deadline_hours)
     return now + delta

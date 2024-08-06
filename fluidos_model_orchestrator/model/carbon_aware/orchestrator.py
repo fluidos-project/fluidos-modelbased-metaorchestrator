@@ -83,17 +83,19 @@ class CarbonAwareOrchestrator(OrchestratorInterface):
             logging.exception("RAM request must be provided greater than 0")
             return []
 
-        timeslots: list[CarbonAwareTimeslot] = []
         now = datetime.now()
         start_time = now.replace(minute=0, second=0, microsecond=0)
-        for i in range(int(deadline)):
-            slot_time = start_time + timedelta(hours=i)
-            timeslot = CarbonAwareTimeslot(i, slot_time.year, slot_time.month, slot_time.day, slot_time.hour, 2)
-            timeslots.append(timeslot)
+
+        timeslots: list[CarbonAwareTimeslot] = [
+            CarbonAwareTimeslot(i, slot_time.year, slot_time.month, slot_time.day, slot_time.hour, 2)
+            for (i, slot_time) in [
+                (i, start_time + timedelta(hours=i)) for i in range(int(deadline))
+            ]
+        ]
 
         _debug(f"Generated timeslots from deadline: {len(timeslots)}")
 
-        flavours = []
+        flavours: list[CarbonAwareFlavour] = []
         for provider in providers:
             flavor = provider.flavor
             _debug(f"provider ID: {provider.id}")
@@ -166,10 +168,10 @@ class CarbonAwareOrchestrator(OrchestratorInterface):
 
         if best_timeslot is None:
             logging.exception("No available timeslot found.")
-            raise RuntimeError("Failing")
+            return []
         if best_node is None:
             logging.exception("No available node found.")
-            raise RuntimeError("Failing")
+            return []
 
         _debug(f"Best node: {best_node.id}")
         _debug(f"Best timeslot (and prediction delay): {best_timeslot.id}")

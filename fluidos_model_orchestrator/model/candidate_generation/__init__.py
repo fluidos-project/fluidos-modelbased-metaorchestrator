@@ -13,14 +13,12 @@ import torch.nn.functional as F  # type: ignore
 from huggingface_hub import PyTorchModelHubMixin  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 
-from ...common import OrchestratorInterface
 from ...common import ModelPredictRequest
 from ...common import ModelPredictResponse
+from ...common import OrchestratorInterface
 from ...common import Resource
 from fluidos_model_orchestrator.model.candidate_generation.model_utils import compute_embedding_for_sentence
 from fluidos_model_orchestrator.model.candidate_generation.model_utils import find_matching_configs
-# import io
-# from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
