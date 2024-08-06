@@ -5,9 +5,9 @@ from collections.abc import Iterable
 
 from fluidos_model_orchestrator.common import cpu_to_int
 from fluidos_model_orchestrator.common import memory_to_int
-from fluidos_model_orchestrator.common import OrchestratorInterface
 from fluidos_model_orchestrator.common import ModelPredictRequest
 from fluidos_model_orchestrator.common import ModelPredictResponse
+from fluidos_model_orchestrator.common import OrchestratorInterface
 from fluidos_model_orchestrator.common import Resource
 from fluidos_model_orchestrator.common import ResourceProvider
 
@@ -16,14 +16,14 @@ class FluidosModelEnsemble(OrchestratorInterface):
     def __init__(self, models: Iterable[OrchestratorInterface]):
         self.models = list(models)
 
-    def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse | None:
+    def predict(self, data: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse | None:
         return _merge_prediction_responses(
             model.predict(data, architecture) for model in self.models
         )
 
-    def rank_resources(self, providers: list[ResourceProvider], prediction: ModelPredictResponse) -> list[ResourceProvider]:
+    def rank_resources(self, providers: list[ResourceProvider], prediction: ModelPredictResponse, request: ModelPredictRequest) -> list[ResourceProvider]:
         for model in self.models:
-            providers = model.rank_resource(providers, prediction)
+            providers = model.rank_resource(providers, prediction, request)
 
         return providers
 

@@ -259,6 +259,28 @@ spec:
                 - currency
                 - period
                 type: object
+              location:
+                description: Location contains the location model
+                  of the Flavour.
+                properties:
+                  latitude:
+                    description: Latitude of the Flavour.
+                    type: number
+                  longitude:
+                    description: Longitude of the Flavour.
+                    type: number
+                  altitude:
+                    description: Altitude of the Flavour.
+                    type: number
+                  additionalNotes:
+                    description: AdditionalNotes is a field
+                      that can be used to add additional notes
+                      to the location of the Flavour.
+                    type: string
+                required:
+                  - latitude
+                  - longitude
+                type: object
               providerID:
                 description: |-
                   ProviderID is the ID of the FLUIDOS Node ID that provides this Flavour.

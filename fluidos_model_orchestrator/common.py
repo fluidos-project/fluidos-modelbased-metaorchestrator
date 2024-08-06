@@ -140,6 +140,7 @@ class Flavor:
     policy: dict[str, Any] = field(default_factory=dict)
     optional_fields: dict[str, Any] = field(default_factory=dict)
     price: dict[str, Any] = field(default_factory=dict)
+    location: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -173,10 +174,10 @@ class OrchestratorInterface(ABC):
         raise NotImplementedError("Not implemented: abstract method")
 
     @abstractmethod
-    def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse | None:
+    def predict(self, data: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse | None:
         raise NotImplementedError("Not implemented: abstract method")
 
-    def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse) -> list[ResourceProvider]:
+    def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse, request: ModelPredictRequest) -> list[ResourceProvider]:
         return providers
 
 
@@ -213,6 +214,9 @@ class KnownIntent(Enum):
     compliance = "compliance", False, _validate_regulations
     energy = "energy", False, _always_true
     battery = "battery", False, _always_true
+
+    # carbon aware requests
+    deadline = "deadline", False, _always_true
 
     # service
     service = "service", True, _always_true
@@ -302,4 +306,5 @@ def build_flavor(flavor: dict[str, Any]) -> Flavor:
         optional_fields=flavor["spec"]["optionalFields"],
         policy=flavor["spec"]["policy"],
         price=flavor["spec"]["price"],
+        location=flavor["spec"].get("location", {'latitude': -122.4194, 'longitude': 37.7749})
     )

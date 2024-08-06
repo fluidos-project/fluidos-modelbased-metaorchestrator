@@ -11,6 +11,6 @@ from fluidos_model_orchestrator.resources.rear import REARResourceFinder
 logger = logging.getLogger(__name__)
 
 
-def get_resource_finder(request: ModelPredictRequest, predict: ModelPredictResponse) -> ResourceFinder:
+def get_resource_finder(request: ModelPredictRequest | None, predict: ModelPredictResponse | None) -> ResourceFinder:
     logger.info("REARResourceFinder being returned")
     return REARResourceFinder()
