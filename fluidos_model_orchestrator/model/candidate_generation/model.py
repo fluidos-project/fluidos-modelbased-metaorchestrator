@@ -295,7 +295,6 @@ class Orchestrator(OrchestratorInterface):
         embeddings = self.sentence_transformer.encode(sentence)
         return torch.tensor(embeddings).unsqueeze(0)
 
-    # def predict_ideal_resource(self, data: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse:
     def predict(self, data: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse:
 
         logger.info("pod embedding generation")
