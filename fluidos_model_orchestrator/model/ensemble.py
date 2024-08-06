@@ -5,9 +5,9 @@ from collections.abc import Iterable
 
 from fluidos_model_orchestrator.common import cpu_to_int
 from fluidos_model_orchestrator.common import memory_to_int
-from fluidos_model_orchestrator.common import OrchestratorInterface
 from fluidos_model_orchestrator.common import ModelPredictRequest
 from fluidos_model_orchestrator.common import ModelPredictResponse
+from fluidos_model_orchestrator.common import OrchestratorInterface
 from fluidos_model_orchestrator.common import Resource
 from fluidos_model_orchestrator.common import ResourceProvider
 

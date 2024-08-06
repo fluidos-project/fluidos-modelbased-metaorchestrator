@@ -1,8 +1,8 @@
 from uuid import uuid4
 
-from ..common import OrchestratorInterface
 from ..common import ModelPredictRequest
 from ..common import ModelPredictResponse
+from ..common import OrchestratorInterface
 from ..common import Resource
 
 
