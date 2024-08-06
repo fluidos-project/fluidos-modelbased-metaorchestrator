@@ -5,6 +5,11 @@ from fluidos_model_orchestrator.model.utils import FLUIDOS_COL_NAMES
 from fluidos_model_orchestrator.model.utils import FLUIDOS_INPUT_OUTPUT_NAME
 
 
+class FEEDBACK_STATUS:
+    OK = "OK"
+    FAIL = "FAIL"
+
+
 def resource_dict_to_values(resources: dict[str, Any]) -> dict[str, Any]:
     resource_to_values: dict[str, Any] = {}
     for resource in resources:

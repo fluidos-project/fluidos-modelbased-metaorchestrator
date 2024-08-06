@@ -15,6 +15,7 @@ from ...common import ModelPredictRequest
 from ...common import ModelPredictResponse
 from ...common import OrchestratorInterface
 from ...common import Resource
+from fluidos_model_orchestrator.model.candidate_generation.utils import FEEDBACK_STATUS
 from fluidos_model_orchestrator.model.candidate_generation.utils import tr2id_from_str_to_list
 from fluidos_model_orchestrator.model.utils import D_TYPE
 from fluidos_model_orchestrator.model.utils import D_UNITS
@@ -284,8 +285,8 @@ class Orchestrator(OrchestratorInterface):
     def _check_feedback_for_relevant_candidates(self, image_name: str) -> tuple[torch.Tensor, torch.Tensor]:
         feedback = pd.read_csv(self.feedback_db_path)
         image_feedback = feedback[feedback['image_name'] == image_name]
-        relevant_candidates_ids = image_feedback[image_feedback['status'] == "OK"]['template_resource_id'].tolist()
-        non_relevant_candidates_ids = image_feedback[image_feedback['status'] == "FAIL"]['template_resource_id'].tolist()
+        relevant_candidates_ids = image_feedback[image_feedback['status'] == FEEDBACK_STATUS.OK]['template_resource_id'].tolist()
+        non_relevant_candidates_ids = image_feedback[image_feedback['status'] == FEEDBACK_STATUS.FAIL]['template_resource_id'].tolist()
         relevant_configs_tensor = torch.tensor(relevant_candidates_ids, device=self.device, dtype=torch.int32).unsqueeze(0)
         non_relevant_configs_tensor = torch.tensor(non_relevant_candidates_ids, device=self.device, dtype=torch.int32).unsqueeze(0)
 
