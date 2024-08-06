@@ -177,11 +177,9 @@ class CarbonAwareOrchestrator(OrchestratorInterface):
         _debug(f"Best timeslot (and prediction delay): {best_timeslot.id}")
         prediction.delay = best_timeslot.id
 
-        bestProvider = []
         for provider in providers:
             if provider.id == best_node.id:
-                bestProvider.append(provider)
-                return bestProvider  # return list of 1 element with best node
+                return [provider]  # return list of 1 element with best node
         return []
 
     def predict(self, req: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse | None:
