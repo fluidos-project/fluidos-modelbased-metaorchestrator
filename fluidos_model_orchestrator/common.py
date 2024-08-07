@@ -283,10 +283,9 @@ def validate_location(provider: ResourceProvider, value: str) -> bool:
 
     location = provider.flavor.spec.location
 
-    return any([
-        location.get("city", "").casefold() == value,
-        location.get("country", "").casefold() == value,
-    ])
+    return any(
+        value == str(_val).casefold() for _val in location.values()
+    )
 
 
 @unique

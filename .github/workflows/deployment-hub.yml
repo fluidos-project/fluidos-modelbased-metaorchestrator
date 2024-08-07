@@ -93,5 +93,5 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.configure.outputs.commit-ref }}
+            # ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.configure.outputs.commit-ref }}
           labels: ${{ steps.meta.outputs.labels }}
