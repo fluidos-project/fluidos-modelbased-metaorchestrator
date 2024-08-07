@@ -4,9 +4,9 @@ from typing import Any
 import kopf  # type: ignore
 
 from .common import Intent
-from .common import OrchestratorInterface
 from .common import ModelPredictRequest
 from .common import ModelPredictResponse
+from .common import OrchestratorInterface
 from .common import ResourceFinder
 from .common import ResourceProvider
 from .common import validate_on_intent
@@ -75,7 +75,7 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
     # find other resources types based on the intents
     expanding_resources: list[tuple[ResourceProvider, Intent]] = _find_expanding_resources(finder, request.intents, namespace)
 
-    if not deploy(spec, best_match, expanding_resources, prediction):
+    if not await deploy(spec, best_match, expanding_resources, prediction):
         logger.info("Unable to deploy")
 
         return {
