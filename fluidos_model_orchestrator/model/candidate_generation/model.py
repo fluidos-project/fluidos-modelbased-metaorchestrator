@@ -8,7 +8,7 @@ import pkg_resources
 import torch  # type: ignore
 import torch.nn as nn  # type: ignore
 import torch.nn.functional as F  # type: ignore
-from huggingface_hub import PyTorchModelHubMixin
+from huggingface_hub import PyTorchModelHubMixin  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 
 from ...common import ModelPredictRequest
