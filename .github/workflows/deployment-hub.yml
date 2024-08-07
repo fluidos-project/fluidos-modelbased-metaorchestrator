@@ -2,9 +2,10 @@ name: Publish Docker image on FLUIDOS Docker Hub
 
 on:
   push:
-    tags: [ 'v*.*.*' ]
-  release:
-    types: [published]
+    tags:
+      - "v*"
+    branches:
+      - main
 
 env:
   REGISTRY: docker.io
@@ -13,18 +14,60 @@ env:
   ORG_NAME: fluidos
 
 jobs:
+  configure:
+    name: Extract configuration
+    runs-on: ubuntu-latest
+    outputs:
+      commit-ref: ${{ steps.configure.outputs.commit-ref }}
+      repo-suffix: ${{ steps.configure.outputs.repo-suffix }}
+      master: ${{ steps.configure.outputs.master }}
+      repo-name: ${{ steps.configure.outputs.repo-name }}
+      architectures: ${{ steps.configure.outputs.architectures }}
+      pr-number: ${{ steps.configure.outputs.pr-number }}
+    steps:
+      - name: Get the version
+        id: get_version
+        run: echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Configure
+        id: configure
+        run: |
+          # The ref of the commit to checkout (do not use the merge commit if repository dispatch)
+          if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+            echo "master=false" >> $GITHUB_OUTPUT
+            echo "architectures=linux/amd64" >> $GITHUB_OUTPUT
+            echo "commit-ref=${{ github.event.client_payload.pull_request.head.sha }}" >> $GITHUB_OUTPUT
+            echo "pr-number=${{ github.event.client_payload.github.payload.issue.number }}" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.get_version.outputs.VERSION }}" != "" ]; then
+            echo "master=false" >> $GITHUB_OUTPUT
+            echo "architectures=linux/amd64,linux/arm64" >> $GITHUB_OUTPUT
+            echo "commit-ref=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_OUTPUT
+          else
+            echo "master=true" >> $GITHUB_OUTPUT
+            echo "architectures=linux/amd64,linux/arm64" >> $GITHUB_OUTPUT
+            echo "commit-ref=${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+
+          # The suffix to append to the repository name if not triggered by a push for a release
+          ([[ "${{ steps.get_version.outputs.VERSION }}" == "" ]] && \
+            echo "repo-suffix=-ci" ||
+            echo "repo-suffix=") >> $GITHUB_OUTPUT
+
+          if [ "${{ github.event_name }}" != "repository_dispatch" ]; then
+            echo "repo-name=${{ github.repository }}" >> $GITHUB_OUTPUT
+          else
+            echo "repo-name=${{ github.event.client_payload.github.payload.repository.full_name }}" >> $GITHUB_OUTPUT
+          fi
   build:
     runs-on:
         - self-hosted
         - fluidos
         - polito
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Log in to Docker Hub
@@ -37,12 +80,18 @@ jobs:
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      - name: Check out the repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.configure.outputs.commit-ref }}
           labels: ${{ steps.meta.outputs.labels }}
