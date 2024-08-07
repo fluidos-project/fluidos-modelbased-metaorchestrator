@@ -3,10 +3,10 @@ from typing import Any
 
 from ..common import Intent
 from ..common import KnownIntent
-from ..common import OrchestratorInterface
 from ..common import ModelPredictRequest
+from ..common import OrchestratorInterface
 from ..container import extract_image_embedding
-from .candidate_generation import Orchestrator as CG
+from .candidate_generation.model import Orchestrator as CG
 from .dummy import DummyOrchestrator
 from .ensemble import FluidosModelEnsemble
 # from .two_tower_v1.orchestrator import TwoTowerOrchestrator

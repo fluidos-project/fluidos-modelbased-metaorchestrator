@@ -79,6 +79,7 @@ D_UNITS = {
 class MODEL_TYPES:
     TWO_TOWER = "model_two_tower"
     CG = "model_cg"
+    CG_LEGACY = "model_cg_legacy"
     SMALL_TF = "model_small_tf"
     BASIC_RANKER = "model_basic_ranker"
     TEMPLATE_MODEL = "model_template"

@@ -1,0 +1,7 @@
+image_name,template_resource_id,status
+mysql:latest,1,OK
+mysql:latest,2,FAIL
+mysql:latest,5,OK
+mysql:latest,9,OK
+mysql:latest,19,FAIL
+mysql:latest,12,FAIL
