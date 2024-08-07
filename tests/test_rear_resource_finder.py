@@ -27,6 +27,28 @@ def test_find_local_no_nodes(k8s: AClusterManager) -> None:
     res_providers = finder._find_local(Resource(id="123", architecture="amd64"), "default")
 
     assert len(res_providers) == 0
+    k8s.delete()
+
+
+def test_find_local(k8s: AClusterManager) -> None:
+    k8s.create()
+
+    k8s.apply(pkg_resources.resource_filename(__name__, "node/crds/nodecore.fluidos.eu_flavors.yaml"))
+    k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/example-flavor.yaml"))
+
+    myconfig = kubernetes.client.Configuration()
+    kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
+
+    configuration = Configuration(
+        k8s_client=_build_k8s_client(myconfig)
+    )
+
+    finder = REARResourceFinder(configuration)
+
+    local = finder._find_local(Resource(id="123", architecture="amd64"), "default")
+
+    assert local is not None
+    assert len(local) == 1
 
 
 def test_solver_creation_and_check(k8s: AClusterManager) -> None:
@@ -69,6 +91,8 @@ def test_solver_creation_and_check(k8s: AClusterManager) -> None:
     assert solver is not None
     assert solver["metadata"]["name"] == solver_id
 
+    k8s.delete()
+
 
 def test_retrieve_peering_candidate_list(k8s: AClusterManager) -> None:
     k8s.create()
@@ -79,11 +103,12 @@ def test_retrieve_peering_candidate_list(k8s: AClusterManager) -> None:
 
     k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/nginx-w-intent-discovery.yaml"))
 
-    k8s.kubectl(["patch", "discovery", "discovery-nginx-w-intent-solver",
+    solver_id = "solver-sample"
+    k8s.kubectl(["patch", "discovery", f"discovery-{solver_id}",
                  "--patch-file", pkg_resources.resource_filename(__name__, "node/examples/nginx-w-intent-discovery-patch.yaml"),
                  "--type", "merge", "--subresource", "status"])
 
-    res = k8s.kubectl(["get", "discovery/discovery-nginx-w-intent-solver"])
+    res = k8s.kubectl(["get", f"discovery/discovery-{solver_id}"])
 
     assert "status" in res
 
@@ -98,22 +123,20 @@ def test_retrieve_peering_candidate_list(k8s: AClusterManager) -> None:
 
     finder = REARResourceFinder(configuration)
 
-    solver_id = "nginx-w-intent-solver"
-
     candidates = finder._retrieve_peering_candidates(solver_id, "default")
 
     assert candidates is not None
-    assert len(candidates) == 1
+    assert len(candidates) == 2
 
     k8s.delete()
 
 
-def test_temporary_flavor_update(k8s: AClusterManager) -> None:
+def test_flavor_update(k8s: AClusterManager) -> None:
     k8s.create()
 
     k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/fluidos-network-manager-identity-config-map.yaml"))
     k8s.apply(pkg_resources.resource_filename(__name__, "data/example-mbmo-config-map.yaml"))
-    k8s.apply(pkg_resources.resource_filename(__name__, "node/crds/nodecore.fluidos.eu_flavours.yaml"))
+    k8s.apply(pkg_resources.resource_filename(__name__, "node/crds/nodecore.fluidos.eu_flavors.yaml"))
     k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/example-flavor.yaml"))
 
     myconfig = kubernetes.client.Configuration()
@@ -129,6 +152,7 @@ def test_temporary_flavor_update(k8s: AClusterManager) -> None:
     flavors = finder._get_locally_available_flavors("default")
 
     assert len(flavors) == 1
+    assert "carbon" not in flavors[0].spec.flavor_type.type_data.properties
 
     flavor = flavors[0]
 
@@ -138,6 +162,6 @@ def test_temporary_flavor_update(k8s: AClusterManager) -> None:
 
     assert len(after_flavors) == 1
 
-    assert "carbon" in after_flavors[0].optional_fields
+    assert "carbon" in after_flavors[0].spec.flavor_type.type_data.properties
 
     k8s.delete()

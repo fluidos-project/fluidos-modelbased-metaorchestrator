@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 from abc import ABC
 from abc import abstractmethod
@@ -35,23 +36,29 @@ class Resource:
     memory: str | None = None
     architecture: str | None = None
     gpu: str | None = None
-    ephemeral_storage: str | None = None
-    persistent_storage: str | None = None
+    storage: str | None = None
     region: str | None = None
+    pods: str | int | None = None
 
     def can_run_on(self, flavor: Flavor) -> bool:
         logger.debug(f"Testing {self=} against {flavor=}")
-        if not _cpu_compatible(self.cpu, flavor.characteristics.cpu):
+        if self.cpu is not None and not _cpu_compatible(self.cpu, flavor.spec.flavor_type.type_data.characteristics.cpu):
             return False
 
-        if not _memory_compatible(self.memory, flavor.characteristics.memory):
+        if self.memory is not None and not _memory_compatible(self.memory, flavor.spec.flavor_type.type_data.characteristics.memory):
             return False
 
-        if self.architecture is not None and self.architecture != flavor.characteristics.architecture:
+        if self.architecture is not None and self.architecture != flavor.spec.flavor_type.type_data.characteristics.architecture:
             return False
 
-        if self.gpu is not None and int(self.gpu) > int(flavor.characteristics.gpu):
-            return False
+        if self.gpu is not None:
+            our_gpu = _convert_to_gpudata(self.gpu)
+            their_gpu = _convert_to_gpudata(flavor.spec.flavor_type.type_data.characteristics.gpu)
+
+            return our_gpu.can_run_on(their_gpu)
+
+        if self.pods is not None:
+            return int(self.pods) == int(flavor.spec.flavor_type.type_data.characteristics.pods if flavor.spec.flavor_type.type_data.characteristics.pods is not None else 0)
 
         # TODO: add checks for storage
 
@@ -105,14 +112,23 @@ def cpu_to_int(spec: str) -> int:
 
 
 @dataclass
+class GPUData:
+    cores: int | str = 0
+    memory: int | str = 0
+    model: str = ""
+
+    def can_run_on(self, other: GPUData) -> bool:
+        return int(other.cores) >= int(self.cores) and int(other.memory) >= int(self.memory)
+
+
+@dataclass(kw_only=True)
 class FlavorCharacteristics:
     cpu: str
     architecture: str
-    gpu: str
     memory: str
+    gpu: GPUData | str | int = "0"
     pods: str | None = None
-    ephemeral_storage: str | None = None
-    persistent_storage: str | None = None
+    storage: str | None = None
 
 
 @unique
@@ -124,22 +140,46 @@ class FlavorType(Enum):
 
     @staticmethod
     def factory(type_name: str) -> FlavorType:
-        if type_name == "k8s-fluidos":
+        if type_name == "K8Slice":
             return FlavorType.K8SLICE
 
         raise ValueError(f"Not supported {type_name=}")
 
 
-@dataclass
-class Flavor:
-    id: str
-    type: FlavorType
+@dataclass(kw_only=True)
+class FlavorMetadata:
+    name: str
+    owner_references: dict[str, Any]
+
+
+@dataclass(kw_only=True)
+class FlavorK8SliceData:
     characteristics: FlavorCharacteristics
+    policies: dict[str, Any] = field(default_factory=dict)
+    properties: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(kw_only=True)
+class FlavorTypeData:
+    type_identifier: FlavorType
+    type_data: FlavorK8SliceData
+
+
+@dataclass(kw_only=True)
+class FlavorSpec:
+    availability: bool
+    flavor_type: FlavorTypeData
+    location: dict[str, Any]
+    network_property_type: str
     owner: dict[str, Any]
     providerID: str
-    policy: dict[str, Any] = field(default_factory=dict)
-    optional_fields: dict[str, Any] = field(default_factory=dict)
     price: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(kw_only=True)
+class Flavor:
+    metadata: FlavorMetadata
+    spec: FlavorSpec
 
 
 @dataclass
@@ -191,9 +231,49 @@ def _validate_regulations(provider: ResourceProvider, value: str) -> bool:
     or such
     """
     value = value.casefold()
-    for field_name, field_value in provider.flavor.optional_fields.items():
+    for field_name, field_value in provider.flavor.spec.flavor_type.type_data.properties.items():
         if str(field_value).casefold() == value:
             return True
+
+    return False
+
+
+def _check_cpu(provider: ResourceProvider, value: str) -> bool:
+    return _cpu_compatible(value, provider.flavor.spec.flavor_type.type_data.characteristics.cpu)
+
+
+def _check_memory(provider: ResourceProvider, value: str) -> bool:
+    return _memory_compatible(value, provider.flavor.spec.flavor_type.type_data.characteristics.memory)
+
+
+def _convert_to_gpudata(gpu: GPUData | str | int | dict[str, Any]) -> GPUData:
+    if type(gpu) is GPUData:
+        return gpu
+    if type(gpu) is dict:
+        # loads of faith required here:
+        return GPUData(
+            cores=gpu.get("core", "0"),
+            memory=gpu.get("memory", "0"),
+            model=gpu.get("model", "")
+        )
+
+    if type(gpu) is str:
+        gpu = int(gpu)
+    if type(gpu) is int:
+        return GPUData(cores=gpu)
+
+    raise ValueError(f"Unable to convert value '{gpu}' of type {type(gpu)}")
+
+
+def _check_gpu(provider: ResourceProvider, value: str) -> bool:
+    data = json.loads(value)
+
+    gpu: GPUData = _convert_to_gpudata(provider.flavor.spec.flavor_type.type_data.characteristics.gpu)
+
+    if type(data) is dict:
+        return gpu.can_run_on(_convert_to_gpudata(data))
+    elif type(data) is int:
+        return int(gpu.cores) >= data
 
     return False
 
@@ -201,10 +281,10 @@ def _validate_regulations(provider: ResourceProvider, value: str) -> bool:
 @unique
 class KnownIntent(Enum):
     # k8s resources
-    cpu = "cpu", False, lambda provider, value: _cpu_compatible(value, provider.flavor.characteristics.cpu)
-    memory = "memory", False, lambda provider, value: _memory_compatible(value, provider.flavor.characteristics.memory)
-    gpu = "gpu", False, lambda provider, value: int(value) <= int(provider.flavor.characteristics.gpu)
-    architecture = "architecture", False, lambda provider, value: value == provider.flavor.characteristics.architecture
+    cpu = "cpu", False, _check_cpu
+    memory = "memory", False, _check_memory
+    gpu = "gpu", False, _check_gpu
+    architecture = "architecture", False, lambda provider, value: value == provider.flavor.spec.flavor_type.type_data.characteristics.architecture
 
     # high order requests
     latency = "latency", False, _always_true
@@ -285,21 +365,54 @@ class ResourceFinder(ABC):
 
 
 def build_flavor(flavor: dict[str, Any]) -> Flavor:
+    if flavor["kind"] != "Flavor":
+        raise ValueError(f"Unable to process kind {flavor['kind']}")
+
     return Flavor(
-        id=flavor["metadata"]["name"],
-        type=FlavorType.factory(flavor["spec"]["type"]),
-        providerID=flavor["spec"]["providerID"],
-        characteristics=FlavorCharacteristics(
-            cpu=flavor["spec"]["characteristics"]["cpu"],
-            architecture=flavor["spec"]["characteristics"]["architecture"],
-            memory=flavor["spec"]["characteristics"]["memory"],
-            gpu=flavor["spec"]["characteristics"]["gpu"],
-            pods=flavor["spec"]["characteristics"]["pods"],
-            ephemeral_storage=flavor["spec"]["characteristics"]["ephemeral-storage"],
-            persistent_storage=flavor["spec"]["characteristics"]["persistent-storage"]
-        ),
-        owner=flavor["spec"]["owner"],
-        optional_fields=flavor["spec"]["optionalFields"],
-        policy=flavor["spec"]["policy"],
-        price=flavor["spec"]["price"],
+        metadata=_build_metadata(flavor["metadata"]),
+        spec=_build_spec(flavor["spec"]),
     )
+
+
+def _build_metadata(metadata: dict[str, Any]) -> FlavorMetadata:
+    return FlavorMetadata(
+        name=metadata["name"],
+        owner_references=metadata["ownerReferences"],
+    )
+
+
+def _build_spec(spec: dict[str, Any]) -> FlavorSpec:
+    return FlavorSpec(
+        availability=spec["availability"],
+        flavor_type=_build_flavor_type(spec["flavorType"]),
+        location=spec["location"],
+        network_property_type=spec["networkPropertyType"],
+        owner=spec["owner"],
+        price=spec["price"],
+        providerID=spec["providerID"],
+    )
+
+
+def _build_flavor_type(flavor_type_data: dict[str, Any]) -> FlavorTypeData:
+    flavor_type = FlavorType.factory(flavor_type_data["typeIdentifier"])
+    return FlavorTypeData(
+        type_identifier=flavor_type,
+        type_data=_build_flavor_type_data(flavor_type, flavor_type_data["typeData"])
+    )
+
+
+def _build_flavor_type_data(flavor_type: FlavorType, data: dict[str, Any]) -> FlavorK8SliceData:
+    if flavor_type is FlavorType.K8SLICE:
+        return FlavorK8SliceData(
+            characteristics=FlavorCharacteristics(
+                cpu=data["characteristics"]["cpu"],
+                architecture=data["characteristics"]["architecture"],
+                memory=data["characteristics"]["memory"],
+                gpu=data["characteristics"]["gpu"],
+                pods=data["characteristics"]["pods"],
+                storage=data["characteristics"]["storage"],
+            ),
+            policies=data.get("policies", {}),
+            properties=data.get("properties", {})
+        )
+    raise ValueError(f"Unsupported flavor type: {flavor_type}")

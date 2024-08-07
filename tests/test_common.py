@@ -1,4 +1,12 @@
-apiVersion: nodecore.fluidos.eu/v1alpha1
+from typing import Any
+
+import yaml
+
+from fluidos_model_orchestrator.common import build_flavor
+
+
+def test_flavor_construction() -> None:
+    example = """apiVersion: nodecore.fluidos.eu/v1alpha1
 kind: Flavor
 metadata:
   name: fluidos.eu-k8slice-2f1640fd4dfb151b4d81ad9590dcb6cc
@@ -51,3 +59,10 @@ spec:
     currency: ""
     period: ""
   providerID: ekvjnuvsel
+"""
+
+    data: dict[str, Any] = yaml.safe_load(example)
+
+    flavor = build_flavor(data)
+
+    assert flavor is not None

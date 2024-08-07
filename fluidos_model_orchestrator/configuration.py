@@ -12,7 +12,7 @@ from kubernetes.client.exceptions import ApiException  # type: ignore
 
 @dataclass
 class Configuration:
-    local_node_key: str = "fluidos.eu/resource-node"
+    local_node_key: str = "node-role.fluidos.eu/resources"
     remote_node_key: str = "liqo.io/remote-cluster-id"
     namespace: str = "fluidos"
     k8s_client: client.ApiClient | None = None

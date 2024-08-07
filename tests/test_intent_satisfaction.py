@@ -1,6 +1,11 @@
 from fluidos_model_orchestrator.common import Flavor
 from fluidos_model_orchestrator.common import FlavorCharacteristics
+from fluidos_model_orchestrator.common import FlavorK8SliceData
+from fluidos_model_orchestrator.common import FlavorMetadata
+from fluidos_model_orchestrator.common import FlavorSpec
 from fluidos_model_orchestrator.common import FlavorType
+from fluidos_model_orchestrator.common import FlavorTypeData
+from fluidos_model_orchestrator.common import GPUData
 from fluidos_model_orchestrator.common import Intent
 from fluidos_model_orchestrator.common import KnownIntent
 from fluidos_model_orchestrator.resources.rear.local_resource_provider import LocalResourceProvider
@@ -8,33 +13,67 @@ from fluidos_model_orchestrator.resources.rear.local_resource_provider import Lo
 
 def test_satisfaction_hardware_resources():
     provider_ok = LocalResourceProvider("ok", Flavor(
-        "foo",
-        FlavorType.K8SLICE,
-        FlavorCharacteristics(
-            cpu="10n",
-            memory="32Gi",
-            architecture="amd64",
-            gpu="1",
+        metadata=FlavorMetadata(
+            name="foo",
+            owner_references={}
         ),
-        {},
-        "provider_id",
-        {},
-        {}
+        spec=FlavorSpec(
+            availability=True,
+            flavor_type=FlavorTypeData(
+                type_identifier=FlavorType.K8SLICE,
+                type_data=FlavorK8SliceData(
+                    characteristics=FlavorCharacteristics(
+                        cpu="10n",
+                        memory="32Gi",
+                        architecture="amd64",
+                        gpu=GPUData(
+                            cores=1,
+                            memory="",
+                            model=""
+                        )
+                    ),
+                    policies={},
+                    properties={}
+                )
+            ),
+            location={},
+            network_property_type="",
+            owner={},
+            providerID="provider_id",
+            price={}
+        )
     ))
 
-    provider_not_ok = LocalResourceProvider("not ok", Flavor(
-        "foo",
-        FlavorType.K8SLICE,
-        FlavorCharacteristics(
-            cpu="1n",
-            memory="1Gi",
-            architecture="arm64",
-            gpu="0",
+    provider_not_ok = LocalResourceProvider("not_ok", Flavor(
+        metadata=FlavorMetadata(
+            name="foo",
+            owner_references={}
         ),
-        {},
-        "provider_id",
-        {},
-        {}
+        spec=FlavorSpec(
+            availability=True,
+            flavor_type=FlavorTypeData(
+                type_identifier=FlavorType.K8SLICE,
+                type_data=FlavorK8SliceData(
+                    characteristics=FlavorCharacteristics(
+                        cpu="1n",
+                        memory="1Gi",
+                        architecture="arm",
+                        gpu=GPUData(
+                            cores=0,
+                            memory="",
+                            model=""
+                        )
+                    ),
+                    policies={},
+                    properties={}
+                )
+            ),
+            location={},
+            network_property_type="",
+            owner={},
+            providerID="provider_id",
+            price={}
+        )
     ))
 
     intents = [

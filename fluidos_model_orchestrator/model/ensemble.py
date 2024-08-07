@@ -67,13 +67,25 @@ def _merge_resource_profile(res1: Resource, res2: Resource) -> Resource:
     else:
         memory = res2.memory
 
+    pods: str | None | int
+
+    if res1.pods is None:
+        pods = res2.pods
+    elif res2.pods is None:
+        pods = res1.pods
+    else:
+        pods = str(max(
+            int(res1.pods),
+            int(res2.pods)
+        ))
+
     return Resource(
         id=res1.id,
         cpu=cpu,
         memory=memory,
         architecture=res1.architecture,
         gpu=res1.gpu if res1.gpu is not None else res2.gpu,
-        ephemeral_storage=res1.ephemeral_storage if res1.ephemeral_storage is not None else res2.ephemeral_storage,
-        persistent_storage=res1.persistent_storage if res1.persistent_storage is not None else res2.persistent_storage,
+        storage=res1.storage if res1.storage is not None else res2.storage,
+        pods=pods,
         region=res1.region if res1.region is not None else res2.region,
     )

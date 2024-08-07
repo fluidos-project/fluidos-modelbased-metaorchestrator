@@ -74,11 +74,15 @@ class REARResourceFinder(ResourceFinder):
             group="nodecore.fluidos.eu",
             version="v1alpha1",
             namespace=namespace,
-            plural="flavours",
-            name=flavor.id,
+            plural="flavors",
+            name=flavor.metadata.name,
             body={
                 "spec": {
-                    "optionalFields": data
+                    "flavorType": {
+                        "typeData": {
+                            "properties": data
+                        }
+                    }
                 }
             }
         )
@@ -294,11 +298,48 @@ class REARResourceFinder(ResourceFinder):
         return (solver_request, intent_id)
 
     def _build_flavour_selector(self, resource: Resource) -> dict[str, Any]:
-        return {
-            "type": "k8s-fluidos",
-            "architecture": resource.architecture if resource.architecture is not None else "amd64",
-            "rangeSelector": self._build_range_selector(resource)
+        selector: dict[str, Any] = {
+            # The flavorType is the type of the Flavor (FLUIDOS node) that the solver should find
+            "flavorType": "K8Slice",
         }
+
+        # The filters are used to filter the Flavors (FLUIDOS nodes) that the solver should consider
+        selector_filters: dict[str, Any] = {}
+
+        if resource.architecture is not None:
+            selector_filters["architectureFilter"] = {
+                "name": "Match",
+                "data": {
+                    "value": resource.architecture
+                }
+            }
+
+        if resource.cpu is not None:
+            selector_filters["cpuFilter"] = {
+                "name": "Range",
+                "data": {
+                    "min": resource.cpu
+                }
+            }
+        if resource.memory is not None:
+            selector_filters["memoryFilter"] = {
+                "name": "Range",
+                "data": {
+                    "min": resource.memory
+                }
+            }
+        if resource.pods is not None:
+            selector_filters["modsFilter"] = {
+                "name": "Match",
+                "data": {
+                    "value": resource.pods
+                }
+            }
+
+        if len(selector_filters):
+            selector["filters"] = selector_filters
+
+        return selector
 
     def _build_range_selector(self, resource: Resource) -> dict[str, str]:
         selector: dict[str, str] = {
@@ -319,41 +360,39 @@ class REARResourceFinder(ResourceFinder):
         local_flavours = self._get_locally_available_flavors(namespace)
 
         for flavor in local_flavours:
-            name = flavor.id
+            name = flavor.metadata.name
 
-            logger.info(f"Processing flavour {name=}")
+            logger.info(f"Processing flavor {name=}")
 
-            if flavor.type is not FlavorType.K8SLICE:
-                logger.info(f"Skipping, wrong flavour type {flavor.type}")
+            if flavor.spec.flavor_type.type_identifier is not FlavorType.K8SLICE:
+                logger.info(f"Skipping, wrong flavour type {flavor.spec.flavor_type}")
                 continue
 
             if resource.can_run_on(flavor):
                 logger.info("Local flavour is compatible, using it")
                 fitting_resources.append(
                     LocalResourceProvider(
-                        flavor.id,
+                        flavor.metadata.name,
                         flavor
                     ))
 
         return fitting_resources
 
     def _get_locally_available_flavors(self, namespace: str) -> list[Flavor]:
+        flavor_list: dict[str, Any]
+
         try:
-            local_flavours = self.api_client.list_namespaced_custom_object(
+            flavor_list = self.api_client.list_namespaced_custom_object(
                 group="nodecore.fluidos.eu",
                 version="v1alpha1",
-                plural="flavours",
+                plural="flavors",
                 namespace=namespace,
             )
-
-            if local_flavours is None:
-                return []
-
-            return [build_flavor(flavor) for flavor in local_flavours.get("items", [])]
-
         except ApiException:
-            logger.warn("Failed to retrieve local flavours, is node available?")
-            return []
+            logger.warn("Failed to retrieve local flavors, is node available?")
+            flavor_list = {}
+
+        return [build_flavor(flavor) for flavor in flavor_list.get("items", [])]
 
     def _get_remotely_available_flavors(self, namespace: str) -> list[Flavor]:
         return []  # TODO: waiting for REAR 2

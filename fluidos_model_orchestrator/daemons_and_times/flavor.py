@@ -7,7 +7,7 @@ import kopf  # type: ignore
 from fluidos_model_orchestrator.configuration import CONFIGURATION
 
 
-@kopf.daemon("flavours", cancellation_timeout=1.0)  # type: ignore
+@kopf.daemon("flavors", cancellation_timeout=1.0)  # type: ignore
 async def daemons_for_flavours_observation(uid: str | None, stopped: bool, logger: Logger, spec: dict[str, Any], **kwargs: dict[str, Any]) -> None:
     try:
         logger.info(f"Running timeseries generation for local flavors only (aka owned by {CONFIGURATION.identity})")
