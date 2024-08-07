@@ -278,6 +278,17 @@ def _check_gpu(provider: ResourceProvider, value: str) -> bool:
     return False
 
 
+def validate_location(provider: ResourceProvider, value: str) -> bool:
+    value = value.casefold()
+
+    location = provider.flavor.spec.location
+
+    return any([
+        location.get("city", "").casefold() == value,
+        location.get("country", "").casefold() == value,
+    ])
+
+
 @unique
 class KnownIntent(Enum):
     # k8s resources
@@ -288,7 +299,7 @@ class KnownIntent(Enum):
 
     # high order requests
     latency = "latency", False, _always_true
-    location = "location", False, _always_true
+    location = "location", False, validate_location
     throughput = "throughput", False, _always_true
     compliance = "compliance", False, _validate_regulations
     energy = "energy", False, _always_true

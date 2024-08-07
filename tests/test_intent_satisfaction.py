@@ -8,6 +8,7 @@ from fluidos_model_orchestrator.common import FlavorTypeData
 from fluidos_model_orchestrator.common import GPUData
 from fluidos_model_orchestrator.common import Intent
 from fluidos_model_orchestrator.common import KnownIntent
+from fluidos_model_orchestrator.common import validate_location
 from fluidos_model_orchestrator.resources.rear.local_resource_provider import LocalResourceProvider
 
 
@@ -88,3 +89,36 @@ def test_satisfaction_hardware_resources():
 
     for intent in intents:
         assert not intent.validates(provider_not_ok), intent
+
+
+def test_validation_of_location():
+    provider = LocalResourceProvider("test", Flavor(
+        metadata=FlavorMetadata(
+            name="foo",
+            owner_references={}
+        ),
+        spec=FlavorSpec(
+            availability=True,
+            flavor_type=FlavorTypeData(
+                type_identifier=FlavorType.K8SLICE,
+                type_data=FlavorK8SliceData(
+                    characteristics=FlavorCharacteristics(cpu="1n", memory="1Gi", architecture="arm", gpu=GPUData(cores=0, memory="", model="")),
+                    policies={},
+                    properties={}
+                )
+            ),
+            location={
+                "city": "Dublin",
+                "country": "Ireland",
+            },
+            network_property_type="",
+            owner={},
+            providerID="provider_id",
+            price={}
+        )
+    ))
+
+    assert validate_location(provider, "Dublin")
+    assert validate_location(provider, "Ireland")
+    assert not validate_location(provider, "Turin")
+    assert not validate_location(provider, "Italy")
