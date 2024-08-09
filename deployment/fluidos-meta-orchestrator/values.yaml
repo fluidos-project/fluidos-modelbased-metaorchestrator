@@ -8,7 +8,7 @@ image:
   repository: "fluidos/fluidos-metaorchestrator"
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+  tag: "latest"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -53,11 +53,11 @@ resources:
 
 livenessProbe:
   httpGet:
-    path: /
+    path: /healthz
     port: http
 readinessProbe:
   httpGet:
-    path: /
+    path: /healthz
     port: http
 
 
@@ -80,5 +80,5 @@ tolerations: []
 
 affinity: {}
 
-WP6:
-  electricity_map_API_KEY:  "<MY KEY TO BE REPLACED WITH SOMETHING MEANINGFULL>" # ElectricityMap API KEY <COMPLETE>
+electricity_map:
+  key:  "<MY KEY TO BE REPLACED WITH SOMETHING MEANINGFULL>" # ElectricityMap API KEY <COMPLETE>

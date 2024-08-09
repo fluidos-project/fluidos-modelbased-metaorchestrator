@@ -316,9 +316,6 @@ class KnownIntent(Enum):
         self._external = external
         self._validator = validator
 
-    def __repr__(self) -> str:
-        return super().__repr__()
-
     def to_intent_key(self) -> str:
         return f"fluidos-intent-{self.name}"
 
