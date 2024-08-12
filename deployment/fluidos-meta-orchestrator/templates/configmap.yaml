@@ -3,4 +3,3 @@ kind: ConfigMap
 metadata:
   name: fluidos-mbmo-configmap
 data:
-  ELECTRICITY_MAP_API_KEY: ${{ .Value.WP6.electricity_map_API_KEY }}
