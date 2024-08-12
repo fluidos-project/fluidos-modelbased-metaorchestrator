@@ -1,6 +1,10 @@
 from datetime import datetime
 from datetime import timedelta
-from datetime import UTC
+try:
+    from datetime import UTC
+except ImportError:
+    from datetime import timezone
+    UTC = timezone.utc
 from logging import Logger
 from typing import Any
 
