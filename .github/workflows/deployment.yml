@@ -143,7 +143,7 @@ jobs:
       - name: Package helm chart
         run: |
           # the output should be in the .cr-release-packages since cr index expects to find it there to create the helm index
-          helm package deployments/fluidos-meta-orchestrator --version "${{ needs.configure.outputs.commit-ref }}" --app-version "${{ needs.configure.outputs.commit-ref }}" --destination .cr-release-packages
+          helm package deployment/fluidos-meta-orchestrator --version "${{ needs.configure.outputs.commit-ref }}" --app-version "${{ needs.configure.outputs.commit-ref }}" --destination .cr-release-packages
 
       # we need to upload only helm artifacts first, to make the index updater to work
       - uses: ncipollo/release-action@v1
