@@ -3,7 +3,7 @@ import yaml
 
 from fluidos_model_orchestrator.model import convert_to_model_request
 from fluidos_model_orchestrator.model import get_model_object
-from fluidos_model_orchestrator.model.candidate_generation import Orchestrator as CandidateGeneration
+from fluidos_model_orchestrator.model.candidate_generation.model import Orchestrator as CandidateGeneration
 from fluidos_model_orchestrator.model.carbon_aware.orchestrator import CarbonAwareOrchestrator
 
 
