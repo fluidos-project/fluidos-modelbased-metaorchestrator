@@ -42,7 +42,7 @@ kubectl apply -f tests/node/crds
 pip install -e .
 
 # start FLUIDOS operator
-kopfs run --verbose -m fluidos_model_orchestrator
+kopf run --verbose -m fluidos_model_orchestrator
 ```
 
 The shell will provide the log of the execution of the operator.
