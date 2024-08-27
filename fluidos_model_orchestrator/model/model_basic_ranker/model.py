@@ -12,7 +12,6 @@ from fluidos_model_orchestrator.common import ModelPredictRequest
 from fluidos_model_orchestrator.common import ModelPredictResponse
 from fluidos_model_orchestrator.common import OrchestratorInterface
 from fluidos_model_orchestrator.common import Resource
-from fluidos_model_orchestrator.common import ResourceProvider
 from fluidos_model_orchestrator.model.common import download_model_from_hf
 from fluidos_model_orchestrator.model.common import MODEL_FILE_NAME
 from fluidos_model_orchestrator.model.common import ModelInterface
@@ -198,6 +197,3 @@ class Orchestrator(OrchestratorInterface):
         return ModelPredictResponse(
             request.id,
             resource_profile=selected_resource)
-
-    def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse) -> list[ResourceProvider]:
-        return providers
