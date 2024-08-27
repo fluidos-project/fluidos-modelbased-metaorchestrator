@@ -5,6 +5,7 @@ from datetime import timedelta
 import numpy as np  # type: ignore
 
 from fluidos_model_orchestrator.common import cpu_to_int
+from fluidos_model_orchestrator.common import KnownIntent
 from fluidos_model_orchestrator.common import memory_to_int
 from fluidos_model_orchestrator.common import ModelPredictRequest
 from fluidos_model_orchestrator.common import ModelPredictResponse
@@ -57,22 +58,21 @@ class CarbonAwareOrchestrator(OrchestratorInterface):
         _debug(f"ModelPredictRequest pod_request: {request.pod_request}")
 
         deadline = np.nan
-        cpuRequest = np.nan
-        ramRequest = np.nan
+        cpuRequest = 1
+        ramRequest = 1
         for intent in request.intents:
-            match intent.name.name:
-                case "deadline":
-                    deadline = int(intent.value)
-                    deadline += 1
-                    _debug(f"Found deadline from intent file (+1): {deadline}")
-                case "cpu":
-                    cpuRequest = cpu_to_int(intent.value)
-                    _debug(f"Found cpu request from intent file: {cpuRequest}")
-                case "memory":
-                    ramRequest = memory_to_int(intent.value)
-                    _debug(f"Found memory request from intent file: {ramRequest}")
-                case _:
-                    _debug(f"Intent {intent.name.name} not recognized in Carbon-Aware orchestrator")
+            if intent.name is KnownIntent.max_delay:
+                deadline = int(intent.value)
+                deadline += 1
+                _debug(f"Found deadline from intent file (+1): {deadline}")
+            elif intent.name is KnownIntent.cpu:
+                cpuRequest = cpu_to_int(intent.value)
+                _debug(f"Found cpu request from intent file: {cpuRequest}")
+            elif intent.name is KnownIntent.memory:
+                ramRequest = memory_to_int(intent.value)
+                _debug(f"Found memory request from intent file: {ramRequest}")
+            else:
+                _debug(f"Intent {intent.name.name} not recognized in Carbon-Aware orchestrator")
         if deadline == np.nan or deadline <= 0 or deadline > 24:
             logging.exception("Deadline must be provided between ]0;24]")
             return []
