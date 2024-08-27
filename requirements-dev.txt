@@ -9,3 +9,5 @@ mypy
 flake8
 types-PyYAML
 kubernetes-stubs
+matplotlib==3.8.3
+ipython
