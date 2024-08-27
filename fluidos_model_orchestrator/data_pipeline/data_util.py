@@ -6,7 +6,7 @@ from typing import Any
 import pandas as pd
 import tensorflow as tf  # type: ignore
 
-
+from fluidos_model_orchestrator.data_pipeline.augmentation.augmentation_utils import AUGMENTATION_TYPES
 from fluidos_model_orchestrator.model.utils import D_TYPE  # type: ignore
 from fluidos_model_orchestrator.model.utils import D_UNITS  # type: ignore
 from fluidos_model_orchestrator.model.utils import FLUIDOS_COL_NAMES  # type: ignore
@@ -34,6 +34,16 @@ class PIPELINE_FILES:
 
     IMAGE_FEATURES_NAME = "image_features.json"
     TEMPLATE_RESOURCES_TO_CLASS_ID = "template_resources2id.json"
+
+
+def get_target_column(augmentation_type: str) -> str:
+    if augmentation_type == AUGMENTATION_TYPES.PERFORMANCE_RATING:
+        return FLUIDOS_COL_NAMES.TARGET_PERFORMANCE_RESOURCES_AUGMENTATION_COL
+    elif augmentation_type == AUGMENTATION_TYPES.FEEDBACK_LOOP:
+        return FLUIDOS_COL_NAMES.TARGET_MOST_OPTIMAL_TEMPLATE_ID
+    else:
+        raise Exception(f"Couldn't find what augmentation type you were referring to with: {augmentation_type}")
+
 
 
 def load_ml_ready_df(ml_ready_path: Path) -> tuple[pd.DataFrame, pd.DataFrame]:  # TODO ml_ready_path check everywhere for the path
