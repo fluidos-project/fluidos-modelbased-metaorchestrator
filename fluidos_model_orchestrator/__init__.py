@@ -36,7 +36,7 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
 
     predictor: OrchestratorInterface = get_model_object(request)
 
-    prediction: ModelPredictResponse | None = predictor.predict(request, "amd64")
+    prediction: ModelPredictResponse | None = predictor.predict(request, "arm64")
 
     if prediction is None:
         logger.error("Model unable to provide valid prediction")
@@ -51,7 +51,8 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
     best_matches: list[ResourceProvider] = validate_with_intents(
         predictor.rank_resource(
             finder.find_best_match(prediction.to_resource(), namespace),
-            prediction
+            prediction,
+            request
         ), request.intents)
 
     if not len(best_matches):

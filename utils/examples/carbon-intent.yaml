@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-deployment
+  annotations:
+    fluidos-intent-deadline: "12"
+  labels:
+    app.kubernetes.io/name: "test-deployment"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: test-deployment
+  template:
+    metadata:
+      labels:
+        name: test-deployment
+        app.kubernetes.io/name: "test-deployment"
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+            requests:
+              cpu: "500m"
+              memory: "256Mi"

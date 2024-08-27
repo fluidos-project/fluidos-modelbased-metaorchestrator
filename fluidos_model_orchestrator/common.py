@@ -169,11 +169,11 @@ class FlavorTypeData:
 class FlavorSpec:
     availability: bool
     flavor_type: FlavorTypeData
-    location: dict[str, Any]
     network_property_type: str
     owner: dict[str, Any]
     providerID: str
     price: dict[str, Any] = field(default_factory=dict)
+    location: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(kw_only=True)
@@ -213,10 +213,10 @@ class OrchestratorInterface(ABC):
         raise NotImplementedError("Not implemented: abstract method")
 
     @abstractmethod
-    def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse | None:
+    def predict(self, data: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse | None:
         raise NotImplementedError("Not implemented: abstract method")
 
-    def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse) -> list[ResourceProvider]:
+    def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse, request: ModelPredictRequest) -> list[ResourceProvider]:
         return providers
 
 
@@ -303,6 +303,10 @@ class KnownIntent(Enum):
     compliance = "compliance", False, _validate_regulations
     energy = "energy", False, _always_true
     battery = "battery", False, _always_true
+
+    # carbon aware requests
+    max_delay = "max_delay", False, _always_true
+    carbon_aware = "carbon_aware", False, _always_true
 
     # service
     service = "service", True, _always_true
