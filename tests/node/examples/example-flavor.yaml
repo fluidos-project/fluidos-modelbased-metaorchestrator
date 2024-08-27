@@ -10,7 +10,7 @@ metadata:
   resourceVersion: "1956"
   uid: 1dbd9361-a36b-4ee6-adff-958b5e0647bf
 spec:
-  # availability: true
+  availability: true
   flavorType:
     typeData:
       characteristics:

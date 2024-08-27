@@ -7,9 +7,9 @@ from ..common import ModelPredictRequest
 from ..common import OrchestratorInterface
 from ..container import extract_image_embedding
 from .candidate_generation.model import Orchestrator as CandidateGenerator
+from .carbon_aware.orchestrator import CarbonAwareOrchestrator
 from .ensemble import FluidosModelEnsemble
-from .model_basic_ranker.model import Orchestrator as BasicRanker
-from fluidos_model_orchestrator.model.carbon_aware.orchestrator import CarbonAwareOrchestrator
+# from .model_basic_ranker.model import Orchestrator as BasicRanker
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ _model_characteristics: list[tuple[set[KnownIntent], type[OrchestratorInterface]
         KnownIntent.memory,
         KnownIntent.throughput,
     }, CandidateGenerator),
-    ({KnownIntent.latency, KnownIntent.location, KnownIntent.memory, KnownIntent.cpu}, BasicRanker),
+    # ({KnownIntent.latency, KnownIntent.location, KnownIntent.memory, KnownIntent.cpu}, BasicRanker),
     ({KnownIntent.carbon_aware, KnownIntent.max_delay}, CarbonAwareOrchestrator)
 ]
 
