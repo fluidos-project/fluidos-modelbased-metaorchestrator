@@ -91,7 +91,7 @@ class CGModelTrainer(BaseModelTrainer):
         self.train_ratio = train_ratio
         self.dataset_path = dataset_path
         self.load_from_generated = load_from_generated
-        self.checkpoint_path = self.checkpoint_dir.joinpath(f"{MODEL_CHECKPOINT_NAMES.CG_INTERMEDIATE}_{epochs-1}.pt")
+        self.checkpoint_path = self.checkpoint_dir.joinpath(f"{MODEL_CHECKPOINT_NAMES.CG_INTERMEDIATE}_{epochs - 1}.pt")
 
         self.model_config: dict[str, Any] = {
             "fc1_size": fc1_size,
@@ -123,7 +123,7 @@ class CGModelTrainer(BaseModelTrainer):
     def _prepare_dataset_model_specific(self, test_mode: bool = False, training_size_ratio: float = 0.90,
                                         model_tag: str = "model_source", dataset_type: str = "train") -> tuple[Any, Any]:
         if test_mode:
-            self.checkpoint_path = self.checkpoint_dir.joinpath(f"{MODEL_CHECKPOINT_NAMES.CG_INTERMEDIATE}_{self.epochs-1}.pt")  # num epochs was changed
+            self.checkpoint_path = self.checkpoint_dir.joinpath(f"{MODEL_CHECKPOINT_NAMES.CG_INTERMEDIATE}_{self.epochs - 1}.pt")  # num epochs was changed
         with open(self.dataset_path.joinpath(PIPELINE_FILES.TEMPLATE_RESOURCES_TO_CLASS_ID)) as f:
             self.template_resource2id = json.load(f)
         self.model_config["num_configs"] = len(self.template_resource2id)
@@ -243,7 +243,7 @@ class CGModelTrainer(BaseModelTrainer):
         train_loss = train_loss / self.train_size
         return train_loss, train_accuracy
 
-    def __validation(self, epoch: int) -> tuple[float, float]:
+    def __validation(self, epoch: int = 0) -> tuple[float, float]:
 
         valid_loss: float = 0.0
         val_accuracy: float = 0.0
@@ -264,6 +264,11 @@ class CGModelTrainer(BaseModelTrainer):
         val_accuracy = val_accuracy / self.val_size
 
         return valid_loss, val_accuracy
+
+    def _validate_model_specific(self) -> None:
+        current_val_loss, val_accuracy = self.__validation()
+        self.val_loss_over_epochs.append(current_val_loss)
+        self.val_acc_over_epochs.append(val_accuracy)
 
     def _predict_model_specific(self, input_dict: dict[str, list[Any]]) -> npt.NDArray[np.float32]:
         return np.zeros(1, dtype=np.float32)

@@ -125,6 +125,12 @@ class BaseModelTrainer:
             json.dump(training_history, file, indent=4)
         return training_history
 
+    def validate_model(self) -> Any:
+        return self._validate_model_specific()
+
+    def _validate_model_specific(self) -> Any:
+        raise NotImplementedError(" method is not implemented")
+
     def _train_model_specific(self) -> dict[str, list[float]]:
         raise NotImplementedError(" method is not implemented")
 

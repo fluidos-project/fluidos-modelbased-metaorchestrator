@@ -17,7 +17,7 @@ class MODEL_HF_VERSION:
     LATEST = "latest"
     CURRENT = "2"
 
-    
+
 class FLUIDOS_COL_NAMES:
     POD_FILE_NAME = "pod_filename"
     TEMPLATE_RESOURCE_ID = "template_resource_id"
@@ -37,6 +37,7 @@ class FLUIDOS_COL_NAMES:
     TARGET_BASIC_RESOURCE_AVAIL_AUGMENTATION_COL = "basic_resource_avail"
     TARGET_PERFORMANCE_RESOURCES_AUGMENTATION_COL = "performance_resources"
     TARGET_MOST_OPTIMAL_TEMPLATE_ID = "best_candidate"
+
 
 class FLUIDOS_INPUT_OUTPUT_NAME:
     POD_NAME = "pod"
