@@ -2,12 +2,12 @@ from pathlib import Path
 
 from fluidos_model_orchestrator.model.utils import FLUIDOS_COL_NAMES
 from fluidos_model_orchestrator.model.utils import MODEL_TYPES
+from fluidos_model_orchestrator.model_pipeline.model_cg.model_trainer import CGModelTrainer
+from fluidos_model_orchestrator.model_pipeline.model_trainer import BaseModelTrainer
 # from fluidos_model_orchestrator.model_pipeline.model_2t.model_trainer import TwoTowerModelTrainer as TwoTowerModelTrainer
 # from fluidos_model_orchestrator.model_pipeline.model_basic_ranker.model_trainer import ModelTrainer as BasicRankerModelTrainer
-from fluidos_model_orchestrator.model_pipeline.model_cg.model_trainer import CGModelTrainer
 # from fluidos_model_orchestrator.model_pipeline.model_fluidos_ranker.model_trainer import ModelTrainer as FluidOSRankerModelTrainer
 # from fluidos_model_orchestrator.model_pipeline.model_small_tf.model_trainer import ModelTrainer as SmallTFModelTrainer
-from fluidos_model_orchestrator.model_pipeline.model_trainer import BaseModelTrainer
 
 
 def model_target_is_valid(model_type: str, col_target: str) -> bool:
