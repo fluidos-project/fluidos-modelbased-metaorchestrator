@@ -1,9 +1,0 @@
-apiVersion: v2
-name: fluidos-modelbased-metaorchestrator
-description: A Helm chart for FLUIDOS model based metaorchestrator
-
-type: application
-
-version: 0.0.1
-
-appVersion: "0.0.4"
