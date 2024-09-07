@@ -4,9 +4,10 @@ from dataclasses import field
 from typing import Any
 
 import kopf  # type: ignore
-from kubernetes import client  # type: ignore
 from kubernetes.client import CoreV1Api  # type: ignore
 from kubernetes.client import V1ConfigMapList
+from kubernetes.client.api_client import ApiClient  # type: ignore
+from kubernetes.client.configuration import Configuration as K8SConfig  # type: ignore
 from kubernetes.client.exceptions import ApiException  # type: ignore
 
 
@@ -15,7 +16,7 @@ class Configuration:
     local_node_key: str = "node-role.fluidos.eu/resources"
     remote_node_key: str = "liqo.io/remote-cluster-id"
     namespace: str = "fluidos"
-    k8s_client: client.ApiClient | None = None
+    k8s_client: ApiClient | None = None
     identity: dict[str, str] = field(default_factory=dict)
     api_keys: dict[str, str] = field(default_factory=dict)
     DAEMON_SLEEP_TIME: float = 60. * 60.  # 1h in seconds
@@ -33,7 +34,7 @@ def enrich_configuration(config: Configuration,
                          memo: Any,
                          kwargs: dict[str, Any],
                          logger: logging.Logger,
-                         my_config: client.Configuration) -> None:
+                         my_config: K8SConfig) -> None:
     logger.info("Enrich default configuration with user provided information")
 
     config.k8s_client = _build_k8s_client(my_config)
@@ -49,8 +50,14 @@ def _retrieve_api_key(config: Configuration, logger: logging.Logger) -> dict[str
         config_maps: V1ConfigMapList = api_endpoint.list_config_map_for_all_namespaces()
         if len(config_maps.items):
             for item in config_maps.items:
+                if item.metadata is None:
+                    continue
+
                 if item.metadata.name == "fluidos-mbmo-configmap":
                     logger.info("ConfigMap identified")
+                    if item.data is None:
+                        raise ValueError("ConfigMap data missing.")
+
                     data: dict[str, str] = item.data
                     return {
                         key: value
@@ -63,8 +70,8 @@ def _retrieve_api_key(config: Configuration, logger: logging.Logger) -> dict[str
     raise ValueError("Unable to retrieve config map")
 
 
-def _build_k8s_client(config: client.Configuration) -> client.ApiClient:
-    return client.ApiClient(config)
+def _build_k8s_client(config: K8SConfig) -> ApiClient:
+    return ApiClient(config)
 
 
 def _retrieve_node_identity(config: Configuration, logger: logging.Logger) -> dict[str, str]:
@@ -75,8 +82,15 @@ def _retrieve_node_identity(config: Configuration, logger: logging.Logger) -> di
         config_maps: V1ConfigMapList = api_endpoint.list_config_map_for_all_namespaces()
         if len(config_maps.items):
             for item in config_maps.items:
+                if item.metadata is None:
+                    continue
+
                 if item.metadata.name == "fluidos-network-manager-identity":
                     logger.info("ConfigMap identified")
+
+                    if item.data is None:
+                        raise ValueError("ConfigMap data missing.")
+
                     logger.debug(f"Returning {item.data}")
                     return item.data
 
