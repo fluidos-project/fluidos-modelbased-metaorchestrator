@@ -237,6 +237,7 @@ class Orchestrator(OrchestratorInterface):
         self.sentence_transformer = SentenceTransformer(self.embedding_model_name)
         self.device = device
         with pkg_resources.resource_stream(__name__, metadata_filename) as metadata_stream:
+            logger.info(f"METADATA LOADED: {metadata_stream is not None}")
             self.metadata: dict[str, Any] = json.load(metadata_stream)
 
         self.feedback_db_path = feedback_db_path
@@ -283,7 +284,8 @@ class Orchestrator(OrchestratorInterface):
         )
 
     def _check_feedback_for_relevant_candidates(self, image_name: str) -> tuple[torch.Tensor, torch.Tensor]:
-        feedback = pd.read_csv(self.feedback_db_path)
+        logger.info(f"{self.feedback_db_path.absolute()}")
+        feedback = pd.read_csv(self.feedback_db_path.absolute())
         image_feedback = feedback[feedback['image_name'] == image_name]
         relevant_candidates_ids = image_feedback[image_feedback['status'] == FEEDBACK_STATUS.OK]['template_resource_id'].tolist()
         non_relevant_candidates_ids = image_feedback[image_feedback['status'] == FEEDBACK_STATUS.FAIL]['template_resource_id'].tolist()
@@ -297,7 +299,6 @@ class Orchestrator(OrchestratorInterface):
         return torch.tensor(embeddings).unsqueeze(0)
 
     def predict(self, data: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse:
-
         logger.info("pod embedding generation")
         pod_embedding = self.__compute_embedding_for_sentence(str(data.pod_request[FLUIDOS_COL_NAMES.POD_MANIFEST]))
         intents_dict: dict[str, Any] = {}
@@ -319,12 +320,19 @@ class Orchestrator(OrchestratorInterface):
         predicted_configuration_id = logits.detach().numpy().argmax()
 
         predicted_config = self.template_resources2id[predicted_configuration_id]
+
+        logger.info(f"{predicted_configuration_id=}")
+
+        logger.info(f"{predicted_config=}")
+
         if predicted_config == "none":
             predicted_config_dict: dict[str, str] = {}
             for item in data.intents:
                 predicted_config_dict[str(item.name)] = "-1"
         else:
             predicted_config_dict = predicted_config
+
+        logger.info(f"{predicted_config_dict=}")
 
         return ModelPredictResponse(
             data.id,

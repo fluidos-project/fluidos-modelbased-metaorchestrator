@@ -8,7 +8,7 @@ spec:
   metadata:
     name: nginx-w-intent
     annotations:
-      fluidos-intent-location: milan
+      fluidos-intent-location: Turin
   spec:
     containers:
     - name: nginx
