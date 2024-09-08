@@ -12,7 +12,7 @@ from fluidos_model_orchestrator.configuration import CONFIGURATION
 from fluidos_model_orchestrator.model.carbon_aware.forecast_updater import update_local_flavor_forecasted_data
 
 
-@kopf.daemon("flavors", cancellation_timeout=1.0)  # type: ignore
+# @kopf.daemon("flavors", cancellation_timeout=1.0)  # type: ignore
 async def daemons_for_flavours_observation(
         stopped: kopf.DaemonStopped,
         retry: int,
