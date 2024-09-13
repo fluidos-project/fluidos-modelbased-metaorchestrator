@@ -10,6 +10,7 @@ from .common import OrchestratorInterface
 from .common import ResourceFinder
 from .common import ResourceProvider
 from .common import validate_on_intent
+from .configuration import CONFIGURATION
 from .daemons_and_times.flavor import daemons_for_flavours_observation  # noqa
 from .deployment import deploy
 from .healthz import healtz_get_current_timestamp  # noqa
@@ -36,7 +37,7 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
 
     predictor: OrchestratorInterface = get_model_object(request)
 
-    prediction: ModelPredictResponse | None = predictor.predict(request, "arm64")
+    prediction: ModelPredictResponse | None = predictor.predict(request, CONFIGURATION.architecture)  # this should use a system defined default, thus from the configuration
 
     if prediction is None:
         logger.error("Model unable to provide valid prediction")
@@ -48,9 +49,13 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
 
     finder: ResourceFinder = get_resource_finder(request, prediction)
 
+    resources = finder.find_best_match(prediction.to_resource(), namespace)
+
+    logger.debug(f"{resources=}")
+
     best_matches: list[ResourceProvider] = validate_with_intents(
         predictor.rank_resource(
-            finder.find_best_match(prediction.to_resource(), namespace),
+            resources,
             prediction,
             request
         ), request.intents)

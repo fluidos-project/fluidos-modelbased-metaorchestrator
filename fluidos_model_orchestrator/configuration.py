@@ -20,6 +20,7 @@ class Configuration:
     identity: dict[str, str] = field(default_factory=dict)
     api_keys: dict[str, str] = field(default_factory=dict)
     DAEMON_SLEEP_TIME: float = 60. * 60.  # 1h in seconds
+    architecture: str = "amd64"
 
     def check_identity(self, identity: dict[str, str]) -> bool:
         return all(

@@ -21,7 +21,9 @@ async def deploy(spec: dict[str, Any], provider: ResourceProvider, expanding_res
 
     enrich(spec_dict, provider)
 
-    await asyncio.sleep(response.delay * 60 * 60)
+    delay_time = response.delay * 60 * 60
+    logger.info(f"Waiting to deploy {delay_time=}")
+    await asyncio.sleep(delay_time)
 
     k8s_client = CONFIGURATION.k8s_client
 

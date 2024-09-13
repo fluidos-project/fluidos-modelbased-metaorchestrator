@@ -101,7 +101,7 @@ class REARResourceFinder(ResourceFinder):
                 namespace=namespace,
                 plural="solvers",
                 name=body["metadata"]["name"],
-                async_req=False)
+                async_req=False)  # type: ignore
         except ApiException as e:
             logger.debug(f"Error retrieving {body['metadata']['name']}: {e=}")
             response = None
@@ -114,7 +114,7 @@ class REARResourceFinder(ResourceFinder):
                 plural="solvers",
                 body=body,
                 async_req=False
-            )
+            )  # type: ignore
         else:
             logger.debug("Solver already existing")
 
@@ -131,7 +131,7 @@ class REARResourceFinder(ResourceFinder):
                 plural="solvers",
                 name=solver_name,
                 async_req=False
-            )
+            )  # type: ignore
         except ApiException as e:
             logger.error("Unable to retrieve solver status")
             logger.debug(f"Reason: {e=}")
@@ -205,7 +205,7 @@ class REARResourceFinder(ResourceFinder):
                 plural="discoveries",
                 name=f"discovery-{solver_name}",
                 async_req=False
-            )
+            )  # type: ignore
 
             return discovery.get("status", {}).get("peeringCandidateList", {}).get("items", None)
 
@@ -217,63 +217,24 @@ class REARResourceFinder(ResourceFinder):
     def _reserve_all(self, solver_name: str, peering_candidates: list[dict[str, Any]], namespace: str) -> list[ResourceProvider]:
         logger.info("Reserving all peering candidates, just in case")
         return [
-            candidate for candidate in
-            [self._reserve_peering_candidate(solver_name, candidate, namespace) for candidate in peering_candidates]
-            if candidate is not None
+            resource for resource in
+            [
+                self._reserve_peering_candidate(solver_name, candidate, namespace) for candidate in peering_candidates
+                if candidate is not None and candidate["spec"]["available"] is True
+            ]
         ]
 
-    def _create_reservation(self, solver_name: str, candidate: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "apiVersion": "reservation.fluidos.eu/v1alpha1",
-            "kind": "Reservation",
-            "metadata": {
-                "name": f'{candidate["metadata"]["name"]}-reservation'
-            },
-            "spec": {
-                "solverID": solver_name,
-                "buyer": self.identity,
-                # Retrieve from PeeringCandidate Flavor Owner field
-                "seller": candidate["spec"]["flavour"]["spec"]["owner"],
-                # Set it to reserve
-                "reserve": True,
-                # Set it to purchase after reservation is completed and you have a transaction
-                "purchase": False,
-                # Retrieve from PeeringCandidate chosen to reserve
-                "peeringCandidate": {
-                    "name": candidate["metadata"]["name"],
-                }
-            }
-        }
-
-    def _reserve_peering_candidate(self, solver_name: str, candidate: dict[str, Any], namespace: str) -> RemoteResourceProvider | None:
-        logger.info(f"Reserving peering candidate {candidate['metadata']['name']}")
-        body = self._create_reservation(solver_name, candidate)
-
-        kopf.adopt(body)
-
-        try:
-            response = self.api_client.create_namespaced_custom_object(
-                group="reservation.fluidos.eu",
-                version="v1alpha1",
-                namespace=namespace,
-                plural="reservations",
-                body=body,
-                async_req=False
-            )
-
-            logger.debug(f"{response=}")
-        except ApiException as e:
-            logger.error(f"Unable to reserve {candidate['metadata']['name']}")
-            logger.debug(f"Reason: {e=}")
-            return None
+    def _reserve_peering_candidate(self, solver_name: str, candidate: dict[str, Any], namespace: str) -> RemoteResourceProvider:
+        logger.info(f"Reserving peering candidate {candidate['metadata']['name']} but not for real")
 
         return RemoteResourceProvider(
             id=solver_name,
-            flavor=build_flavor(candidate["spec"]["flavour"]),
+            flavor=build_flavor(candidate["spec"]["flavor"]),
             peering_candidate=candidate["metadata"]["name"],
-            reservation=response["metadata"]["name"],
+            reservation="",  # response["metadata"]["name"],
             namespace=namespace,
-            api_client=self.api_client
+            api_client=self.api_client,
+            seller=candidate["spec"]["flavor"]["spec"]["owner"]
         )
 
     def _resource_to_solver_request(self, resource: Resource, intent_id: str | None = None) -> tuple[dict[str, Any], str]:

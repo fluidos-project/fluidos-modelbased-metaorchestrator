@@ -21,12 +21,16 @@ class ResourceProvider(ABC):
         self.id = id
         self.flavor = flavor
 
+    @abstractmethod
     def acquire(self) -> bool:
-        return True
+        raise NotImplementedError("Abstract method")
 
     @abstractmethod
     def get_label(self) -> str:
         raise NotImplementedError("Abstract method")
+
+    def __str__(self) -> str:
+        return f"{self.id=}: {self.flavor=}"
 
 
 @dataclass(kw_only=True)
@@ -376,8 +380,11 @@ class ResourceFinder(ABC):
 
 
 def build_flavor(flavor: dict[str, Any]) -> Flavor:
-    if flavor["kind"] != "Flavor":
-        raise ValueError(f"Unable to process kind {flavor['kind']}")
+    if "kind" in flavor:
+        if flavor["kind"] != "Flavor":
+            raise ValueError(f"Unable to process kind {flavor['kind']}")
+    else:
+        logger.info("Building flavor from spec, not object")
 
     return Flavor(
         metadata=_build_metadata(flavor["metadata"]),
@@ -388,7 +395,7 @@ def build_flavor(flavor: dict[str, Any]) -> Flavor:
 def _build_metadata(metadata: dict[str, Any]) -> FlavorMetadata:
     return FlavorMetadata(
         name=metadata["name"],
-        owner_references=metadata["ownerReferences"],
+        owner_references=metadata.get("ownerReferences", {}),
     )
 
 

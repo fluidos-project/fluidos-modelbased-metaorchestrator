@@ -8,3 +8,6 @@ class LocalResourceProvider(ResourceProvider):
 
     def get_label(self) -> str:
         return ""
+
+    def acquire(self) -> bool:
+        return True
