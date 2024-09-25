@@ -24,6 +24,7 @@ class RemoteResourceProvider(ResourceProvider):
         self.namespace = namespace
         self.api_client = api_client
         self.seller = seller
+        self.remote_node_id: str | None = None
 
     def acquire(self) -> bool:
         logger.info("Creating connection to remote node")
@@ -32,8 +33,15 @@ class RemoteResourceProvider(ResourceProvider):
             return False
         return self._establish_peering(contract)
 
-    def get_label(self) -> str:
-        return "liqo.io/type=virtual-node"
+    def get_label(self) -> dict[str, str]:
+        # return {"liqo.io/type": "virtual-node"}
+        if self.remote_node_id is None:
+            logger.error("Remote resource not bougth, cannot return valid label")
+            raise RuntimeError("RemoteResourceProvider not connected to active resource")
+
+        return {
+            CONFIGURATION.remote_node_key: self.remote_node_id
+        }
 
     def _buy(self) -> str | None:
         logger.info(f"Establishing buying of {self.peering_candidate}")

@@ -12,7 +12,7 @@ from fluidos_model_orchestrator.configuration import enrich_configuration
 
 def test_failing_missing_config_map(k8s: AClusterManager) -> None:
     k8s.create()
-    myconfig = kubernetes.client.Configuration()
+    myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
     config = Configuration()
@@ -50,7 +50,7 @@ def test_configuration_enrichment_with_k8s(k8s: AClusterManager) -> None:
     k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/fluidos-network-manager-identity-config-map.yaml"))
     k8s.apply(pkg_resources.resource_filename(__name__, "data/example-mbmo-config-map.yaml"))
 
-    myconfig = kubernetes.client.Configuration()
+    myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
     config = Configuration()

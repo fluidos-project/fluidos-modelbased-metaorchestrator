@@ -26,7 +26,7 @@ class ResourceProvider(ABC):
         raise NotImplementedError("Abstract method")
 
     @abstractmethod
-    def get_label(self) -> str:
+    def get_label(self) -> dict[str, str]:
         raise NotImplementedError("Abstract method")
 
     def __str__(self) -> str:

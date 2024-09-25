@@ -39,6 +39,10 @@ def enrich(spec: dict[str, Any], provider: ResourceProvider) -> bool:
 
     label = provider.get_label()
 
+    if not label:
+        logger.info("No label provided, deploying randomly")
+        return True
+
     nodeSelector: dict[str, Any]
 
     if spec["kind"] == "Deployment":

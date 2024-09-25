@@ -15,7 +15,7 @@ from fluidos_model_orchestrator.resources import REARResourceFinder
 def test_find_local_no_nodes(k8s: AClusterManager) -> None:
     k8s.create()
 
-    myconfig = kubernetes.client.Configuration()
+    myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
     configuration = Configuration(
@@ -36,7 +36,7 @@ def test_find_local(k8s: AClusterManager) -> None:
     k8s.apply(pkg_resources.resource_filename(__name__, "node/crds/nodecore.fluidos.eu_flavors.yaml"))
     k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/example-flavor.yaml"))
 
-    myconfig = kubernetes.client.Configuration()
+    myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
     configuration = Configuration(
@@ -58,7 +58,7 @@ def test_solver_creation_and_check(k8s: AClusterManager) -> None:
     k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/fluidos-network-manager-identity-config-map.yaml"))
     k8s.apply(pkg_resources.resource_filename(__name__, "data/example-mbmo-config-map.yaml"))
 
-    myconfig = kubernetes.client.Configuration()
+    myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
     configuration = Configuration()
@@ -112,7 +112,7 @@ def test_retrieve_peering_candidate_list(k8s: AClusterManager) -> None:
 
     assert "status" in res
 
-    myconfig = kubernetes.client.Configuration()
+    myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
     configuration = Configuration()
@@ -139,7 +139,7 @@ def test_flavor_update(k8s: AClusterManager) -> None:
     k8s.apply(pkg_resources.resource_filename(__name__, "node/crds/nodecore.fluidos.eu_flavors.yaml"))
     k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/example-flavor.yaml"))
 
-    myconfig = kubernetes.client.Configuration()
+    myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
     configuration = Configuration()

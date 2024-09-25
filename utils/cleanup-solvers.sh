@@ -23,13 +23,3 @@ for resource_type in $(cat tests/node/crds/* | yq '.spec.names.plural' | grep -v
     done
     echo "... done"
 done
-
-for secret in $(kubectl get secret -n liqo --no-headers | grep remote-token); do
-    echo "Removing $secret"
-    kubectl delete secret/$secret -n liqo
-done
-
-for tenant_ns in $(kubectl get ns --no-headers | grep liqo-tenant); do
-    echo "Removing $tenant_ns namespace"
-    kubectl delete ns/$tenant_ns
-done

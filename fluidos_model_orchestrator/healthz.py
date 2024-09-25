@@ -1,7 +1,7 @@
 from datetime import datetime
 from datetime import timedelta
 try:
-    from datetime import UTC
+    from datetime import UTC  # type: ignore
 except ImportError:
     from datetime import timezone
     UTC = timezone.utc
