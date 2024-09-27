@@ -5,9 +5,9 @@ set -xao pipefail
 
 function _get_command {
   if command -v docker 2>/dev/null >&2 ; then
-    return "docker"
+    echo "docker"
   else
-    return "podman"
+    echo "podman"
   fi
 }
 
@@ -16,45 +16,68 @@ function _get_command {
 # basic setup
 helm repo add fluidos https://fluidos-project.github.io/node/ --force-update
 
-consumer_node_port=30000
-provider_node_port=30001
+CONSUMER_NODE_PORT=30000
+PROVIDER_NODE_PORT=30001
 
-COMMAND=_get_command
+COMMAND=$(_get_command)
 
 
-# setup provider
-kind create cluster --name provider --config $PWD/provider-cluster-config.yaml --kubeconfig $PWD/provider-config.yaml
+# setup provider DE
+kind create cluster --name provider-germany --config $PWD/provider-cluster-config.yaml --kubeconfig $PWD/provider-DE-config.yaml
 
-provider_controlplane_ip=$($COMMAND inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' provider-control-plane)
+DE_PROVIDER_CONTROLPLANE_IP=$($COMMAND inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' provider-germany-control-plane)
 
-liqoctl install kind --kubeconfig $PWD/provider-config.yaml
+liqoctl install kind --kubeconfig $PWD/provider-DE-config.yaml
 
 helm upgrade --install --devel -n fluidos --create-namespace node fluidos/node \
   --set "provider=kind" \
-  --set "networkManager.configMaps.nodeIdentity.ip=$provider_controlplane_ip:$provider_node_port" \
+  --set "networkManager.configMaps.nodeIdentity.ip=$DE_PROVIDER_CONTROLPLANE_IP:$PROVIDER_NODE_PORT" \
   --set "networkManager.configMaps.nodeIdentity.domain=provider.fluidos.eu" \
   --set "networkManager.configMaps.nodeIdentity.nodeId=provider" \
   --wait \
-  --kubeconfig $PWD/provider-config.yaml
+  --kubeconfig $PWD/provider-DE-config.yaml
+
+
+
+kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/provider-DE-config.yaml | cut -f1 -d\  | xargs -I% kubectl patch flavor/%  --patch-file ./flavors-location-germany.yaml --type merge -n fluidos --kubeconfig $PWD/provider-DE-config.yaml
+
+# setup provider Italy
+kind create cluster --name provider-italy --config $PWD/provider-cluster-config.yaml --kubeconfig $PWD/provider-IT-config.yaml
+
+IT_PROVIDER_CONTROLPLANE_IP=$($COMMAND inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' provider-italy-control-plane)
+
+liqoctl install kind --kubeconfig $PWD/provider-IT-config.yaml
+
+helm upgrade --install --devel -n fluidos --create-namespace node fluidos/node \
+  --set "provider=kind" \
+  --set "networkManager.configMaps.nodeIdentity.ip=$IT_PROVIDER_CONTROLPLANE_IP:$PROVIDER_NODE_PORT" \
+  --set "networkManager.configMaps.nodeIdentity.domain=provider.fluidos.eu" \
+  --set "networkManager.configMaps.nodeIdentity.nodeId=provider" \
+  --wait \
+  --kubeconfig $PWD/provider-IT-config.yaml
 
 # setup consumer
 kind create cluster --name consumer --config $PWD/consumer-cluster-config.yaml --kubeconfig $PWD/consumer-config.yaml
 
-consumer_controlplane_ip=$($COMMAND inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' consumer-control-plane)
+CONSUMER_CONTROLPLANE_IP=$($COMMAND inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' consumer-control-plane)
 
 liqoctl install kind --kubeconfig $PWD/consumer-config.yaml
 
 helm upgrade --install --devel -n fluidos --create-namespace node fluidos/node \
   --set "provider=kind" \
-  --set "networkManager.configMaps.nodeIdentity.ip=$consumer_controlplane_ip:$consumer_node_port" \
-  --set "networkManager.configMaps.providers.local=$provider_controlplane_ip:$provider_node_port" \
+  --set "networkManager.configMaps.nodeIdentity.ip=$CONSUMER_CONTROLPLANE_IP:$CONSUMER_NODE_PORT" \
+  --set "networkManager.configMaps.providers.local='$IT_PROVIDER_CONTROLPLANE_IP:$PROVIDER_NODE_PORT\,$DE_PROVIDER_CONTROLPLANE_IP:$PROVIDER_NODE_PORT'" \
   --set "networkManager.configMaps.nodeIdentity.domain=consumer.fluidos.eu" \
   --set "networkManager.configMaps.nodeIdentity.nodeId=consumer" \
   --wait \
   --kubeconfig $PWD/consumer-config.yaml
 
-kubectl apply -f $PWD/example-mbmo-config-map.yaml --kubeconfig $PWD/consumer-config.yaml
+# add config map required to run MBMO
+kubectl apply -f $PWD/example-mbmo-config-map.yaml --kubeconfig $PWD/consumer-config.yaml -n fluidos
+
+# add CRDs required
+kubectl apply --kubeconfig $PWD/consumer-config.yaml -f $PWD/../../deployment/fluidos-meta-orchestrator/crds
 
 
 # pretend the consumer cluster is in Dublin, Ireland
-kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/consumer-config.yaml | cut -f1 -d\  | xargs -I% kubectl patch flavor/%  --patch-file ./flavors-location.yaml --type merge -n fluidos --kubeconfig $PWD/consumer-config.yaml
+kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/consumer-config.yaml | cut -f1 -d\  | xargs -I% kubectl patch flavor/%  --patch-file ./flavors-location-ireland.yaml --type merge -n fluidos --kubeconfig $PWD/consumer-config.yaml
