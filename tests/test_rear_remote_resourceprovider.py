@@ -19,15 +19,21 @@ from fluidos_model_orchestrator.resources.rear.remote_resource_provider import R
 def test_basic_creation(k8s: AClusterManager) -> None:
     k8s.create()
 
-    myconfig = kubernetes.client.Configuration()
+    myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
-    k8s_client = _build_k8s_client(myconfig)
+    k8s_client = kubernetes.client.CustomObjectsApi(_build_k8s_client(myconfig))
 
     owner: dict[str, Any] = {
         "domain": "fluidos.eu",
         "ip": "172.18.0.2:30000",
         "nodeID": "l6936ty08l",
+    }
+
+    seller: dict[str, Any] = {
+        "domain": "fluidos.eu",
+        "ip": "172.18.0.3:30001",
+        "nodeID": "sellerID",
     }
 
     provider = RemoteResourceProvider(
@@ -53,7 +59,8 @@ def test_basic_creation(k8s: AClusterManager) -> None:
         "peeringcandidate-fluidos.eu-k8s-fluidos-c3978e7c",
         "reservation-test-sample",
         "default",
-        k8s_client
+        k8s_client,
+        seller
     )
 
     assert provider
@@ -63,10 +70,10 @@ def test_basic_creation(k8s: AClusterManager) -> None:
 def test_resource_buying(k8s: AClusterManager) -> None:
     k8s.create()
 
-    myconfig = kubernetes.client.Configuration()
+    myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
-    k8s_client = _build_k8s_client(myconfig)
+    k8s_client = kubernetes.client.CustomObjectsApi(_build_k8s_client(myconfig))
 
     k8s.apply(pkg_resources.resource_filename(__name__, "node/crds/tests/node/crds/reservation.fluidos.eu_reservations.yaml"))
 
@@ -78,6 +85,13 @@ def test_resource_buying(k8s: AClusterManager) -> None:
         "ip": "172.18.0.2:30000",
         "nodeID": "l6936ty08l",
     }
+
+    seller: dict[str, Any] = {
+        "domain": "fluidos.eu",
+        "ip": "172.18.0.3:30001",
+        "nodeID": "sellerID",
+    }
+
     provider = RemoteResourceProvider(
         "id",
         Flavor(
@@ -101,7 +115,8 @@ def test_resource_buying(k8s: AClusterManager) -> None:
         "peeringcandidate-fluidos.eu-k8s-fluidos-c3978e7c",
         "reservation-test-sample",
         "default",
-        k8s_client
+        k8s_client,
+        seller
     )
 
     assert provider

@@ -350,7 +350,7 @@ class REARResourceFinder(ResourceFinder):
                 namespace=namespace,
             )
         except ApiException:
-            logger.warn("Failed to retrieve local flavors, is node available?")
+            logger.warning("Failed to retrieve local flavors, is node available?")
             flavor_list = {}
 
         return [build_flavor(flavor) for flavor in flavor_list.get("items", [])]
