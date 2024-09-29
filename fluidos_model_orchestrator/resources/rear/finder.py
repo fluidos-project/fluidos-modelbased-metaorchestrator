@@ -39,7 +39,7 @@ class REARResourceFinder(ResourceFinder):
         if type(request) is Resource:
             resource = request
         elif type(request) is Intent:
-            logger.info("Request is for \"intent\" resource")
+            logger.info("Request is for \"intent-defined\" resource")
             return []  # not supported yet
         else:
             raise ValueError(f"Unkown resource type {type(request)}")
@@ -49,6 +49,8 @@ class REARResourceFinder(ResourceFinder):
 
         if len(local):
             logger.info(f"Found local resource {local=}")
+        else:
+            logger.info("No local resource compatible")
 
         remote = self._find_remote(resource, namespace)
 
@@ -142,7 +144,7 @@ class REARResourceFinder(ResourceFinder):
         return remote_flavour_status
 
     def _find_remote(self, resource: Resource, namespace: str) -> list[ResourceProvider]:
-        logger.info(f"Retrieving remote flavours in {namespace}")
+        logger.info(f"Retrieving remote flavours in {namespace=}")
 
         body, _ = self._resource_to_solver_request(resource, resource.id)
 
@@ -314,7 +316,7 @@ class REARResourceFinder(ResourceFinder):
         return selector
 
     def _find_local(self, resource: Resource, namespace: str) -> list[ResourceProvider]:
-        logger.info("Retrieving locally available flavours")
+        logger.info(f"Retrieving locally available flavours for {resource=}")
 
         fitting_resources: list[ResourceProvider] = []
 
@@ -330,12 +332,14 @@ class REARResourceFinder(ResourceFinder):
                 continue
 
             if resource.can_run_on(flavor):
-                logger.info("Local flavour is compatible, using it")
+                logger.info(f"Local flavour {name=} is compatible")
                 fitting_resources.append(
                     LocalResourceProvider(
                         flavor.metadata.name,
                         flavor
                     ))
+            else:
+                logger.info("Not able to run the request")
 
         return fitting_resources
 
