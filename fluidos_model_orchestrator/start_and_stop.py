@@ -32,7 +32,7 @@ async def configure(settings: kopf.OperatorSettings, retry: int, started: dateti
 
 @kopf.on.cleanup()  # type: ignore
 def cleanup_function(logger: logging.Logger, **kwargs: str) -> None:
-    logger.info("Running clean up functionlity")
+    logger.info("Running clean up functionality")
 
     print(kwargs)
 
