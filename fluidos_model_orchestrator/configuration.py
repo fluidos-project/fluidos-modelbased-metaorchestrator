@@ -22,6 +22,7 @@ class Configuration:
     api_keys: dict[str, str] = field(default_factory=dict)
     DAEMON_SLEEP_TIME: float = 60. * 60.  # 1h in seconds
     architecture: str = "arm64"
+    n_try: int = 5
 
     def check_identity(self, identity: dict[str, str]) -> bool:
         return all(
@@ -42,7 +43,7 @@ def enrich_configuration(config: Configuration,
     config.k8s_client = _build_k8s_client(my_config)
     config.identity = _retrieve_node_identity(config, logger)
     config.api_keys = _retrieve_api_key(config, logger)
-    config.architecture = _retrieve_architecture(config, logger)
+    # config.architecture = _retrieve_architecture(config, logger)
     config.architecture = "arm64"
 
 

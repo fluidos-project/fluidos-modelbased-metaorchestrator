@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import logging
 import time
 from typing import Any
@@ -24,24 +23,47 @@ class RemoteResourceProvider(ResourceProvider):
         self.namespace = namespace
         self.api_client = api_client
         self.seller = seller
-        self.remote_node_id: str | None = None
+        self.contract: str | None = None
 
     def acquire(self) -> bool:
         logger.info("Creating connection to remote node")
         contract = self._buy()
         if contract is None:
             return False
+        self.contract = contract
         return self._establish_peering(contract)
 
     def get_label(self) -> dict[str, str]:
         # return {"liqo.io/type": "virtual-node"}
-        if self.remote_node_id is None:
+        if self.contract is None:
             logger.error("Remote resource not bougth, cannot return valid label")
             raise RuntimeError("RemoteResourceProvider not connected to active resource")
 
         return {
-            CONFIGURATION.remote_node_key: self.remote_node_id
+            CONFIGURATION.remote_node_key: self._get_remote_cluster_id()
         }
+
+    def _get_remote_cluster_id(self) -> str:
+        if self.contract is None:
+            raise RuntimeError("Unable to retrieve contract with no contract id specified")
+
+        try:
+            resource = self.api_client.get_namespaced_custom_object(
+                group="reservation.fluidos.eu",
+                version="v1alpha1",
+                namespace=self.namespace,
+                plural="contracts",
+                name=self.contract
+            )
+
+            if resource is None:
+                raise RuntimeError(f"Unable to retrieve {self.contract=}")
+
+            return resource["spec"]["peeringTargetCredentials"]["clusterID"]
+        except ApiException as e:
+            logger.error(f"Unable to reserve and buy {self.peering_candidate}")
+            logger.debug(f"Reason: {e=}")
+            raise RuntimeError(e)
 
     def _buy(self) -> str | None:
         logger.info(f"Establishing buying of {self.peering_candidate}")
@@ -66,9 +88,7 @@ class RemoteResourceProvider(ResourceProvider):
             logger.debug(f"Reason: {e=}")
             return None
 
-        attempt = 0
-
-        while attempt < 5:
+        for _ in range(CONFIGURATION.n_try):
             if "name" in response.get("status", {}).get("contract", {}):
                 logger.info("Contract available")
                 break
@@ -88,8 +108,6 @@ class RemoteResourceProvider(ResourceProvider):
             except ApiException as e:
                 logger.error(f"Unable to reserve and buy {self.peering_candidate}")
                 logger.error(f"Reason: {e=}")
-
-            attempt += 1
         else:
             logger.info("Contract not available")
             return None
@@ -133,7 +151,7 @@ class RemoteResourceProvider(ResourceProvider):
 
             if allocation is not None:
                 logger.info("Allocation created")
-                logger.info(f"{json.dumps(allocation)}")
+                # logger.info(f"{json.dumps(allocation)}")
 
                 return True
         except ApiException as e:
