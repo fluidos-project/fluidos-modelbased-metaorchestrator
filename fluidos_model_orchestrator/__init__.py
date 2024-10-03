@@ -58,7 +58,7 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
             resources,
             prediction,
             request
-        ), request.intents)
+        ), request.intents, logger)
 
     if not len(best_matches):
         logger.info("Unable to find resource matching requirement")
@@ -81,7 +81,7 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
     # find other resources types based on the intents
     expanding_resources: list[tuple[ResourceProvider, Intent]] = _find_expanding_resources(finder, request.intents, namespace)
 
-    if not await deploy(spec, best_match, expanding_resources, prediction):
+    if not await deploy(spec, best_match, expanding_resources, prediction, namespace):
         logger.info("Unable to deploy")
 
         return {
@@ -99,12 +99,23 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
     }
 
 
-def validate_with_intents(providers: list[ResourceProvider], intents: list[Intent]) -> list[ResourceProvider]:
-    return [
-        provider for provider in providers if all(
-            intent.validates(provider) for intent in intents
-        )
-    ]
+def validate_with_intents(providers: list[ResourceProvider], intents: list[Intent], logger: Logger) -> list[ResourceProvider]:
+    valid_providers: list[ResourceProvider] = []
+
+    # return [
+    #     provider for provider in providers if all(intent.validates(provider) for intent in intents)
+    # ]
+
+    for provider in providers:
+        for intent in intents:
+            if not intent.validates(provider):
+                logger.info(f"{intent} does not validate {provider}")
+                break
+        else:
+            logger.info(f"{provider} is validating all intents")
+            valid_providers.append(provider)
+
+    return valid_providers
 
 
 def _find_expanding_resources(finder: ResourceFinder, intents: list[Intent], namespace: str) -> list[tuple[ResourceProvider, Intent]]:

@@ -43,6 +43,7 @@ def enrich_configuration(config: Configuration,
     config.identity = _retrieve_node_identity(config, logger)
     config.api_keys = _retrieve_api_key(config, logger)
     config.architecture = _retrieve_architecture(config, logger)
+    config.architecture = "arm64"
 
 
 def _retrieve_api_key_from_secret(config: Configuration, logger: logging.Logger) -> dict[str, str]:

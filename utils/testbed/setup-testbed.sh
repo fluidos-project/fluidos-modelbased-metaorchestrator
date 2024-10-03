@@ -33,7 +33,8 @@ helm upgrade --install --devel -n fluidos --create-namespace node fluidos/node \
   --set "provider=kind" \
   --set "networkManager.configMaps.nodeIdentity.ip=$DE_PROVIDER_CONTROLPLANE_IP:$PROVIDER_NODE_PORT" \
   --set "networkManager.configMaps.nodeIdentity.domain=provider.fluidos.eu" \
-  --set "networkManager.configMaps.nodeIdentity.nodeId=provider" \
+  --set "networkManager.configMaps.nodeIdentity.nodeId=provider_DE" \
+  --set "rearController.service.gateway.nodePort.port=$PROVIDER_NODE_PORT" \
   --wait \
   --kubeconfig $PWD/provider-DE-config.yaml
 
@@ -52,7 +53,8 @@ helm upgrade --install --devel -n fluidos --create-namespace node fluidos/node \
   --set "provider=kind" \
   --set "networkManager.configMaps.nodeIdentity.ip=$IT_PROVIDER_CONTROLPLANE_IP:$PROVIDER_NODE_PORT" \
   --set "networkManager.configMaps.nodeIdentity.domain=provider.fluidos.eu" \
-  --set "networkManager.configMaps.nodeIdentity.nodeId=provider" \
+  --set "networkManager.configMaps.nodeIdentity.nodeId=provider_IT" \
+  --set "rearController.service.gateway.nodePort.port=$PROVIDER_NODE_PORT" \
   --wait \
   --kubeconfig $PWD/provider-IT-config.yaml
 
@@ -69,6 +71,7 @@ helm upgrade --install --devel -n fluidos --create-namespace node fluidos/node \
   --set "networkManager.configMaps.providers.local='$IT_PROVIDER_CONTROLPLANE_IP:$PROVIDER_NODE_PORT\,$DE_PROVIDER_CONTROLPLANE_IP:$PROVIDER_NODE_PORT'" \
   --set "networkManager.configMaps.nodeIdentity.domain=consumer.fluidos.eu" \
   --set "networkManager.configMaps.nodeIdentity.nodeId=consumer" \
+  --set "rearController.service.gateway.nodePort.port=$CONSUMER_NODE_PORT" \
   --wait \
   --kubeconfig $PWD/consumer-config.yaml
 
