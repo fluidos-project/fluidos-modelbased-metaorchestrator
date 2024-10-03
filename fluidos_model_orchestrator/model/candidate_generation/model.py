@@ -222,7 +222,7 @@ class OrchestrationModel(BaseOrchestrationModel, PyTorchModelHubMixin):
 class Orchestrator(OrchestratorInterface):
     embedding_model_name: str = "distiluse-base-multilingual-cased-v2"  # TODO read from metadata
 
-    def __init__(self, model_name: str = "fluidos/candidate-generation", device: str = "cpu", feedback_db_path: Path = Path("feedback.csv")) -> None:
+    def __init__(self, model_name: str = "fluidos/candidate-generation", device: str = "cpu", feedback_db_path: Path = Path("~/git/fluidos-modelbased-metaorchestrator/tests/model/feedback/feedback.csv")) -> None:
 
         self.model_name = model_name
         metadata_filename = "metadata_cg_v0.0.2.json"
@@ -299,7 +299,8 @@ class Orchestrator(OrchestratorInterface):
     def predict(self, data: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse:
 
         logger.info("pod embedding generation")
-        pod_embedding = self.__compute_embedding_for_sentence(str(data.pod_request[FLUIDOS_COL_NAMES.POD_MANIFEST]))
+        
+        pod_embedding = self.__compute_embedding_for_sentence(str(data.pod_request.get(FLUIDOS_COL_NAMES.POD_MANIFEST, None)))
         intents_dict: dict[str, Any] = {}
         for intent in data.intents:
             intent_name = KNOWN_INTENT_TO_POD_INTENT[intent.name.name]
@@ -330,7 +331,7 @@ class Orchestrator(OrchestratorInterface):
             data.id,
             resource_profile=Resource(
                 id=data.id,
-                region=predicted_config_dict[FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_LOCATION],
+                region=predicted_config_dict.get(FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_LOCATION, "default_region"),
                 cpu=f"{predicted_config_dict[FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_CPU]}{D_UNITS[FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_CPU][0]}",
                 memory=f"{predicted_config_dict[FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_MEMORY]}{D_UNITS[FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_MEMORY][0]}",
                 architecture=architecture)

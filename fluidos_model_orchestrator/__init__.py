@@ -26,6 +26,14 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
     logger.info("Processing incoming request")
     logger.debug(f"Received request: {spec}")
 
+    # Ignorar el campo 'pod_manifest' si no está presente
+    pod_manifest = spec.get('pod_manifest', None)
+    if pod_manifest is not None:
+        logger.debug(f"Pod manifest detected: {pod_manifest}")
+    else:
+        logger.info("No 'pod_manifest' detected, continuing without it.")
+
+
     request: ModelPredictRequest | None = convert_to_model_request(spec, namespace)
 
     if request is None:

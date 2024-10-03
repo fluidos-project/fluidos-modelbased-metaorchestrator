@@ -18,6 +18,7 @@ def test_intent_values():
         "fluidos-intent-resource",
         "fluidos-intent-service",
         "fluidos-intent-throughput",
+        "fluidos-intent-mspl",
     }
 
     for intent in KnownIntent:
@@ -43,6 +44,7 @@ def test_iternal_or_external():
         "fluidos-intent-memory",
         "fluidos-intent-resource",
         "fluidos-intent-throughput",
+        "fluidos-intent-mspl",
     }
 
     for intent in KnownIntent:

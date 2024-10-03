@@ -68,7 +68,7 @@ class RankingModel(tf.keras.Model):
     def from_config(cls, config: dict[str, Any]) -> type[RankingModel]:
         # Note that you can also use `keras.saving.deserialize_keras_object` here
 
-        # config["pod_manifest_text"] = tf.keras.layers.deserialize(config["pod_manifest_text"])
+        config["pod_manifest_text"] = tf.keras.layers.deserialize(config["pod_manifest_text"])
         config["unique_user_ids"] = tf.keras.layers.deserialize(config["unique_user_ids"])
         config["unique_movie_titles"] = tf.keras.layers.deserialize(
             config["unique_movie_titles"]
@@ -126,7 +126,7 @@ class BasicRankerModel(tfrs.models.Model, ModelInterface):
         config = super().get_config()
         config.update(
             {
-                # "pod_manifest_text": self.pod_manifest_text,
+                "pod_manifest_text": self.pod_manifest_text,
                 "unique_pod_ids": self.unique_pod_ids,
                 "embedding_output_dimension": self.embedding_output_dimension,
                 "max_tokens": self.max_tokens,
@@ -138,7 +138,7 @@ class BasicRankerModel(tfrs.models.Model, ModelInterface):
     def from_config(cls, config: dict[str, Any]) -> Any:
         # Note that you can also use `keras.saving.deserialize_keras_object` here
 
-        # config["pod_manifest_text"] = tf.keras.layers.deserialize(config["pod_manifest_text"])
+        config["pod_manifest_text"] = tf.keras.layers.deserialize(config["pod_manifest_text"])
         config["unique_pod_ids"] = tf.keras.layers.deserialize(config["unique_pod_ids"])
         config["embedding_output_dimension"] = tf.keras.layers.deserialize(
             config["embedding_output_dimension"]
@@ -192,7 +192,7 @@ class Orchestrator(OrchestratorInterface):
             region='dummyLocation',
             cpu=input_df_extended[FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_CPU][top_prediction],
             memory=input_df_extended[FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_MEMORY][top_prediction])
-        # resource = self._retrieve_template_resources(request.id, input_df_extended[FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_ID][top_prediction])
+        resource = self._retrieve_template_resources(request.id, input_df_extended[FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_ID][top_prediction])
 
         return ModelPredictResponse(
             request.id,

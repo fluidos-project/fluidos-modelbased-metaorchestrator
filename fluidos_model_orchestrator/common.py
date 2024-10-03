@@ -308,6 +308,9 @@ class KnownIntent(Enum):
     max_delay = "max_delay", False, _always_true
     carbon_aware = "carbon_aware", False, _always_true
 
+    #mspl
+    #mspl = "mspl", False, _always_true
+
     # service
     service = "service", True, _always_true
 
@@ -376,6 +379,8 @@ class ResourceFinder(ABC):
 
 
 def build_flavor(flavor: dict[str, Any]) -> Flavor:
+    #print(f"flavor!!!!!!!!!!!!!!!!!!!!!{flavor}!!!!!!!!!!!!!")
+    
     if flavor["kind"] != "Flavor":
         raise ValueError(f"Unable to process kind {flavor['kind']}")
 
