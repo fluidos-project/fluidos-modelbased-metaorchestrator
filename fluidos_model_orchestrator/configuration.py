@@ -22,7 +22,7 @@ class Configuration:
     api_keys: dict[str, str] = field(default_factory=dict)
     DAEMON_SLEEP_TIME: float = 60. * 60.  # 1h in seconds
     architecture: str = "arm64"
-    n_try: int = 5
+    n_try: int = 25
 
     def check_identity(self, identity: dict[str, str]) -> bool:
         return all(

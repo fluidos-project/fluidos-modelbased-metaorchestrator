@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 
 class REARResourceFinder(ResourceFinder):
-    SOLVER_TIMEOUT = 25.0  # ~5 seconds
     SOLVER_SLEEPING_TIME = 0.2  # as float, in seconds ~200ms
 
     def __init__(self, configuration: Configuration = CONFIGURATION) -> None:
@@ -152,9 +151,7 @@ class REARResourceFinder(ResourceFinder):
 
         solver_name = self._initiate_search(body, namespace)
 
-        counter = 0
-
-        while counter < self.SOLVER_TIMEOUT:
+        for _ in range(CONFIGURATION.n_try):
             time.sleep(self.SOLVER_SLEEPING_TIME)
             remote_flavour_status = self._check_solver_status(solver_name, namespace)
 
@@ -171,9 +168,7 @@ class REARResourceFinder(ResourceFinder):
                 return []
 
             if phase == "Running" or phase == "Pending":
-                logger.debug("Still processing, wait")
-                counter += 1
-                continue
+                logger.debug("Still processing, wait...")
         else:
             logger.error("Solver did not finish withing the allocated time")
             return []
