@@ -222,7 +222,7 @@ class OrchestrationModel(BaseOrchestrationModel, PyTorchModelHubMixin):
 class Orchestrator(OrchestratorInterface):
     embedding_model_name: str = "distiluse-base-multilingual-cased-v2"  # TODO read from metadata
 
-    def __init__(self, model_name: str = "fluidos/candidate-generation", device: str = "cpu", feedback_db_path: Path = Path("/Users/diego/git/fluidos-modelbased-metaorchestrator/tests/model/feedback/feedback.csv")) -> None:
+    def __init__(self, model_name: str = "fluidos/candidate-generation", device: str = "cpu", feedback_db_path: Path = Path("~/fluidos-modelbased-metaorchestrator/tests/model/feedback/feedback.csv")) -> None:
         self.model_name = model_name
         self.orchestrator: OrchestrationModel | OrchestrationModelLegacy
         metadata_filename = "metadata_cg_v0.0.2.json"
