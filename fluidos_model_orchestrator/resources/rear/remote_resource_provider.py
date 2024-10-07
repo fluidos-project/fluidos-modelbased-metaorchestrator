@@ -153,10 +153,35 @@ class RemoteResourceProvider(ResourceProvider):
                 logger.info("Allocation created")
                 # logger.info(f"{json.dumps(allocation)}")
 
-                return True
+                return self._create_namespace_offload_resource()
         except ApiException as e:
             logger.error(f"Error establishing peering for {self.peering_candidate}")
             logger.error(f"{e=}")
+
+        return False
+
+    def _create_namespace_offload_resource(self) -> bool:
+        for _ in range(CONFIGURATION.n_try):
+            res = self.api_client.create_namespaced_custom_object(
+                group="offloading.liqo.io",
+                version="v1alpha1",
+                namespace=self.namespace,
+                plural="namespaceoffloadings",
+                body={
+                    "metadata": {
+                        "name": "offloading"
+                    },
+                    "spec": {
+                        "namespaceMappingStrategy": "EnforceSameName",
+                        "podOffloadinStrategy": "LocalAndRemote",
+                    }
+                },
+                async_req=False)  # type: ignore
+
+            if res is not None:
+                logger.info(f"NamespaceOffload created for {self.namespace}")
+
+                return True
 
         return False
 
