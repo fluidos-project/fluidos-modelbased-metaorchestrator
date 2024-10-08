@@ -161,27 +161,32 @@ class RemoteResourceProvider(ResourceProvider):
         return False
 
     def _create_namespace_offload_resource(self) -> bool:
-        for _ in range(CONFIGURATION.n_try):
-            res = self.api_client.create_namespaced_custom_object(
-                group="offloading.liqo.io",
-                version="v1alpha1",
-                namespace=self.namespace,
-                plural="namespaceoffloadings",
-                body={
-                    "metadata": {
-                        "name": "offloading"
+        try:
+            for _ in range(CONFIGURATION.n_try):
+                res = self.api_client.create_namespaced_custom_object(
+                    group="offloading.liqo.io",
+                    version="v1alpha1",
+                    namespace=self.namespace,
+                    plural="namespaceoffloadings",
+                    body={
+                        "metadata": {
+                            "name": "offloading"
+                        },
+                        "spec": {
+                            "namespaceMappingStrategy": "EnforceSameName",
+                            "podOffloadinStrategy": "LocalAndRemote",
+                        }
                     },
-                    "spec": {
-                        "namespaceMappingStrategy": "EnforceSameName",
-                        "podOffloadinStrategy": "LocalAndRemote",
-                    }
-                },
-                async_req=False)  # type: ignore
+                    async_req=False)  # type: ignore
 
-            if res is not None:
-                logger.info(f"NamespaceOffload created for {self.namespace}")
+                if res is not None:
+                    logger.info(f"NamespaceOffload created for {self.namespace}")
 
-                return True
+                    return True
+        except ApiException as e:
+            logger.error(f"Error offloading namespace {self.namespace}")
+            logger.error(f"{e=}")
+            logger.error(f"{e.reason=}")
 
         return False
 
