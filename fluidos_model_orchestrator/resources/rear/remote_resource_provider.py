@@ -173,8 +173,11 @@ class RemoteResourceProvider(ResourceProvider):
                             "name": "offloading"
                         },
                         "spec": {
-                            "namespaceMappingStrategy": "EnforceSameName",
-                            "podOffloadinStrategy": "LocalAndRemote",
+                            "clusterSelector": {
+                                "nodeSelectorTerms": []
+                            },
+                            "namespaceMappingStrategy": "DefaultName",
+                            "podOffloadingStrategy": "LocalAndRemote",
                         }
                     },
                     async_req=False)  # type: ignore
