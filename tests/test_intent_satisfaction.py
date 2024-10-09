@@ -122,3 +122,40 @@ def test_validation_of_location():
     assert validate_location(provider, "Ireland")
     assert not validate_location(provider, "Turin")
     assert not validate_location(provider, "Italy")
+
+
+def test_validate_bandwidth_against_satisfaction() -> None:
+    provider = LocalResourceProvider("test", Flavor(
+        metadata=FlavorMetadata(
+            name="foo",
+            owner_references={}
+        ),
+        spec=FlavorSpec(
+            availability=True,
+            flavor_type=FlavorTypeData(
+                type_identifier=FlavorType.K8SLICE,
+                type_data=FlavorK8SliceData(
+                    characteristics=FlavorCharacteristics(cpu="1n", memory="1Gi", architecture="arm", gpu=GPUData(cores=0, memory="", model="")),
+                    policies={},
+                    properties={
+                        "bandwidth": {
+                            "POINT_A": "500ms",
+                            "POINT-B": "200ms",
+                        }
+                    }
+                )
+            ),
+            location={
+                "city": "Dublin",
+                "country": "Ireland",
+            },
+            network_property_type="",
+            owner={},
+            providerID="provider_id",
+            price={}
+        )
+    ))
+
+    assert Intent(KnownIntent.bandwidth_against, "<= 200ms POINT-B").validates(provider)
+    assert Intent(KnownIntent.bandwidth_against, "< 300ms POINT-B").validates(provider)
+    assert not Intent(KnownIntent.bandwidth_against, "< 100ms POINT-B").validates(provider)
