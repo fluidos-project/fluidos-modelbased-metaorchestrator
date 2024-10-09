@@ -20,6 +20,7 @@ def test_intent_values():
         "fluidos-intent-throughput",
         "fluidos-intent-bandwidth-against",
         "fluidos-intent-tee-readiness",
+        "fluidos-intent-mspl",
     }
 
     for intent in KnownIntent:
@@ -47,6 +48,7 @@ def test_iternal_or_external():
         "fluidos-intent-throughput",
         "fluidos-intent-bandwidth-against",
         "fluidos-intent-tee-readiness",
+        "fluidos-intent-mspl",
     }
 
     for intent in KnownIntent:

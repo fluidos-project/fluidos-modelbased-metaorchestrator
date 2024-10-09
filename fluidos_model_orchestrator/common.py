@@ -316,6 +316,9 @@ class KnownIntent(Enum):
 
     # service
     service = "service", True, _always_true
+    
+    #mspl
+    mspl = "mspl", False, _always_true
 
     def __new__(cls, *args: str, **kwds: str) -> KnownIntent:
         obj = object.__new__(cls)
