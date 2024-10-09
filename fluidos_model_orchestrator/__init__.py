@@ -122,7 +122,7 @@ def _find_expanding_resources(finder: ResourceFinder, intents: list[Intent], nam
     resources_and_intents: list[tuple[ResourceProvider, Intent]] = list()
 
     for (resources, intent) in [
-        (finder.find_best_match(intent, namespace), intent) for intent in intents if intent.has_external_requirement()
+        (finder.find_best_match(intent, namespace), intent) for intent in intents if intent.is_external_requirement()
     ]:
         if len(resources):
             resource: ResourceProvider = validate_on_intent(resources, intent)

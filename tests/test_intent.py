@@ -48,7 +48,7 @@ def test_iternal_or_external():
     for intent in KnownIntent:
         key = intent.to_intent_key()
         assert (key in internal_intents and key not in external_intents) or (key in external_intents and key not in internal_intents)
-        assert (intent.has_external_requirement() and key in external_intents) or (key in internal_intents)
+        assert (intent.is_external_requirement() and key in external_intents) or (key in internal_intents)
 
 
 def test_intent_validated():

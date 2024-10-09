@@ -327,7 +327,7 @@ class KnownIntent(Enum):
     def to_intent_key(self) -> str:
         return f"fluidos-intent-{self.name}"
 
-    def has_external_requirement(self) -> bool:
+    def is_external_requirement(self) -> bool:
         return self._external
 
     def validates(self, provider: ResourceProvider, value: str) -> bool:
@@ -357,8 +357,8 @@ class Intent:
     name: KnownIntent
     value: str
 
-    def has_external_requirement(self) -> bool:
-        return self.name.has_external_requirement()
+    def is_external_requirement(self) -> bool:
+        return self.name.is_external_requirement()
 
     def validates(self, provider: ResourceProvider) -> bool:
         return self.name.validates(provider, self.value)
