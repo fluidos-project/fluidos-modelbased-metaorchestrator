@@ -173,6 +173,7 @@ class RemoteResourceProvider(ResourceProvider):
                             "name": "offloading"
                         },
                         "spec": {
+                            "kind": "NamespaceOffloading",
                             "clusterSelector": {
                                 "nodeSelectorTerms": []
                             },
