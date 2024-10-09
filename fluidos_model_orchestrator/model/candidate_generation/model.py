@@ -11,6 +11,7 @@ import torch.nn.functional as F  # type: ignore
 from huggingface_hub import PyTorchModelHubMixin  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 
+from ...common import KnownIntent
 from ...common import ModelPredictRequest
 from ...common import ModelPredictResponse
 from ...common import OrchestratorInterface
@@ -177,7 +178,6 @@ class OrchestrationModel(BaseOrchestrationModel, PyTorchModelHubMixin):
         }
 
     def forward(self, input: list[torch.Tensor]) -> torch.Tensor:
-
         """
         Predicts relevant config id
         config = (cpu, memory, location, throughput)
@@ -223,13 +223,13 @@ class Orchestrator(OrchestratorInterface):
     embedding_model_name: str = "distiluse-base-multilingual-cased-v2"  # TODO read from metadata
 
     def __init__(self, model_name: str = "fluidos/candidate-generation", device: str = "cpu", feedback_db_path: Path = Path("feedback.csv")) -> None:
-
         self.model_name = model_name
+        self.orchestrator: OrchestrationModel | OrchestrationModelLegacy
         metadata_filename = "metadata_cg_v0.0.2.json"
         match self.model_name:
             case "fluidos/candidate-generation":
                 metadata_filename = "metadata_cg_v0.0.1.json"
-                self.orchestrator: OrchestrationModel | OrchestrationModelLegacy = OrchestrationModelLegacy.from_pretrained(self.model_name)  # Will be dropped when v2 works fine enough
+                self.orchestrator = OrchestrationModelLegacy.from_pretrained(self.model_name)  # Will be dropped when v2 works fine enough
             case  "fluidos/candidate-generation-v2":
                 metadata_filename = "metadata_cg_v0.0.2.json"
                 self.orchestrator = OrchestrationModel.from_pretrained(self.model_name)  # type: ignore
@@ -237,6 +237,7 @@ class Orchestrator(OrchestratorInterface):
         self.sentence_transformer = SentenceTransformer(self.embedding_model_name)
         self.device = device
         with pkg_resources.resource_stream(__name__, metadata_filename) as metadata_stream:
+            logger.info(f"METADATA LOADED: {metadata_stream is not None}")
             self.metadata: dict[str, Any] = json.load(metadata_stream)
 
         self.feedback_db_path = feedback_db_path
@@ -264,7 +265,6 @@ class Orchestrator(OrchestratorInterface):
 
     @staticmethod
     def create_sample_request_legacy() -> ModelPredictRequest:
-
         #PODS should be identical
         pod_request = {FLUIDOS_COL_NAMES.POD_FILE_NAME: ['pod_mysql.yaml'],
                        FLUIDOS_COL_NAMES.POD_MANIFEST: {'apiVersion': 'v1',
@@ -283,7 +283,8 @@ class Orchestrator(OrchestratorInterface):
         )
 
     def _check_feedback_for_relevant_candidates(self, image_name: str) -> tuple[torch.Tensor, torch.Tensor]:
-        feedback = pd.read_csv(self.feedback_db_path)
+        logger.info(f"{self.feedback_db_path.absolute()}")
+        feedback = pd.read_csv(self.feedback_db_path.absolute())
         image_feedback = feedback[feedback['image_name'] == image_name]
         relevant_candidates_ids = image_feedback[image_feedback['status'] == FEEDBACK_STATUS.OK]['template_resource_id'].tolist()
         non_relevant_candidates_ids = image_feedback[image_feedback['status'] == FEEDBACK_STATUS.FAIL]['template_resource_id'].tolist()
@@ -296,9 +297,8 @@ class Orchestrator(OrchestratorInterface):
         embeddings = self.sentence_transformer.encode(sentence)
         return torch.tensor(embeddings).unsqueeze(0)
 
-    def predict(self, data: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse:
-
-        logger.info("pod embedding generation")
+    def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse:
+        logger.info("Pod embedding generation")
         pod_embedding = self.__compute_embedding_for_sentence(str(data.pod_request[FLUIDOS_COL_NAMES.POD_MANIFEST]))
         intents_dict: dict[str, Any] = {}
         for intent in data.intents:
@@ -319,6 +319,7 @@ class Orchestrator(OrchestratorInterface):
         predicted_configuration_id = logits.detach().numpy().argmax()
 
         predicted_config = self.template_resources2id[predicted_configuration_id]
+
         if predicted_config == "none":
             predicted_config_dict: dict[str, str] = {}
             for item in data.intents:
@@ -330,8 +331,17 @@ class Orchestrator(OrchestratorInterface):
             data.id,
             resource_profile=Resource(
                 id=data.id,
-                region=predicted_config_dict[FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_LOCATION],
-                cpu=f"{predicted_config_dict[FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_CPU]}{D_UNITS[FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_CPU][0]}",
-                memory=f"{predicted_config_dict[FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_MEMORY]}{D_UNITS[FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_MEMORY][0]}",
+                region=_get_region(data),  # predicted_config_dict.get(FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_LOCATION, "Dublin"),
+                cpu=f"{predicted_config_dict.get(FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_CPU, '1')}{D_UNITS[FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_CPU][0]}",
+                memory=f"{predicted_config_dict.get(FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_MEMORY, '1')}{D_UNITS[FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_MEMORY][0]}",
                 architecture=architecture)
         )
+
+
+def _get_region(data: ModelPredictRequest) -> str:
+    asked_region = [i for i in data.intents if i.name == KnownIntent.location]
+
+    if len(asked_region):
+        return asked_region[0].value
+    else:
+        return "Dublin"

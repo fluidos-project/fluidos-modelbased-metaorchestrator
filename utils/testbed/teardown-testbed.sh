@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -xauo pipefail
+
+kind get clusters | xargs kind delete clusters
+
+rm -f provider-{DE,IT}-config.yaml
+rm -f consumer-config.yaml

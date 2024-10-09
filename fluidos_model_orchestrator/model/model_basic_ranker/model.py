@@ -22,7 +22,7 @@ REPO_ID = "fluidos/basic_ranker"
 
 
 class RankingModel(tf.keras.Model):
-    def __init__(self, unique_user_ids: np.array, unique_movie_titles: np.array) -> None:
+    def __init__(self, unique_user_ids: np.array, unique_movie_titles: np.array) -> None:  # type: ignore
         super().__init__()
         embedding_dimension = 32
         self.unique_user_ids = unique_user_ids
@@ -80,8 +80,8 @@ class RankingModel(tf.keras.Model):
 
 
 class BasicRankerModel(tfrs.models.Model, ModelInterface):
-    def __init__(self, unique_user_ids: np.array,
-                 unique_movie_titles: np.array,
+    def __init__(self, unique_user_ids: np.array,  # type: ignore
+                 unique_movie_titles: np.array,  # type: ignore
                  target_column: str):
         super().__init__()
         self.ranking_model: tf.keras.Model = RankingModel(unique_user_ids, unique_movie_titles)

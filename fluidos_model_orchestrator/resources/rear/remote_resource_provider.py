@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-import uuid
+import time
 from typing import Any
 
 import kopf  # type: ignore
@@ -10,94 +10,130 @@ from kubernetes.client.exceptions import ApiException  # type: ignore
 
 from fluidos_model_orchestrator.common import Flavor
 from fluidos_model_orchestrator.common import ResourceProvider
+from fluidos_model_orchestrator.configuration import CONFIGURATION
 
 logger = logging.getLogger(__name__)
 
 
 class RemoteResourceProvider(ResourceProvider):
-    def __init__(self, id: str, flavor: Flavor, peering_candidate: str, reservation: str, namespace: str, api_client: client.CustomObjectsApi) -> None:
+    def __init__(self, id: str, flavor: Flavor, peering_candidate: str, reservation: str, namespace: str, api_client: client.CustomObjectsApi, seller: dict[str, Any]) -> None:
         super().__init__(id, flavor)
         self.peering_candidate = peering_candidate
         self.reservation = reservation
         self.namespace = namespace
         self.api_client = api_client
+        self.seller = seller
+        self.contract: str | None = None
 
     def acquire(self) -> bool:
         logger.info("Creating connection to remote node")
         contract = self._buy()
         if contract is None:
             return False
+        self.contract = contract
         return self._establish_peering(contract)
 
-    def get_label(self) -> str:
-        raise NotImplementedError()
+    def get_label(self) -> dict[str, str]:
+        # return {"liqo.io/type": "virtual-node"}
+        if self.contract is None:
+            logger.error("Remote resource not bougth, cannot return valid label")
+            raise RuntimeError("RemoteResourceProvider not connected to active resource")
 
-    def _buy(self) -> dict[str, Any] | None:
-        logger.info(f"Establishing buying of {self.peering_candidate}")
+        return {
+            CONFIGURATION.remote_node_key: self._get_remote_cluster_id()
+        }
+
+    def _get_remote_cluster_id(self) -> str:
+        if self.contract is None:
+            raise RuntimeError("Unable to retrieve contract with no contract id specified")
 
         try:
-            reservation = self.api_client.patch_namespaced_custom_object(
-                group="reservation.fluidos.eu",
-                version="v1alpha1",
-                namespace=self.namespace,
-                plural="reservations",
-                name=self.reservation,
-                body={
-                    "spec": {
-                        "purchase": True
-                    }
-                },
-                async_req=False)
-
-            logger.debug(f"Retrieved {reservation=}")
-
-            contract_name = reservation["status"]["contract"]["name"]
-
-            logger.debug(f"Retrieving contract {contract_name}")
-
-            # retrieve contract ID or fail
-            contract = self.api_client.get_namespaced_custom_object(
+            resource = self.api_client.get_namespaced_custom_object(
                 group="reservation.fluidos.eu",
                 version="v1alpha1",
                 namespace=self.namespace,
                 plural="contracts",
-                name=contract_name,
+                name=self.contract
             )
 
-            logger.debug(f"Retrieved {contract=}")
+            if resource is None:
+                raise RuntimeError(f"Unable to retrieve {self.contract=}")
 
-            return contract
+            return resource["spec"]["peeringTargetCredentials"]["clusterID"]
         except ApiException as e:
-            logger.error(f"Error buying {self.reservation}")
-            logger.debug(f"{e=}")
+            logger.error(f"Unable to reserve and buy {self.peering_candidate}")
+            logger.debug(f"Reason: {e=}")
+            raise RuntimeError(e)
 
-        return None
+    def _buy(self) -> str | None:
+        logger.info(f"Establishing buying of {self.peering_candidate}")
 
-    def _establish_peering(self, contract: dict[str, Any]) -> bool:
+        try:
+            logger.info(f"Reserving peering candidate {self.peering_candidate}")
+            body = self._create_reservation(self.id, self.peering_candidate, self.namespace, self.seller)
+
+            kopf.adopt(body)
+
+            response: dict[str, Any] = self.api_client.create_namespaced_custom_object(
+                group="reservation.fluidos.eu",
+                version="v1alpha1",
+                namespace=self.namespace,
+                plural="reservations",
+                body=body,
+                async_req=False
+            )  # type: ignore
+
+        except ApiException as e:
+            logger.error(f"Unable to reserve and buy {self.peering_candidate}")
+            logger.debug(f"Reason: {e=}")
+            return None
+
+        for _ in range(CONFIGURATION.n_try):
+            if "name" in response.get("status", {}).get("contract", {}):
+                logger.info("Contract available")
+                break
+            else:
+                logger.info("Contract name not available")
+
+            time.sleep(0.2)
+            try:
+                response = self.api_client.get_namespaced_custom_object(
+                    group="reservation.fluidos.eu",
+                    version="v1alpha1",
+                    namespace=self.namespace,
+                    plural="reservations",
+                    name=body["metadata"]["name"],
+                    async_req=False
+                )  # type: ignore
+            except ApiException as e:
+                logger.error(f"Unable to reserve and buy {self.peering_candidate}")
+                logger.error(f"Reason: {e=}")
+        else:
+            logger.info("Contract not available")
+            return None
+
+        contract_name = response["status"]["contract"]["name"]
+
+        return contract_name
+
+    def _establish_peering(self, contract_name: str) -> bool:
         logger.info(f"Establishing peering for {self.peering_candidate}")
 
         allocation_name = f"{self.id}-allocation"
 
-        body = {
+        body: dict[str, Any] = {
+            "apiVersion": "nodecore.fluidos.eu/v1alpha1",
             "kind": "Allocation",
             "metadata": {
-                "name": allocation_name
+                "name": allocation_name,
             },
             "spec": {
-                # From the reservation get the contract and from the contract get the Spec.SellerCredentials.ClusterID
-                "remoteClusterID": contract["sellerCredentials"]["clusterID"],
                 # Get it from the solver
                 "intentID": self.id,
-                # Set a name for the VirtualNode on the consumer cluster. Pattern suggested: "liqo-clusterName", where clusterName s the one you get from the contract.Spec.SellerCredentials.ClusterName
-                "nodeName": f"liqo-{str(uuid.uuid4())}",
-                # On the consumer set it as VirtualNode, since the allocation will be bound to a VirtualNode to be created
-                "type": "VirtualNode",
-                # On the consumer set it as Local, since the allocation of resources will be consumed locally
-                "destination": "Local",
-                # Retrieve information from the reservation and the contract bou d to it
+                # Retrieve information from the reservation and the contract
                 "contract": {
-                    "name": contract["metadata"]["name"],
-                    "namespace": contract["metadata"]["namespace"],
+                    "name": contract_name,
+                    "namespace": self.namespace
                 }
             }
         }
@@ -105,17 +141,77 @@ class RemoteResourceProvider(ResourceProvider):
         kopf.adopt(body)
 
         try:
-            self.api_client.create_namespaced_custom_object(
+            allocation = self.api_client.create_namespaced_custom_object(
                 group="nodecore.fluidos.eu",
                 version="v1alpha1",
                 namespace=self.namespace,
                 plural="allocations",
-                name=allocation_name,
                 body=body,
-                async_req=False)
+                async_req=False)  # type: ignore
 
+            if allocation is not None:
+                logger.info("Allocation created")
+                # logger.info(f"{json.dumps(allocation)}")
+
+                return self._create_namespace_offload_resource()
         except ApiException as e:
             logger.error(f"Error establishing peering for {self.peering_candidate}")
-            logger.debug(f"{e=}")
+            logger.error(f"{e=}")
 
         return False
+
+    def _create_namespace_offload_resource(self) -> bool:
+        try:
+            for _ in range(CONFIGURATION.n_try):
+                res = self.api_client.create_namespaced_custom_object(
+                    group="offloading.liqo.io",
+                    version="v1alpha1",
+                    namespace=self.namespace,
+                    plural="namespaceoffloadings",
+                    body={
+                        "metadata": {
+                            "name": "offloading"
+                        },
+                        "spec": {
+                            "namespaceMappingStrategy": "EnforceSameName",
+                            "podOffloadinStrategy": "LocalAndRemote",
+                        }
+                    },
+                    async_req=False)  # type: ignore
+
+                if res is not None:
+                    logger.info(f"NamespaceOffload created for {self.namespace}")
+
+                    return True
+        except ApiException as e:
+            logger.error(f"Error offloading namespace {self.namespace}")
+            logger.error(f"{e=}")
+            logger.error(f"{e.reason=}")
+
+        return False
+
+    def _create_reservation(self, solver_name: str, candidate: str, namespace: str, seller: dict[str, Any]) -> dict[str, Any]:
+        logger.info(f'Creating reservation for {candidate}')
+
+        return {
+            "apiVersion": "reservation.fluidos.eu/v1alpha1",
+            "kind": "Reservation",
+            "metadata": {
+                "name": f'{candidate}-reservation'
+            },
+            "spec": {
+                "solverID": solver_name,
+                "buyer": CONFIGURATION.identity,
+                # Retrieve from PeeringCandidate Flavor Owner field
+                "seller": seller,
+                # Set it to reserve
+                "reserve": True,
+                # Set it to purchase after reservation is completed and you have a transaction
+                "purchase": True,
+                # Retrieve from PeeringCandidate chosen to reserve
+                "peeringCandidate": {
+                    "name": candidate,
+                    "namespace": namespace
+                }
+            }
+        }

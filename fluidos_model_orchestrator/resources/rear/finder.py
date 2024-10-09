@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 
 class REARResourceFinder(ResourceFinder):
-    SOLVER_TIMEOUT = 25.0  # ~5 seconds
     SOLVER_SLEEPING_TIME = 0.2  # as float, in seconds ~200ms
 
     def __init__(self, configuration: Configuration = CONFIGURATION) -> None:
@@ -39,7 +38,7 @@ class REARResourceFinder(ResourceFinder):
         if type(request) is Resource:
             resource = request
         elif type(request) is Intent:
-            logger.info("Request is for \"intent\" resource")
+            logger.info("Request is for \"intent-defined\" resource")
             return []  # not supported yet
         else:
             raise ValueError(f"Unkown resource type {type(request)}")
@@ -49,6 +48,8 @@ class REARResourceFinder(ResourceFinder):
 
         if len(local):
             logger.info(f"Found local resource {local=}")
+        else:
+            logger.info("No local resource compatible")
 
         remote = self._find_remote(resource, namespace)
 
@@ -101,7 +102,7 @@ class REARResourceFinder(ResourceFinder):
                 namespace=namespace,
                 plural="solvers",
                 name=body["metadata"]["name"],
-                async_req=False)
+                async_req=False)  # type: ignore
         except ApiException as e:
             logger.debug(f"Error retrieving {body['metadata']['name']}: {e=}")
             response = None
@@ -114,7 +115,7 @@ class REARResourceFinder(ResourceFinder):
                 plural="solvers",
                 body=body,
                 async_req=False
-            )
+            )  # type: ignore
         else:
             logger.debug("Solver already existing")
 
@@ -131,7 +132,7 @@ class REARResourceFinder(ResourceFinder):
                 plural="solvers",
                 name=solver_name,
                 async_req=False
-            )
+            )  # type: ignore
         except ApiException as e:
             logger.error("Unable to retrieve solver status")
             logger.debug(f"Reason: {e=}")
@@ -142,7 +143,7 @@ class REARResourceFinder(ResourceFinder):
         return remote_flavour_status
 
     def _find_remote(self, resource: Resource, namespace: str) -> list[ResourceProvider]:
-        logger.info(f"Retrieving remote flavours in {namespace}")
+        logger.info(f"Retrieving remote flavours in {namespace=}")
 
         body, _ = self._resource_to_solver_request(resource, resource.id)
 
@@ -150,9 +151,7 @@ class REARResourceFinder(ResourceFinder):
 
         solver_name = self._initiate_search(body, namespace)
 
-        counter = 0
-
-        while counter < self.SOLVER_TIMEOUT:
+        for _ in range(CONFIGURATION.n_try):
             time.sleep(self.SOLVER_SLEEPING_TIME)
             remote_flavour_status = self._check_solver_status(solver_name, namespace)
 
@@ -169,9 +168,7 @@ class REARResourceFinder(ResourceFinder):
                 return []
 
             if phase == "Running" or phase == "Pending":
-                logger.debug("Still processing, wait")
-                counter += 1
-                continue
+                logger.debug("Still processing, wait...")
         else:
             logger.error("Solver did not finish withing the allocated time")
             return []
@@ -205,7 +202,7 @@ class REARResourceFinder(ResourceFinder):
                 plural="discoveries",
                 name=f"discovery-{solver_name}",
                 async_req=False
-            )
+            )  # type: ignore
 
             return discovery.get("status", {}).get("peeringCandidateList", {}).get("items", None)
 
@@ -217,63 +214,24 @@ class REARResourceFinder(ResourceFinder):
     def _reserve_all(self, solver_name: str, peering_candidates: list[dict[str, Any]], namespace: str) -> list[ResourceProvider]:
         logger.info("Reserving all peering candidates, just in case")
         return [
-            candidate for candidate in
-            [self._reserve_peering_candidate(solver_name, candidate, namespace) for candidate in peering_candidates]
-            if candidate is not None
+            resource for resource in
+            [
+                self._reserve_peering_candidate(solver_name, candidate, namespace) for candidate in peering_candidates
+                if candidate is not None and candidate["spec"]["available"] is True
+            ]
         ]
 
-    def _create_reservation(self, solver_name: str, candidate: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "apiVersion": "reservation.fluidos.eu/v1alpha1",
-            "kind": "Reservation",
-            "metadata": {
-                "name": f'{candidate["metadata"]["name"]}-reservation'
-            },
-            "spec": {
-                "solverID": solver_name,
-                "buyer": self.identity,
-                # Retrieve from PeeringCandidate Flavor Owner field
-                "seller": candidate["spec"]["flavour"]["spec"]["owner"],
-                # Set it to reserve
-                "reserve": True,
-                # Set it to purchase after reservation is completed and you have a transaction
-                "purchase": False,
-                # Retrieve from PeeringCandidate chosen to reserve
-                "peeringCandidate": {
-                    "name": candidate["metadata"]["name"],
-                }
-            }
-        }
-
-    def _reserve_peering_candidate(self, solver_name: str, candidate: dict[str, Any], namespace: str) -> RemoteResourceProvider | None:
-        logger.info(f"Reserving peering candidate {candidate['metadata']['name']}")
-        body = self._create_reservation(solver_name, candidate)
-
-        kopf.adopt(body)
-
-        try:
-            response = self.api_client.create_namespaced_custom_object(
-                group="reservation.fluidos.eu",
-                version="v1alpha1",
-                namespace=namespace,
-                plural="reservations",
-                body=body,
-                async_req=False
-            )
-
-            logger.debug(f"{response=}")
-        except ApiException as e:
-            logger.error(f"Unable to reserve {candidate['metadata']['name']}")
-            logger.debug(f"Reason: {e=}")
-            return None
+    def _reserve_peering_candidate(self, solver_name: str, candidate: dict[str, Any], namespace: str) -> RemoteResourceProvider:
+        logger.info(f"Reserving peering candidate {candidate['metadata']['name']} but not for real")
 
         return RemoteResourceProvider(
             id=solver_name,
-            flavor=build_flavor(candidate["spec"]["flavour"]),
+            flavor=build_flavor(candidate["spec"]["flavor"]),
             peering_candidate=candidate["metadata"]["name"],
-            reservation=response["metadata"]["name"],
+            reservation="",  # response["metadata"]["name"],
             namespace=namespace,
-            api_client=self.api_client
+            api_client=self.api_client,
+            seller=candidate["spec"]["flavor"]["spec"]["owner"]
         )
 
     def _resource_to_solver_request(self, resource: Resource, intent_id: str | None = None) -> tuple[dict[str, Any], str]:
@@ -353,7 +311,7 @@ class REARResourceFinder(ResourceFinder):
         return selector
 
     def _find_local(self, resource: Resource, namespace: str) -> list[ResourceProvider]:
-        logger.info("Retrieving locally available flavours")
+        logger.info(f"Retrieving locally available flavours for {resource=}")
 
         fitting_resources: list[ResourceProvider] = []
 
@@ -369,12 +327,14 @@ class REARResourceFinder(ResourceFinder):
                 continue
 
             if resource.can_run_on(flavor):
-                logger.info("Local flavour is compatible, using it")
+                logger.info(f"Local flavour {name=} is compatible")
                 fitting_resources.append(
                     LocalResourceProvider(
                         flavor.metadata.name,
                         flavor
                     ))
+            else:
+                logger.info("Not able to run the request")
 
         return fitting_resources
 
@@ -389,7 +349,7 @@ class REARResourceFinder(ResourceFinder):
                 namespace=namespace,
             )
         except ApiException:
-            logger.warn("Failed to retrieve local flavors, is node available?")
+            logger.warning("Failed to retrieve local flavors, is node available?")
             flavor_list = {}
 
         return [build_flavor(flavor) for flavor in flavor_list.get("items", [])]

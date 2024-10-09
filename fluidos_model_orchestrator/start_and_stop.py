@@ -24,15 +24,15 @@ async def configure(settings: kopf.OperatorSettings, retry: int, started: dateti
 
     LOCK = Lock()
 
-    my_config = k8s_client.Configuration()
-    k8s_config.load_config(client_configuration=my_config)
+    my_config = k8s_client.Configuration()  # type: ignore
+    k8s_config.load_config(client_configuration=my_config)  # type: ignore
 
     enrich_configuration(CONFIGURATION, settings, param, memo, kwargs, logger, my_config)
 
 
 @kopf.on.cleanup()  # type: ignore
 def cleanup_function(logger: logging.Logger, **kwargs: str) -> None:
-    logger.info("Running clean up functionlity")
+    logger.info("Running clean up functionality")
 
     print(kwargs)
 

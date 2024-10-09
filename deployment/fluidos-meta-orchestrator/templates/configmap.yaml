@@ -3,3 +3,5 @@ kind: ConfigMap
 metadata:
   name: fluidos-mbmo-configmap
 data:
+  ELECTRICITY_API_KEY: {{ .Values.electricity_map.key }}
+  architecture: {{ .Values.configuration.architecture }}

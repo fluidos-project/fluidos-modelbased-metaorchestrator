@@ -9,6 +9,7 @@ from ..container import extract_image_embedding
 from .candidate_generation.model import Orchestrator as CandidateGenerator
 from .carbon_aware.orchestrator import CarbonAwareOrchestrator
 from .ensemble import FluidosModelEnsemble
+from fluidos_model_orchestrator.model.utils import FLUIDOS_COL_NAMES
 # from .model_basic_ranker.model import Orchestrator as BasicRanker
 
 logger = logging.getLogger(__name__)
@@ -90,7 +91,9 @@ def convert_to_model_request(spec: Any, namespace: str) -> ModelPredictRequest |
         request = ModelPredictRequest(
             id=spec["metadata"]["name"],
             namespace=namespace,
-            pod_request=spec["spec"]["template"],
+            pod_request={
+                FLUIDOS_COL_NAMES.POD_MANIFEST: spec["spec"]["template"]
+            },
             intents=intents,
             container_image_embeddings=[extract_image_embedding(container["image"]) for container in spec["spec"]["template"]["spec"]["containers"]]
         )
@@ -109,7 +112,9 @@ def convert_to_model_request(spec: Any, namespace: str) -> ModelPredictRequest |
         request = ModelPredictRequest(
             id=spec["metadata"]["name"],
             namespace=namespace,
-            pod_request=spec,
+            pod_request={
+                FLUIDOS_COL_NAMES.POD_MANIFEST: spec
+            },
             intents=intents,
             container_image_embeddings=[extract_image_embedding(container["image"]) for container in spec["spec"]["containers"]]
         )
