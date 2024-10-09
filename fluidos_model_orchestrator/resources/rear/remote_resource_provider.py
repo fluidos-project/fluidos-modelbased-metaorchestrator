@@ -138,8 +138,6 @@ class RemoteResourceProvider(ResourceProvider):
             }
         }
 
-        kopf.adopt(body)
-
         try:
             allocation = self.api_client.create_namespaced_custom_object(
                 group="nodecore.fluidos.eu",
@@ -169,6 +167,8 @@ class RemoteResourceProvider(ResourceProvider):
                     namespace=self.namespace,
                     plural="namespaceoffloadings",
                     body={
+                        "apiVersion": "offloading.liqo.io/v1alpha1",
+                        "kind": "NamespaceOffloading",
                         "metadata": {
                             "name": "offloading"
                         },
