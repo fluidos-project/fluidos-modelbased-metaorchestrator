@@ -23,6 +23,7 @@ class Configuration:
     DAEMON_SLEEP_TIME: float = 60. * 60.  # 1h in seconds
     architecture: str = "arm64"
     n_try: int = 25
+    API_SLEEP_TIME: float = 0.1  # 100 ms
 
     def check_identity(self, identity: dict[str, str]) -> bool:
         return all(
