@@ -284,7 +284,12 @@ class Orchestrator(OrchestratorInterface):
 
     def _check_feedback_for_relevant_candidates(self, image_name: str) -> tuple[torch.Tensor, torch.Tensor]:
         logger.info(f"{self.feedback_db_path.absolute()}")
-        feedback = pd.read_csv(self.feedback_db_path.absolute())
+        try:
+            feedback = pd.read_csv(self.feedback_db_path.absolute())
+        except:
+            logger.warning(f"No feedback was found for {image_name} at {self.feedback_db_path.absolute()}")
+            return torch.tensor([], dtype=torch.int32).unsqueeze(0), torch.tensor([], dtype=torch.int32).unsqueeze(0)
+        
         image_feedback = feedback[feedback['image_name'] == image_name]
         relevant_candidates_ids = image_feedback[image_feedback['status'] == FEEDBACK_STATUS.OK]['template_resource_id'].tolist()
         non_relevant_candidates_ids = image_feedback[image_feedback['status'] == FEEDBACK_STATUS.FAIL]['template_resource_id'].tolist()
