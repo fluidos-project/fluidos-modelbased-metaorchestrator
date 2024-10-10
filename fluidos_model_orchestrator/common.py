@@ -292,6 +292,34 @@ def validate_location(provider: ResourceProvider, value: str) -> bool:
     )
 
 
+def _validate_bandwidth_against_point(provider: ResourceProvider, value: str) -> bool:
+    # assumes value is of the form "<operator> value <point>"
+    [operator, quantity, point] = value.split(" ")
+
+    bandwidth_properties = provider.flavor.spec.flavor_type.type_data.properties.get("bandwidth", {}).get(point, None)
+
+    if bandwidth_properties is not None:
+        # assume that bandwidth_property is in ms
+        bandwidth = int(bandwidth_properties[:-2])
+        required_bandwidth = int(quantity[:-2])   # assumes quantity = "\d+ms"
+
+        match operator:
+            case ">":
+                return bandwidth > required_bandwidth
+            case ">=":
+                return bandwidth >= required_bandwidth
+            case "<":
+                return bandwidth < required_bandwidth
+            case "<=":
+                return bandwidth <= required_bandwidth
+            case "=":
+                return bandwidth == required_bandwidth
+            case _:
+                raise ValueError(f"Unknown operator {operator=}")
+
+    return False
+
+
 @unique
 class KnownIntent(Enum):
     # k8s resources
@@ -311,6 +339,9 @@ class KnownIntent(Enum):
     # carbon aware requests
     max_delay = "max_delay", False, _always_true
     carbon_aware = "carbon_aware", False, _always_true
+
+    # TER
+    bandwidth_against = "bandwidth-against-point", False, _validate_bandwidth_against_point
 
     # service
     service = "service", True, _always_true
