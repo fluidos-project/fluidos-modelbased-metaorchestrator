@@ -4,7 +4,6 @@ import logging
 import time
 from typing import Any
 
-import kopf  # type: ignore
 from kubernetes import client  # type: ignore
 from kubernetes.client.exceptions import ApiException  # type: ignore
 
@@ -71,8 +70,6 @@ class RemoteResourceProvider(ResourceProvider):
         try:
             logger.info(f"Reserving peering candidate {self.peering_candidate}")
             body = self._create_reservation(self.id, self.peering_candidate, self.namespace, self.seller)
-
-            kopf.adopt(body)
 
             response: dict[str, Any] = self.api_client.create_namespaced_custom_object(
                 group="reservation.fluidos.eu",

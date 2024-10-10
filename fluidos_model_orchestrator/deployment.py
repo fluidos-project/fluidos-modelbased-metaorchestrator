@@ -8,6 +8,7 @@ from kubernetes.utils import create_from_dict  # type: ignore
 from .common import Intent
 from .common import ModelPredictResponse
 from .common import ResourceProvider
+from .common import ServiceResourceProvider
 from .configuration import CONFIGURATION
 
 
@@ -17,7 +18,7 @@ logger = logging.getLogger()
 async def deploy(
         spec: dict[str, Any],
         provider: ResourceProvider,
-        expanding_resources: list[tuple[ResourceProvider, Intent]],
+        expanding_resources: list[tuple[ServiceResourceProvider, Intent]],
         response: ModelPredictResponse,
         namespace: str) -> bool:
     spec_dict = {
@@ -35,8 +36,6 @@ async def deploy(
     kopf.adopt(spec_dict)
 
     reference = create_from_dict(k8s_client=k8s_client, data=spec_dict, namespace=namespace)
-
-    # logger.info(f"Created manifest: {reference}")
 
     return reference is not None
 
