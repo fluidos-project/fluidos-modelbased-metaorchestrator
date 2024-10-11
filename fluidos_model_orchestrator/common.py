@@ -320,10 +320,6 @@ class Intent:
         return self.name.validates(provider, self.value)
 
 
-def validate_on_intent(resources: list[ResourceProvider | ServiceResourceProvider], intent: Intent) -> ResourceProvider | ServiceResourceProvider:
-    return resources[0]  # for now
-
-
 class ResourceFinder(ABC):
     def find_best_match(self, resource: Resource, namespace: str) -> list[ResourceProvider]:
         raise NotImplementedError()

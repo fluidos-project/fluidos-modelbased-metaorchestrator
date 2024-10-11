@@ -41,7 +41,12 @@ class FlavorK8SliceData:
 
 @dataclass(kw_only=True)
 class FlavorServiceData:
-    pass
+    category: str
+    configurationTemplate: dict[str, Any]
+    description: str
+    hostingPolicies: list[str]
+    name: str
+    tags: list[str]
 
 
 @unique
@@ -130,7 +135,7 @@ def _build_flavor_type(flavor_type_data: dict[str, Any]) -> FlavorTypeData:
     )
 
 
-def _build_flavor_type_data(flavor_type: FlavorType, data: dict[str, Any]) -> FlavorK8SliceData:
+def _build_flavor_type_data(flavor_type: FlavorType, data: dict[str, Any]) -> FlavorK8SliceData | FlavorServiceData:
     if flavor_type is FlavorType.K8SLICE:
         return FlavorK8SliceData(
             characteristics=FlavorCharacteristics(
@@ -144,4 +149,14 @@ def _build_flavor_type_data(flavor_type: FlavorType, data: dict[str, Any]) -> Fl
             policies=data.get("policies", {}),
             properties=data.get("properties", {})
         )
+    elif flavor_type is FlavorType.SERVICE:
+        return FlavorServiceData(
+            category=data["category"],
+            configurationTemplate=data["configurationTemplate"],
+            description=data["description"],
+            hostingPolicies=data["hostingPolicies"],
+            name=data["name"],
+            tags=data["tags"],
+        )
+
     raise ValueError(f"Unsupported flavor type: {flavor_type}")

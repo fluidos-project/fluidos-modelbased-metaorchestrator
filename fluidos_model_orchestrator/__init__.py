@@ -10,7 +10,6 @@ from .common import OrchestratorInterface
 from .common import ResourceFinder
 from .common import ResourceProvider
 from .common import ServiceResourceProvider
-from .common import validate_on_intent
 from .configuration import CONFIGURATION
 from .daemons_and_times.flavor import daemons_for_flavours_observation  # noqa
 from .deployment import deploy
@@ -103,10 +102,6 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
 def validate_with_intents(providers: list[ResourceProvider], intents: list[Intent], logger: Logger) -> list[ResourceProvider]:
     valid_providers: list[ResourceProvider] = []
 
-    # return [
-    #     provider for provider in providers if all(intent.validates(provider) for intent in intents)
-    # ]
-
     for provider in providers:
         for intent in intents:
             if not intent.validates(provider):
@@ -126,7 +121,7 @@ def _find_expanding_resources(finder: ResourceFinder, intents: list[Intent], id:
         (finder.find_service(id, intent, namespace), intent) for intent in intents if intent.is_external_requirement()
     ]:
         if len(resources):
-            resource: ResourceProvider = validate_on_intent(resources, intent)
+            resource: ServiceResourceProvider = resources[0]
             resources_and_intents.append(
                 (resource, intent)
             )
