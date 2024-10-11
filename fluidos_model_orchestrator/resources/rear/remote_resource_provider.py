@@ -33,7 +33,6 @@ class RemoteResourceProvider(ResourceProvider):
         return self._establish_peering(contract)
 
     def get_label(self) -> dict[str, str]:
-        # return {"liqo.io/type": "virtual-node"}
         if self.contract is None:
             logger.error("Remote resource not bougth, cannot return valid label")
             raise RuntimeError("RemoteResourceProvider not connected to active resource")

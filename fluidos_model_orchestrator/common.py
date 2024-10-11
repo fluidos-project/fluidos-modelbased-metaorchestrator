@@ -39,9 +39,9 @@ class ResourceProvider(ABC):
         return f"{self.id=}: {self.flavor=}"
 
 
-class ServiceResourceProvider(ResourceProvider):
-    def __init__(self, id: str, flavor: Flavor) -> None:
-        super().__init__(id, flavor)
+class ServiceResourceProvider(ABC):
+    def enrich(self, spec: dict[str, Any]) -> None:
+        raise NotImplementedError("Abstract method")
 
 
 @dataclass(kw_only=True)

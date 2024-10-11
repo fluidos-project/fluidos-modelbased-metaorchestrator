@@ -15,6 +15,14 @@ from .configuration import CONFIGURATION
 logger = logging.getLogger()
 
 
+def expand(spec: dict[str, Any], expanding: tuple[ServiceResourceProvider, Intent]) -> bool:
+    # retrieve credentials as secret named f"credentials-{contact_name}"
+    # stored in namespaced called f"{contact_name}"
+    # to be decoded
+
+    return True
+
+
 async def deploy(
         spec: dict[str, Any],
         provider: ResourceProvider,
@@ -26,6 +34,9 @@ async def deploy(
     }
 
     enrich(spec_dict, provider)
+
+    for expanding_resource in expanding_resources:
+        expand(spec_dict, expanding_resource)
 
     delay_time = response.delay * 60 * 60
     logger.info(f"Waiting to deploy {delay_time=}")

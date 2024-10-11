@@ -62,8 +62,8 @@ class REARResourceFinder(ResourceFinder):
             "spec": {
                 "intentID": intent_id,
                 "findCandidate": True,
-                "reserveAndBuy": False,
-                "enstablishPeering": False,
+                "reserveAndBuy": True,
+                "enstablishPeering": True,
                 "selector": {
                     "flaovrType": "Service",
                     "filters": {
@@ -87,45 +87,116 @@ class REARResourceFinder(ResourceFinder):
 
         solver_name = self._initiate_search(body, namespace)
 
+        # NOTE: FOR SERVICE SOLVER DOES NOT SOLVE
+        # Check status of Allocation with .status.status == "Active" and
+        # find right allocation using .spec.contract.name == "<contract name>"
+        # contract name is retrieved from Reservation where .spec.solverID == "solver-name", there one finds .status.contract.name
+
         for _ in range(CONFIGURATION.n_try):
             time.sleep(self.SOLVER_SLEEPING_TIME)
-            remote_flavour_status = self._check_solver_status(solver_name, namespace)
 
-            if remote_flavour_status is None or "status" not in remote_flavour_status:
-                return []
+            reservations = [reservation for reservation in self.api_client.list_namespaced_custom_object(
+                group="reservation.fluidos.eu",
+                version="v1alpha1",
+                plural="reservations",
+                namespace=CONFIGURATION.namespace,
+                async_req=False  # type: ignore
+            ) if reservation["spec"]["solverID"] == solver_name and reservation.get("status", {}).get("contract", {}).get("name", None) is not None]
 
-            phase: str = remote_flavour_status["status"]["solverPhase"]["phase"]
-
-            if phase == "Solved":
+            if len(reservations) == 0:
+                # either no reservation or not with valid status
+                continue
+            if len(reservations) == 1:
                 break
-
-            if phase == "Failed" or phase == "Timed Out":
-                logger.info("Unable to find matching flavour")
-                return []
-
-            if phase == "Running" or phase == "Pending":
-                logger.debug("Still processing, wait...")
         else:
-            logger.error("Solver did not finish withing the allocated time")
+            # assume no service found
+            logger.info("No valid service found (no valid reservation)")
             return []
 
-        # resource found and reserved, now we need to return the best matching
-        peering_candidates = self._retrieve_peering_candidates(solver_name, namespace)
-        if peering_candidates is None:
-            logger.error("Error retrieving peering candidates from Discovery")
+        contract_name = reservations[0]["status"]["contract"]["name"]
+
+        # Check status of Allocation with .status.status == "Active" and
+        # find right allocation using .spec.contract.name == "<contract name>"
+        for _ in range(CONFIGURATION.n_try):
+            time.sleep(self.SOLVER_SLEEPING_TIME)
+
+            allocations = [allocation for allocation in self.api_client.list_namespaced_custom_object(
+                group="reservation.fluidos.eu",
+                version="v1alpha1",
+                plural="contracts",
+                namespace=CONFIGURATION.namespace,
+                async_req=False  # type: ignore
+            ) if allocation["spec"]["contract"]["name"] == contract_name and allocation.get("status", {}).get("status", "") == "Active"]
+
+            if len(allocations) == 0:
+                continue
+            if len(allocations) == 1:
+                break
+        else:
+            # assuem no allocation found in time
+            logger.info("No valid service found (no active allocation for contract)")
             return []
 
-        if len(peering_candidates) == 0:
-            logger.info("No valid peering candidates found")
-            return []
+        allocation = allocations[0]
 
-        logger.debug(f"{peering_candidates=}")
+        return [
+            REARServiceResourceProvider(
+                api_client=self.api_client,
+                allocation=allocation
+            )
+        ]
 
-        matching_resources: list[ServiceResourceProvider] = self._reserve_all_service_peering_candidate(solver_name, peering_candidates, namespace)
+    # def find_service_future(self, id: str, service: Intent, namespace: str) -> list[ServiceResourceProvider]:
+    #     logger.info("Retrieving service with REAR")
 
-        logger.debug(f"{matching_resources=}")
+    #     body, _ = self._resource_to_service_sorver_request(service, id)
 
-        return matching_resources
+    #     solver_name = self._initiate_search(body, namespace)
+
+    #     # NOTE: FOR SERVICE SOLVER DOES NOT SOLVE
+    #     # Check status of Allocation with .status.status == "Active" and
+    #     # find right allocation using .spec.contract.name == "<contract name>"
+    #     # contract name is retrieved from Reservation where .spec.solverID == "solver-name", there one finds .status.contract.name
+
+    #     for _ in range(CONFIGURATION.n_try):
+    #         time.sleep(self.SOLVER_SLEEPING_TIME)
+    #         remote_flavour_status = self._check_solver_status(solver_name, namespace)
+
+    #         if remote_flavour_status is None or "status" not in remote_flavour_status:
+    #             return []
+
+    #         phase: str = remote_flavour_status["status"]["solverPhase"]["phase"]
+
+    #         if phase == "Solved":
+    #             break
+
+    #         if phase == "Failed" or phase == "Timed Out":
+    #             logger.info("Unable to find matching flavour")
+    #             return []
+
+    #         if phase == "Running" or phase == "Pending":
+    #             logger.debug("Still processing, wait...")
+    #     else:
+    #         logger.error("Solver did not finish withing the allocated time")
+    #         return []
+
+    #     # resource found and reserved, now we need to return the best matching
+    #     peering_candidates = self._retrieve_peering_candidates(solver_name, namespace)
+    #     if peering_candidates is None:
+    #         logger.error("Error retrieving peering candidates from Discovery")
+    #         return []
+
+    #     if len(peering_candidates) == 0:
+    #         logger.info("No valid peering candidates found")
+    #         return []
+
+    #     logger.debug(f"{peering_candidates=}")
+
+    #     matching_resources: list[ServiceResourceProvider] = self._reserve_all_service_peering_candidate(solver_name, peering_candidates, namespace)
+
+    #     logger.debug(f"{matching_resources=}")
+
+    #     return matching_resources
 
     def retrieve_all_flavors(self, namespace: str) -> list[Flavor]:
         logger.info("Retrieving all flavours")
@@ -279,15 +350,15 @@ class REARResourceFinder(ResourceFinder):
             logger.debug(f"Reason: {e=}")
             return None
 
-    def _reserve_all_service_peering_candidate(self, solver_name: str, peering_candidates: list[dict[str, Any]], namespace: str) -> list[ServiceResourceProvider]:
-        logger.info("Reserving all peering candidates, just in case")
-        return [
-            resource for resource in
-            [
-                self._reserve_service_peering_candidate(solver_name, candidate, namespace) for candidate in peering_candidates
-                if candidate is not None and candidate["spec"]["available"] is True
-            ]
-        ]
+    # def _reserve_all_service_peering_candidate(self, solver_name: str, peering_candidates: list[dict[str, Any]], namespace: str) -> list[ServiceResourceProvider]:
+    #     logger.info("Reserving all peering candidates, just in case")
+    #     return [
+    #         resource for resource in
+    #         [
+    #             self._reserve_service_peering_candidate(solver_name, candidate, namespace) for candidate in peering_candidates
+    #             if candidate is not None and candidate["spec"]["available"] is True
+    #         ]
+    #     ]
 
     def _reserve_all(self, solver_name: str, peering_candidates: list[dict[str, Any]], namespace: str) -> list[ResourceProvider]:
         logger.info("Reserving all peering candidates, just in case")
@@ -299,18 +370,18 @@ class REARResourceFinder(ResourceFinder):
             ]
         ]
 
-    def _reserve_service_peering_candidate(self, solver_name: str, candidate: dict[str, Any], namespace: str) -> ServiceResourceProvider:
-        logger.info(f"Reserving peering candidate {candidate['metadata']['name']} but not for real")
+    # def _reserve_service_peering_candidate(self, solver_name: str, candidate: dict[str, Any], namespace: str) -> ServiceResourceProvider:
+    #     logger.info(f"Reserving peering candidate {candidate['metadata']['name']} but not for real")
 
-        return REARServiceResourceProvider(
-            id=solver_name,
-            flavor=build_flavor(candidate["spec"]["flavor"]),
-            peering_candidate=candidate["metadata"]["name"],
-            reservation="",  # response["metadata"]["name"],
-            namespace=namespace,
-            api_client=self.api_client,
-            seller=candidate["spec"]["flavor"]["spec"]["owner"]
-        )
+    #     return REARServiceResourceProvider(
+    #         id=solver_name,
+    #         flavor=build_flavor(candidate["spec"]["flavor"]),
+    #         peering_candidate=candidate["metadata"]["name"],
+    #         reservation="",  # response["metadata"]["name"],
+    #         namespace=namespace,
+    #         api_client=self.api_client,
+    #         seller=candidate["spec"]["flavor"]["spec"]["owner"]
+    #     )
 
     def _reserve_peering_candidate(self, solver_name: str, candidate: dict[str, Any], namespace: str) -> RemoteResourceProvider:
         logger.info(f"Reserving peering candidate {candidate['metadata']['name']} but not for real")
@@ -438,7 +509,8 @@ class REARResourceFinder(ResourceFinder):
                 version="v1alpha1",
                 plural="flavors",
                 namespace=namespace,
-            )
+                sync_req=False)  # type: ignore
+
         except ApiException:
             logger.warning("Failed to retrieve local flavors, is node available?")
             flavor_list = {}
