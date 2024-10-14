@@ -20,7 +20,17 @@ def expand(spec: dict[str, Any], expanding: tuple[ServiceResourceProvider, Inten
     # stored in namespaced called f"{contact_name}"
     # to be decoded
 
-    return True
+    match spec["kind"]:
+        case "Pod":
+            for container in spec["spec"]["containers"]:
+                expanding[0].enrich(container)
+            return True
+        case "Deployment":
+            raise ValueError(f"Unsupported type: {spec['kind']}")
+        case _:
+            raise ValueError(f"Unsupported type: {spec['kind']}")
+
+    return False
 
 
 async def deploy(

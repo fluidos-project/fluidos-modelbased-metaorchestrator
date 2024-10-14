@@ -14,5 +14,5 @@ class REARServiceResourceProvider(ServiceResourceProvider):
         self.api_client = api_client
         self.allocation = allocation
 
-    def enrich(self, spec: dict[str, Any]) -> None:
-        super().enrich(spec)
+    def enrich(self, container: dict[str, Any]) -> None:
+        raise NotImplementedError("To be fixed")

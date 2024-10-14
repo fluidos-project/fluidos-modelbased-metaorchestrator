@@ -14,8 +14,12 @@ from typing import cast
 
 from .flavor import build_flavor  # noqa
 from .flavor import Flavor
+from .flavor import FlavorCharacteristics  # noqa
 from .flavor import FlavorK8SliceData
+from .flavor import FlavorMetadata  # noqa
+from .flavor import FlavorSpec  # noqa
 from .flavor import FlavorType
+from .flavor import FlavorTypeData  # noqa
 from .flavor import GPUData
 
 
@@ -40,7 +44,7 @@ class ResourceProvider(ABC):
 
 
 class ServiceResourceProvider(ABC):
-    def enrich(self, spec: dict[str, Any]) -> None:
+    def enrich(self, container: dict[str, Any]) -> None:
         raise NotImplementedError("Abstract method")
 
 
