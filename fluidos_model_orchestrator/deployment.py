@@ -74,11 +74,6 @@ def enrich(spec: dict[str, Any], provider: ResourceProvider) -> bool:
 
     nodeSelector.update(labels)
 
-    # if label:
-    #     nodeSelector[CONFIGURATION.remote_node_key] = label
-    # else:
-    #     nodeSelector[CONFIGURATION.local_node_key] = "true"
-
     return True
 
 

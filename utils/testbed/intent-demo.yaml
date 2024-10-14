@@ -10,7 +10,7 @@ spec:
     annotations:
       fluidos-intent-throughput: 100
       fluidos-intent-location: Turin
-      fluidos-intent-service: MQTT
+      fluidos-intent-service: message-queue
   spec:
     containers:
     - image: quay.io/stefano_braghin/fluidos-demo:producer
