@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 
 
 class REARResourceFinder(ResourceFinder):
-    SOLVER_SLEEPING_TIME = 0.2  # as float, in seconds ~200ms
 
     def __init__(self, configuration: Configuration = CONFIGURATION) -> None:
         self.configuration = configuration
@@ -58,15 +57,15 @@ class REARResourceFinder(ResourceFinder):
             "apiVersion": "nodecore.fluidos.eu/v1alpha1",
             "kind": "Solver",
             "metadata": {
-                "name": f"service-{service.name}-{intent_id}-solver"
+                "name": f"service-{service.name.name}-{intent_id}-solver"
             },
             "spec": {
                 "intentID": intent_id,
                 "findCandidate": True,
                 "reserveAndBuy": True,
-                "enstablishPeering": True,
+                "establishPeering": True,
                 "selector": {
-                    "flaovrType": "Service",
+                    "flavorType": "Service",
                     "filters": {
                         "categoryFilter": {
                             "name": "Match",
@@ -94,44 +93,54 @@ class REARResourceFinder(ResourceFinder):
         # contract name is retrieved from Reservation where .spec.solverID == "solver-name", there one finds .status.contract.name
 
         for _ in range(CONFIGURATION.n_try):
-            time.sleep(self.SOLVER_SLEEPING_TIME)
+            time.sleep(CONFIGURATION.SOLVER_SLEEPING_TIME)
 
-            reservations = [reservation for reservation in self.api_client.list_namespaced_custom_object(
+            reservations: None | dict[str, Any] = self.api_client.list_namespaced_custom_object(
                 group="reservation.fluidos.eu",
                 version="v1alpha1",
                 plural="reservations",
                 namespace=CONFIGURATION.namespace,
                 async_req=False  # type: ignore
-            ) if reservation["spec"]["solverID"] == solver_name and reservation.get("status", {}).get("contract", {}).get("name", None) is not None]
+            )
 
-            if len(reservations) == 0:
+            if reservations is None:
+                continue
+
+            valid_reservations = [reservation for reservation in reservations.get("items", []) if reservation["spec"]["solverID"] == solver_name and reservation.get("status", {}).get("contract", {}).get("name", None) is not None]
+
+            if len(valid_reservations) == 0:
                 # either no reservation or not with valid status
                 continue
-            if len(reservations) == 1:
+            if len(valid_reservations) == 1:
                 break
         else:
             # assume no service found
             logger.info("No valid service found (no valid reservation)")
             return []
 
-        contract_name = reservations[0]["status"]["contract"]["name"]
+        contract_name = valid_reservations[0]["status"]["contract"]["name"]
 
         # Check status of Allocation with .status.status == "Active" and
         # find right allocation using .spec.contract.name == "<contract name>"
         for _ in range(CONFIGURATION.n_try):
-            time.sleep(self.SOLVER_SLEEPING_TIME)
+            time.sleep(CONFIGURATION.SOLVER_SLEEPING_TIME)
 
-            allocations = [allocation for allocation in self.api_client.list_namespaced_custom_object(
+            allocations: None | dict[str, Any] = self.api_client.list_namespaced_custom_object(
                 group="reservation.fluidos.eu",
                 version="v1alpha1",
                 plural="contracts",
                 namespace=CONFIGURATION.namespace,
                 async_req=False  # type: ignore
-            ) if allocation["spec"]["contract"]["name"] == contract_name and allocation.get("status", {}).get("status", "") == "Active"]
+            )
 
-            if len(allocations) == 0:
+            if allocations is None:
                 continue
-            if len(allocations) == 1:
+
+            valid_allocations = [allocation for allocation in allocations.get("items", []) if allocation["spec"]["contract"]["name"] == contract_name and allocation.get("status", {}).get("status", "") == "Active"]
+
+            if len(valid_allocations) == 0:
+                continue
+            if len(valid_allocations) == 1:
                 break
         else:
             # assume no allocation found in time
@@ -139,7 +148,7 @@ class REARResourceFinder(ResourceFinder):
             return []
 
         return [
-            build_REARServiceResourceProvider(self.configuration.k8s_client, allocation) for allocation in allocations
+            build_REARServiceResourceProvider(self.configuration.k8s_client, allocation) for allocation in valid_allocations
         ]
 
     # def find_service_future(self, id: str, service: Intent, namespace: str) -> list[ServiceResourceProvider]:
@@ -245,6 +254,7 @@ class REARResourceFinder(ResourceFinder):
             response = None
 
         if response is None or response["kind"] != "Solver":
+            logger.debug("Solver not existing, creating")
             response = self.api_client.create_namespaced_custom_object(
                 group="nodecore.fluidos.eu",
                 version="v1alpha1",
@@ -287,7 +297,7 @@ class REARResourceFinder(ResourceFinder):
         solver_name = self._initiate_search(body, namespace)
 
         for _ in range(CONFIGURATION.n_try):
-            time.sleep(self.SOLVER_SLEEPING_TIME)
+            time.sleep(CONFIGURATION.SOLVER_SLEEPING_TIME)
             remote_flavour_status = self._check_solver_status(solver_name, namespace)
 
             if remote_flavour_status is None or "status" not in remote_flavour_status:
@@ -491,8 +501,7 @@ class REARResourceFinder(ResourceFinder):
                 group="nodecore.fluidos.eu",
                 version="v1alpha1",
                 plural="flavors",
-                namespace=namespace,
-                sync_req=False)  # type: ignore
+                namespace=namespace)
 
         except ApiException:
             logger.warning("Failed to retrieve local flavors, is node available?")
