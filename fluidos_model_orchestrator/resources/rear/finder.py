@@ -133,11 +133,13 @@ class REARResourceFinder(ResourceFinder):
             if len(allocations) == 1:
                 break
         else:
-            # assuem no allocation found in time
+            # assume no allocation found in time
             logger.info("No valid service found (no active allocation for contract)")
             return []
 
         allocation = allocations[0]
+
+
 
         return [
             REARServiceResourceProvider(
