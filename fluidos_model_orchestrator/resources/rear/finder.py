@@ -21,7 +21,7 @@ from fluidos_model_orchestrator.configuration import CONFIGURATION
 from fluidos_model_orchestrator.configuration import Configuration
 from fluidos_model_orchestrator.resources.rear.local_resource_provider import LocalResourceProvider
 from fluidos_model_orchestrator.resources.rear.remote_resource_provider import RemoteResourceProvider
-from fluidos_model_orchestrator.resources.rear.service_resource_provider import REARServiceResourceProvider
+from fluidos_model_orchestrator.resources.rear.service_resource_provider import build_REARServiceResourceProvider
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,8 @@ class REARResourceFinder(ResourceFinder):
     SOLVER_SLEEPING_TIME = 0.2  # as float, in seconds ~200ms
 
     def __init__(self, configuration: Configuration = CONFIGURATION) -> None:
-        self.api_client: client.CustomObjectsApi = client.CustomObjectsApi(api_client=configuration.k8s_client)
+        self.configuration = configuration
+        self.api_client: client.CustomObjectsApi = client.CustomObjectsApi(api_client=self.configuration.k8s_client)
         self.identity: dict[str, str] = configuration.identity
 
     def find_best_match(self, resource: Resource, namespace: str) -> list[ResourceProvider]:
@@ -137,15 +138,8 @@ class REARResourceFinder(ResourceFinder):
             logger.info("No valid service found (no active allocation for contract)")
             return []
 
-        allocation = allocations[0]
-
-
-
         return [
-            REARServiceResourceProvider(
-                api_client=self.api_client,
-                allocation=allocation
-            )
+            build_REARServiceResourceProvider(self.configuration.k8s_client, allocation) for allocation in allocations
         ]
 
     # def find_service_future(self, id: str, service: Intent, namespace: str) -> list[ServiceResourceProvider]:
@@ -371,19 +365,6 @@ class REARResourceFinder(ResourceFinder):
                 if candidate is not None and candidate["spec"]["available"] is True
             ]
         ]
-
-    # def _reserve_service_peering_candidate(self, solver_name: str, candidate: dict[str, Any], namespace: str) -> ServiceResourceProvider:
-    #     logger.info(f"Reserving peering candidate {candidate['metadata']['name']} but not for real")
-
-    #     return REARServiceResourceProvider(
-    #         id=solver_name,
-    #         flavor=build_flavor(candidate["spec"]["flavor"]),
-    #         peering_candidate=candidate["metadata"]["name"],
-    #         reservation="",  # response["metadata"]["name"],
-    #         namespace=namespace,
-    #         api_client=self.api_client,
-    #         seller=candidate["spec"]["flavor"]["spec"]["owner"]
-    #     )
 
     def _reserve_peering_candidate(self, solver_name: str, candidate: dict[str, Any], namespace: str) -> RemoteResourceProvider:
         logger.info(f"Reserving peering candidate {candidate['metadata']['name']} but not for real")
