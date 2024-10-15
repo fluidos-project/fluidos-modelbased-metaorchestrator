@@ -9,7 +9,6 @@ spec:
     name: nginx-w-intent-ie
     annotations:
       fluidos-intent-location: Dublin
-      fluidos-intent-service:
   spec:
     containers:
     - name: nginx

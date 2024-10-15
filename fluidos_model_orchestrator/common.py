@@ -246,10 +246,15 @@ def validate_location(provider: ResourceProvider, value: str) -> bool:
 
 
 def _validate_bandwidth_against_point(provider: ResourceProvider, value: str) -> bool:
+    if provider.flavor.spec.flavor_type.type_identifier is not FlavorType.K8SLICE:
+        return False
+
     # assumes value is of the form "<operator> value <point>"
     [operator, quantity, point] = value.split(" ")
 
-    bandwidth_properties = provider.flavor.spec.flavor_type.type_data.properties.get("bandwidth", {}).get(point, None)
+    type_data = cast(FlavorK8SliceData, provider.flavor.spec.flavor_type.type_data)
+
+    bandwidth_properties = type_data.properties.get("bandwidth", {}).get(point, None)
 
     if bandwidth_properties is not None:
         # assume that bandwidth_property is in ms
@@ -269,8 +274,9 @@ def _validate_bandwidth_against_point(provider: ResourceProvider, value: str) ->
                 return bandwidth == required_bandwidth
             case _:
                 raise ValueError(f"Unknown operator {operator=}")
+    return False
 
-                
+
 def _validate_architecture(provider: ResourceProvider, value: str) -> bool:
     if provider.flavor.spec.flavor_type.type_identifier is FlavorType.K8SLICE:
         return value == cast(FlavorK8SliceData, provider.flavor.spec.flavor_type.type_data).characteristics.architecture
