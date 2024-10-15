@@ -8,7 +8,7 @@ spec:
   metadata:
     name: y2demo-pod
     annotations:
-      fluidos-intent-throughput: 100
+      fluidos-intent-throughput: 100ms
       fluidos-intent-location: Turin
       fluidos-intent-service: message-queue
   spec:
