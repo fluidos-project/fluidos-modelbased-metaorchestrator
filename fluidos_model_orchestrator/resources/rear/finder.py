@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 
 
 class REARResourceFinder(ResourceFinder):
-
     def __init__(self, configuration: Configuration = CONFIGURATION) -> None:
         self.configuration = configuration
         self.api_client: client.CustomObjectsApi = client.CustomObjectsApi(api_client=self.configuration.k8s_client)
@@ -124,6 +123,7 @@ class REARResourceFinder(ResourceFinder):
         # find right allocation using .spec.contract.name == "<contract name>"
         for _ in range(CONFIGURATION.n_try):
             time.sleep(CONFIGURATION.SOLVER_SLEEPING_TIME)
+            logger.info(f"Searching valid allocation for {contract_name}")
 
             allocations: None | dict[str, Any] = self.api_client.list_namespaced_custom_object(
                 group="reservation.fluidos.eu",
@@ -136,12 +136,26 @@ class REARResourceFinder(ResourceFinder):
             if allocations is None:
                 continue
 
-            valid_allocations = [allocation for allocation in allocations.get("items", []) if allocation["spec"]["contract"]["name"] == contract_name and allocation.get("status", {}).get("status", "") == "Active"]
+            valid_allocations = []
+
+            for allocation in allocations.get("items", []):
+                if allocation.get("spec", {}).get("contract", {}).get("name", None) == contract_name:
+                    logger.info("Allocation found")
+                    if allocation.get("status", {}).get("status", "") == "Active":
+                        logger.info("Allocation is active!")
+                        valid_allocations.append(allocation)
+                    else:
+                        logger.info(f"Allocation is not active \n---\n {json.dumps(allocation)}\n---\n")
 
             if len(valid_allocations) == 0:
+                logger.info("No allocations")
                 continue
-            if len(valid_allocations) == 1:
+            elif len(valid_allocations) == 1:
+                logger.info("One allocation")
                 break
+            else:
+                logger.info(f"{len(valid_allocations)} found, something is very wrong")
+
         else:
             # assume no allocation found in time
             logger.info("No valid service found (no active allocation for contract)")
