@@ -1,3 +1,4 @@
+import json
 import logging
 from base64 import b64decode
 from typing import Any
@@ -36,6 +37,8 @@ def build_REARServiceResourceProvider(api_client: ApiClient | None, allocation: 
         raise ValueError("api_client is None")
 
     client = CoreV1Api(api_client=api_client)
+
+    logger.info(f"Building REARServiceResourceProvider from \n----\n{json.dumps(allocation)}")
 
     secret_name = allocation["status"]["resourceRef"]["name"]
     namespace = allocation["status"]["resourceRef"]["namespace"]

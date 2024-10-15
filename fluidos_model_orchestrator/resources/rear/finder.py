@@ -136,34 +136,20 @@ class REARResourceFinder(ResourceFinder):
             if allocations is None:
                 continue
 
-            valid_allocations = []
-
             for allocation in allocations.get("items", []):
                 if allocation.get("spec", {}).get("contract", {}).get("name", None) == contract_name:
                     logger.info("Allocation found")
                     if allocation.get("status", {}).get("status", "") == "Active":
                         logger.info("Allocation is active!")
-                        valid_allocations.append(allocation)
+                        return [
+                            build_REARServiceResourceProvider(self.configuration.k8s_client, allocation)
+                        ]
                     else:
                         logger.info(f"Allocation is not active \n---\n {json.dumps(allocation)}\n---\n")
-
-            if len(valid_allocations) == 0:
-                logger.info("No allocations")
-                continue
-            elif len(valid_allocations) == 1:
-                logger.info("One allocation")
-                break
-            else:
-                logger.info(f"{len(valid_allocations)} found, something is very wrong")
-
         else:
             # assume no allocation found in time
             logger.info("No valid service found (no active allocation for contract)")
             return []
-
-        return [
-            build_REARServiceResourceProvider(self.configuration.k8s_client, allocation) for allocation in valid_allocations
-        ]
 
     # def find_service_future(self, id: str, service: Intent, namespace: str) -> list[ServiceResourceProvider]:
     #     logger.info("Retrieving service with REAR")
