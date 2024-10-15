@@ -6,7 +6,3 @@ nodes:
   labels:
     node-role.fluidos.eu/resources: "true"
     node-role.fluidos.eu/worker: "true"
-- role: worker
-  labels:
-    node-role.fluidos.eu/resources: "true"
-    node-role.fluidos.eu/worker: "true"

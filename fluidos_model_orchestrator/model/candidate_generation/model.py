@@ -302,6 +302,9 @@ class Orchestrator(OrchestratorInterface):
         pod_embedding = self.__compute_embedding_for_sentence(str(data.pod_request[FLUIDOS_COL_NAMES.POD_MANIFEST]))
         intents_dict: dict[str, Any] = {}
         for intent in data.intents:
+            if intent.name.name not in KNOWN_INTENT_TO_POD_INTENT:
+                logger.info(f"Skipping {intent.name}")
+                continue  # patch for skipping unmanaged intent
             intent_name = KNOWN_INTENT_TO_POD_INTENT[intent.name.name]
             unit_len = -1 * len(D_UNITS[intent_name][0])
             intent_value = intent.value[:unit_len]

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -xao pipefail
+set -xeuo pipefail
 
 
 function _get_command {
