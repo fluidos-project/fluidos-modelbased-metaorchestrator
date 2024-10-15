@@ -8,7 +8,7 @@ spec:
   metadata:
     name: nginx-w-intent
     annotations:
-      fluidos-intent-throughput: 1000/ms
+      fluidos-intent-throughput: 100ms
       fluidos-intent-location: Turin
   spec:
     containers:

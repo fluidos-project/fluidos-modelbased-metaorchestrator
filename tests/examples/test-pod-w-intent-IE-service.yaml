@@ -8,7 +8,9 @@ spec:
   metadata:
     name: nginx-w-intent-ie
     annotations:
+      fluidos-intent-throughput: 100ms
       fluidos-intent-location: Dublin
+      fluidos-intent-service: message-queue
   spec:
     containers:
     - name: nginx

@@ -126,9 +126,9 @@ class REARResourceFinder(ResourceFinder):
             logger.info(f"Searching valid allocation for {contract_name}")
 
             allocations: None | dict[str, Any] = self.api_client.list_namespaced_custom_object(
-                group="reservation.fluidos.eu",
+                group="nodecore.fluidos.eu",
                 version="v1alpha1",
-                plural="contracts",
+                plural="allocations",
                 namespace=CONFIGURATION.namespace,
                 async_req=False  # type: ignore
             )
