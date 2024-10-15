@@ -122,7 +122,7 @@ class REARResourceFinder(ResourceFinder):
         # Check status of Allocation with .status.status == "Active" and
         # find right allocation using .spec.contract.name == "<contract name>"
         for _ in range(CONFIGURATION.n_try):
-            time.sleep(CONFIGURATION.SOLVER_SLEEPING_TIME)
+            time.sleep(CONFIGURATION.SOLVER_SLEEPING_TIME * 1.5)
             logger.info(f"Searching valid allocation for {contract_name}")
 
             allocations: None | dict[str, Any] = self.api_client.list_namespaced_custom_object(
@@ -141,9 +141,11 @@ class REARResourceFinder(ResourceFinder):
                     logger.info("Allocation found")
                     if allocation.get("status", {}).get("status", "") == "Active":
                         logger.info("Allocation is active!")
-                        return [
-                            build_REARServiceResourceProvider(self.configuration.k8s_client, allocation)
-                        ]
+                        if len(allocation["status"]["resourceRef"]):
+                            logger.info("resourceRef available")
+                            return [
+                                build_REARServiceResourceProvider(self.configuration.k8s_client, allocation)
+                            ]
                     else:
                         logger.info(f"Allocation is not active \n---\n {json.dumps(allocation)}\n---\n")
         else:
