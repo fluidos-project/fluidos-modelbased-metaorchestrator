@@ -4,7 +4,6 @@ import logging
 import time
 from typing import Any
 
-import kopf  # type: ignore
 from kubernetes import client  # type: ignore
 from kubernetes.client.exceptions import ApiException  # type: ignore
 
@@ -34,7 +33,6 @@ class RemoteResourceProvider(ResourceProvider):
         return self._establish_peering(contract)
 
     def get_label(self) -> dict[str, str]:
-        # return {"liqo.io/type": "virtual-node"}
         if self.contract is None:
             logger.error("Remote resource not bougth, cannot return valid label")
             raise RuntimeError("RemoteResourceProvider not connected to active resource")
@@ -71,8 +69,6 @@ class RemoteResourceProvider(ResourceProvider):
         try:
             logger.info(f"Reserving peering candidate {self.peering_candidate}")
             body = self._create_reservation(self.id, self.peering_candidate, self.namespace, self.seller)
-
-            kopf.adopt(body)
 
             response: dict[str, Any] = self.api_client.create_namespaced_custom_object(
                 group="reservation.fluidos.eu",
@@ -138,8 +134,6 @@ class RemoteResourceProvider(ResourceProvider):
             }
         }
 
-        kopf.adopt(body)
-
         try:
             allocation = self.api_client.create_namespaced_custom_object(
                 group="nodecore.fluidos.eu",
@@ -169,12 +163,18 @@ class RemoteResourceProvider(ResourceProvider):
                     namespace=self.namespace,
                     plural="namespaceoffloadings",
                     body={
+                        "apiVersion": "offloading.liqo.io/v1alpha1",
+                        "kind": "NamespaceOffloading",
                         "metadata": {
                             "name": "offloading"
                         },
                         "spec": {
-                            "namespaceMappingStrategy": "EnforceSameName",
-                            "podOffloadinStrategy": "LocalAndRemote",
+                            "kind": "NamespaceOffloading",
+                            "clusterSelector": {
+                                "nodeSelectorTerms": []
+                            },
+                            "namespaceMappingStrategy": "DefaultName",
+                            "podOffloadingStrategy": "LocalAndRemote",
                         }
                     },
                     async_req=False)  # type: ignore
