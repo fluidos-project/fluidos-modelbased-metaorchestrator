@@ -23,13 +23,13 @@ class REARServiceResourceProvider(ServiceResourceProvider):
     def enrich(self, container: dict[str, Any]) -> None:
 
         if "env" not in container:
-            container["env"] = {}
+            container["env"] = []
 
-        env: dict[str, str] = container["env"]
+        env: list[dict[str, str]] = container["env"]
 
-        env["FLUIDOS_MQTT_ENDPOINTS"] = self.endpoints
-        env["FLUIDOS_MQTT_USERNAME"] = self.username
-        env["FLUIDOS_MQTT_PASSWORD"] = self.password
+        env.append({"name": "FLUIDOS_MQTT_ENDPOINTS", "value": self.endpoints})
+        env.append({"name": "FLUIDOS_MQTT_USERNAME", "value": self.username})
+        env.append({"name": "FLUIDOS_MQTT_PASSWORD", "value": self.password})
 
 
 def build_REARServiceResourceProvider(api_client: ApiClient | None, allocation: dict[str, Any]) -> REARServiceResourceProvider:

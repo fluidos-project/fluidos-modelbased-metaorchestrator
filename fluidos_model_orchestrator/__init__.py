@@ -23,7 +23,7 @@ from .start_and_stop import configure  # noqa
 
 
 @kopf.on.create("fluidosdeployments")  # type: ignore
-async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Logger, errors: kopf.ErrorsMode = kopf.ErrorsMode.PERMANENT, **kwargs: str) -> dict[str, dict[str, ResourceProvider | list[tuple[ServiceResourceProvider, Intent]] | None | str] | str]:
+async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Logger, errors: kopf.ErrorsMode = kopf.ErrorsMode.PERMANENT, **kwargs: str) -> dict[str, dict[str, ResourceProvider | list[str] | None | str] | str]:
     logger.info("Processing incoming request")
     logger.debug(f"Received request: {spec}")
 
@@ -93,8 +93,7 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
         "status": "Success",
         "deployed": {
             "resource_provider": str(best_match),
-            "expandind_resources": expanding_resources or None,
-            "validation": []
+            "expandind_resources": [res[1].name.name for res in expanding_resources],
         }
     }
 

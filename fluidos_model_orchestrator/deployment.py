@@ -1,9 +1,11 @@
 import asyncio
+import json
 import logging
 from typing import Any
 
 import kopf  # type: ignore
 from kubernetes.utils import create_from_dict  # type: ignore
+from kubernetes.utils import FailToCreateError  # type: ignore
 
 from .common import Intent
 from .common import ModelPredictResponse
@@ -56,9 +58,17 @@ async def deploy(
 
     kopf.adopt(spec_dict)
 
-    reference = create_from_dict(k8s_client=k8s_client, data=spec_dict, namespace=namespace)
+    try:
+        reference = create_from_dict(k8s_client=k8s_client, data=spec_dict, namespace=namespace)
 
-    return reference is not None
+        return reference is not None
+
+    except FailToCreateError as e:
+        logger.error("Unable to create resource")
+        logger.error(f"Missed resource: {json.dumps(spec_dict)}")
+        logger.error(e)
+
+    return False
 
 
 def enrich(spec: dict[str, Any], provider: ResourceProvider) -> bool:

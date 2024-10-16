@@ -153,58 +153,6 @@ class REARResourceFinder(ResourceFinder):
             logger.info("No valid service found (no active allocation for contract)")
             return []
 
-    # def find_service_future(self, id: str, service: Intent, namespace: str) -> list[ServiceResourceProvider]:
-    #     logger.info("Retrieving service with REAR")
-
-    #     body, _ = self._resource_to_service_sorver_request(service, id)
-
-    #     solver_name = self._initiate_search(body, namespace)
-
-    #     # NOTE: FOR SERVICE SOLVER DOES NOT SOLVE
-    #     # Check status of Allocation with .status.status == "Active" and
-    #     # find right allocation using .spec.contract.name == "<contract name>"
-    #     # contract name is retrieved from Reservation where .spec.solverID == "solver-name", there one finds .status.contract.name
-
-    #     for _ in range(CONFIGURATION.n_try):
-    #         time.sleep(self.SOLVER_SLEEPING_TIME)
-    #         remote_flavour_status = self._check_solver_status(solver_name, namespace)
-
-    #         if remote_flavour_status is None or "status" not in remote_flavour_status:
-    #             return []
-
-    #         phase: str = remote_flavour_status["status"]["solverPhase"]["phase"]
-
-    #         if phase == "Solved":
-    #             break
-
-    #         if phase == "Failed" or phase == "Timed Out":
-    #             logger.info("Unable to find matching flavour")
-    #             return []
-
-    #         if phase == "Running" or phase == "Pending":
-    #             logger.debug("Still processing, wait...")
-    #     else:
-    #         logger.error("Solver did not finish withing the allocated time")
-    #         return []
-
-    #     # resource found and reserved, now we need to return the best matching
-    #     peering_candidates = self._retrieve_peering_candidates(solver_name, namespace)
-    #     if peering_candidates is None:
-    #         logger.error("Error retrieving peering candidates from Discovery")
-    #         return []
-
-    #     if len(peering_candidates) == 0:
-    #         logger.info("No valid peering candidates found")
-    #         return []
-
-    #     logger.debug(f"{peering_candidates=}")
-
-    #     matching_resources: list[ServiceResourceProvider] = self._reserve_all_service_peering_candidate(solver_name, peering_candidates, namespace)
-
-    #     logger.debug(f"{matching_resources=}")
-
-    #     return matching_resources
-
     def retrieve_all_flavors(self, namespace: str) -> list[Flavor]:
         logger.info("Retrieving all flavours")
 
