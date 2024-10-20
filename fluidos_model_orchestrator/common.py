@@ -32,7 +32,7 @@ class ResourceProvider(ABC):
         self.flavor = flavor
 
     @abstractmethod
-    def acquire(self) -> bool:
+    def acquire(self, namespace: str) -> bool:
         raise NotImplementedError("Abstract method")
 
     @abstractmethod

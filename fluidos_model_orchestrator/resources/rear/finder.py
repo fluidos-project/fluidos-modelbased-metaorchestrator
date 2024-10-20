@@ -35,14 +35,14 @@ class REARResourceFinder(ResourceFinder):
     def find_best_match(self, resource: Resource, namespace: str) -> list[ResourceProvider]:
         logger.info("Retrieving resource best match with REAR")
 
-        local: list[ResourceProvider] = self._find_local(resource, namespace)
+        local: list[ResourceProvider] = self._find_local(resource, CONFIGURATION.namespace)
 
         if len(local):
             logger.info(f"Found local resource {local=}")
         else:
             logger.info("No local resource compatible")
 
-        remote = self._find_remote(resource, namespace)
+        remote = self._find_remote(resource, CONFIGURATION.namespace)
 
         logger.info(f"Found remote resource {remote=}")
 
@@ -154,6 +154,7 @@ class REARResourceFinder(ResourceFinder):
             return []
 
     def retrieve_all_flavors(self, namespace: str) -> list[Flavor]:
+
         logger.info("Retrieving all flavours")
 
         locally_available_flavours = self._get_locally_available_flavors(namespace)
@@ -334,7 +335,6 @@ class REARResourceFinder(ResourceFinder):
             flavor=build_flavor(candidate["spec"]["flavor"]),
             peering_candidate=candidate["metadata"]["name"],
             reservation="",  # response["metadata"]["name"],
-            namespace=namespace,
             api_client=self.api_client,
             seller=candidate["spec"]["flavor"]["spec"]["owner"]
         )

@@ -70,7 +70,7 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
 
     best_match = best_matches[0]
 
-    if not best_match.acquire():
+    if not best_match.acquire(namespace):
         logger.info(f"Unable to acquire {best_match}")
 
         return {
