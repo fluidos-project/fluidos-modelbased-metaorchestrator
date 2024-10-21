@@ -283,6 +283,13 @@ def _validate_architecture(provider: ResourceProvider, value: str) -> bool:
     return False
 
 
+def _validate_tee_available(provider: ResourceProvider, value: str) -> bool:
+    if provider.flavor.spec.flavor_type.type_identifier is FlavorType.K8SLICE:
+        properties = cast(FlavorK8SliceData, provider.flavor.spec.flavor_type.type_data).properties
+        return bool(value) == bool(properties.get("TEE", "False"))
+    return False
+
+
 @unique
 class KnownIntent(Enum):
     # k8s resources
@@ -305,6 +312,7 @@ class KnownIntent(Enum):
 
     # TER
     bandwidth_against = "bandwidth-against-point", False, _validate_bandwidth_against_point
+    tee = "tee-available", False, _validate_tee_available
 
     # service
     service = "service", True, _always_true
