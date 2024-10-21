@@ -307,16 +307,6 @@ class REARResourceFinder(ResourceFinder):
             logger.debug(f"Reason: {e=}")
             return None
 
-    # def _reserve_all_service_peering_candidate(self, solver_name: str, peering_candidates: list[dict[str, Any]], namespace: str) -> list[ServiceResourceProvider]:
-    #     logger.info("Reserving all peering candidates, just in case")
-    #     return [
-    #         resource for resource in
-    #         [
-    #             self._reserve_service_peering_candidate(solver_name, candidate, namespace) for candidate in peering_candidates
-    #             if candidate is not None and candidate["spec"]["available"] is True
-    #         ]
-    #     ]
-
     def _reserve_all(self, solver_name: str, peering_candidates: list[dict[str, Any]], namespace: str) -> list[ResourceProvider]:
         logger.info("Reserving all peering candidates, just in case")
         return [
