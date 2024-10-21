@@ -286,7 +286,7 @@ def _validate_architecture(provider: ResourceProvider, value: str) -> bool:
 def _validate_tee_available(provider: ResourceProvider, value: str) -> bool:
     if provider.flavor.spec.flavor_type.type_identifier is FlavorType.K8SLICE:
         properties = cast(FlavorK8SliceData, provider.flavor.spec.flavor_type.type_data).properties
-        return bool(value) == bool(properties.get("TEE", "False"))
+        return value.capitalize() == str(properties.get("TEE", "False")).capitalize()
     return False
 
 
@@ -307,12 +307,12 @@ class KnownIntent(Enum):
     battery = "battery", False, _always_true
 
     # carbon aware requests
-    max_delay = "max_delay", False, _always_true
-    carbon_aware = "carbon_aware", False, _always_true
+    max_delay = "max-delay", False, _always_true
+    carbon_aware = "carbon-aware", False, _always_true
 
     # TER
-    bandwidth_against = "bandwidth-against-point", False, _validate_bandwidth_against_point
-    tee = "tee-available", False, _validate_tee_available
+    bandwidth_against = "bandwidth-against", False, _validate_bandwidth_against_point
+    tee_available = "tee-available", False, _validate_tee_available
 
     # service
     service = "service", True, _always_true
@@ -322,12 +322,13 @@ class KnownIntent(Enum):
         obj._value_ = args[0]
         return obj
 
-    def __init__(self, _: str, external: bool, validator: Callable[[ResourceProvider, str], bool]):
+    def __init__(self, label: str, external: bool, validator: Callable[[ResourceProvider, str], bool]):
+        self.label = label
         self._external = external
         self._validator = validator
 
     def to_intent_key(self) -> str:
-        return f"fluidos-intent-{self.name}"
+        return f"fluidos-intent-{self.label}"
 
     def is_external_requirement(self) -> bool:
         return self._external
@@ -341,7 +342,7 @@ class KnownIntent(Enum):
             intent_name = "-".join(intent_name.split("-")[2:])
 
         return any(
-            known_intent.name == intent_name for known_intent in KnownIntent
+            known_intent.label == intent_name for known_intent in KnownIntent
         )
 
     @staticmethod
