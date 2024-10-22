@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import time
 from typing import Any
 
 import kopf  # type: ignore
@@ -59,6 +60,7 @@ async def deploy(
     kopf.adopt(spec_dict)
 
     try:
+        time.sleep(5)
         reference = create_from_dict(k8s_client=k8s_client, data=spec_dict, namespace=namespace)
 
         return reference is not None
