@@ -1,23 +1,45 @@
 import asyncio
+import json
 import logging
+import time
 from typing import Any
 
 import kopf  # type: ignore
 from kubernetes.utils import create_from_dict  # type: ignore
+from kubernetes.utils import FailToCreateError  # type: ignore
 
 from .common import Intent
 from .common import ModelPredictResponse
 from .common import ResourceProvider
+from .common import ServiceResourceProvider
 from .configuration import CONFIGURATION
 
 
 logger = logging.getLogger()
 
 
+def expand(spec: dict[str, Any], expanding: tuple[ServiceResourceProvider, Intent]) -> bool:
+    # retrieve credentials as secret named f"credentials-{contact_name}"
+    # stored in namespaced called f"{contact_name}"
+    # to be decoded
+
+    match spec["kind"]:
+        case "Pod":
+            for container in spec["spec"]["containers"]:
+                expanding[0].enrich(container)
+            return True
+        case "Deployment":
+            raise ValueError(f"Unsupported type: {spec['kind']}")
+        case _:
+            raise ValueError(f"Unsupported type: {spec['kind']}")
+
+    return False
+
+
 async def deploy(
         spec: dict[str, Any],
         provider: ResourceProvider,
-        expanding_resources: list[tuple[ResourceProvider, Intent]],
+        expanding_resources: list[tuple[ServiceResourceProvider, Intent]],
         response: ModelPredictResponse,
         namespace: str) -> bool:
     spec_dict = {
@@ -25,6 +47,9 @@ async def deploy(
     }
 
     enrich(spec_dict, provider)
+
+    for expanding_resource in expanding_resources:
+        expand(spec_dict, expanding_resource)
 
     delay_time = response.delay * 60 * 60
     logger.info(f"Waiting to deploy {delay_time=}")
@@ -34,11 +59,18 @@ async def deploy(
 
     kopf.adopt(spec_dict)
 
-    reference = create_from_dict(k8s_client=k8s_client, data=spec_dict, namespace=namespace)
+    try:
+        time.sleep(5)
+        reference = create_from_dict(k8s_client=k8s_client, data=spec_dict, namespace=namespace)
 
-    # logger.info(f"Created manifest: {reference}")
+        return reference is not None
 
-    return reference is not None
+    except FailToCreateError as e:
+        logger.error("Unable to create resource")
+        logger.error(f"Missed resource: {json.dumps(spec_dict)}")
+        logger.error(e)
+
+    return False
 
 
 def enrich(spec: dict[str, Any], provider: ResourceProvider) -> bool:
@@ -53,11 +85,6 @@ def enrich(spec: dict[str, Any], provider: ResourceProvider) -> bool:
     nodeSelector: dict[str, str] = _get_node_selector(spec)
 
     nodeSelector.update(labels)
-
-    # if label:
-    #     nodeSelector[CONFIGURATION.remote_node_key] = label
-    # else:
-    #     nodeSelector[CONFIGURATION.local_node_key] = "true"
 
     return True
 

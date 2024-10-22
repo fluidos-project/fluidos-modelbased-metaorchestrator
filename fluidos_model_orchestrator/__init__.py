@@ -9,7 +9,7 @@ from .common import ModelPredictResponse
 from .common import OrchestratorInterface
 from .common import ResourceFinder
 from .common import ResourceProvider
-from .common import validate_on_intent
+from .common import ServiceResourceProvider
 from .configuration import CONFIGURATION
 from .daemons_and_times.flavor import daemons_for_flavours_observation  # noqa
 from .deployment import deploy
@@ -23,7 +23,7 @@ from .start_and_stop import configure  # noqa
 
 
 @kopf.on.create("fluidosdeployments")  # type: ignore
-async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Logger, errors: kopf.ErrorsMode = kopf.ErrorsMode.PERMANENT, **kwargs: str) -> dict[str, dict[str, ResourceProvider | list[tuple[ResourceProvider, Intent]] | None | str] | str]:
+async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Logger, errors: kopf.ErrorsMode = kopf.ErrorsMode.PERMANENT, **kwargs: str) -> dict[str, dict[str, ResourceProvider | list[str] | None | str] | str]:
     logger.info("Processing incoming request")
     logger.debug(f"Received request: {spec}")
 
@@ -70,7 +70,7 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
 
     best_match = best_matches[0]
 
-    if not best_match.acquire():
+    if not best_match.acquire(namespace):
         logger.info(f"Unable to acquire {best_match}")
 
         return {
@@ -79,7 +79,7 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
         }
 
     # find other resources types based on the intents
-    expanding_resources: list[tuple[ResourceProvider, Intent]] = _find_expanding_resources(finder, request.intents, namespace)
+    expanding_resources: list[tuple[ServiceResourceProvider, Intent]] = _find_expanding_resources(finder, request.intents, name, namespace)
 
     if not await deploy(spec, best_match, expanding_resources, prediction, namespace):
         logger.info("Unable to deploy")
@@ -93,18 +93,13 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
         "status": "Success",
         "deployed": {
             "resource_provider": str(best_match),
-            "expandind_resources": expanding_resources or None,
-            "validation": []
+            "expandind_resources": [res[1].name.name for res in expanding_resources],
         }
     }
 
 
 def validate_with_intents(providers: list[ResourceProvider], intents: list[Intent], logger: Logger) -> list[ResourceProvider]:
     valid_providers: list[ResourceProvider] = []
-
-    # return [
-    #     provider for provider in providers if all(intent.validates(provider) for intent in intents)
-    # ]
 
     for provider in providers:
         for intent in intents:
@@ -118,14 +113,14 @@ def validate_with_intents(providers: list[ResourceProvider], intents: list[Inten
     return valid_providers
 
 
-def _find_expanding_resources(finder: ResourceFinder, intents: list[Intent], namespace: str) -> list[tuple[ResourceProvider, Intent]]:
-    resources_and_intents: list[tuple[ResourceProvider, Intent]] = list()
+def _find_expanding_resources(finder: ResourceFinder, intents: list[Intent], id: str, namespace: str) -> list[tuple[ServiceResourceProvider, Intent]]:
+    resources_and_intents: list[tuple[ServiceResourceProvider, Intent]] = list()
 
     for (resources, intent) in [
-        (finder.find_best_match(intent, namespace), intent) for intent in intents if intent.is_external_requirement()
+        (finder.find_service(id, intent, namespace), intent) for intent in intents if intent.is_external_requirement()
     ]:
         if len(resources):
-            resource: ResourceProvider = validate_on_intent(resources, intent)
+            resource: ServiceResourceProvider = resources[0]
             resources_and_intents.append(
                 (resource, intent)
             )
