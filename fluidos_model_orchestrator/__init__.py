@@ -3,13 +3,14 @@ from typing import Any
 
 import kopf  # type: ignore
 
+from .common import ExternalResourceProvider
 from .common import Intent
+from .common import KnownIntent
 from .common import ModelPredictRequest
 from .common import ModelPredictResponse
 from .common import OrchestratorInterface
 from .common import ResourceFinder
 from .common import ResourceProvider
-from .common import ServiceResourceProvider
 from .configuration import CONFIGURATION
 from .daemons_and_times.flavor import daemons_for_flavours_observation  # noqa
 from .deployment import deploy
@@ -79,7 +80,7 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
         }
 
     # find other resources types based on the intents
-    expanding_resources: list[tuple[ServiceResourceProvider, Intent]] = _find_expanding_resources(finder, request.intents, name, namespace)
+    expanding_resources: list[tuple[ExternalResourceProvider, Intent]] = _find_expanding_resources(finder, request.intents, name, namespace)
 
     if not await deploy(spec, best_match, expanding_resources, prediction, namespace):
         logger.info("Unable to deploy")
@@ -113,14 +114,14 @@ def validate_with_intents(providers: list[ResourceProvider], intents: list[Inten
     return valid_providers
 
 
-def _find_expanding_resources(finder: ResourceFinder, intents: list[Intent], id: str, namespace: str) -> list[tuple[ServiceResourceProvider, Intent]]:
-    resources_and_intents: list[tuple[ServiceResourceProvider, Intent]] = list()
+def _find_expanding_resources(finder: ResourceFinder, intents: list[Intent], id: str, namespace: str) -> list[tuple[ExternalResourceProvider, Intent]]:
+    resources_and_intents: list[tuple[ExternalResourceProvider, Intent]] = list()
 
     for (resources, intent) in [
-        (finder.find_service(id, intent, namespace), intent) for intent in intents if intent.is_external_requirement()
+        (finder.find_service(id, intent, namespace), intent) for intent in intents if intent.name == KnownIntent.service
     ]:
         if len(resources):
-            resource: ServiceResourceProvider = resources[0]
+            resource: ExternalResourceProvider = resources[0]
             resources_and_intents.append(
                 (resource, intent)
             )
