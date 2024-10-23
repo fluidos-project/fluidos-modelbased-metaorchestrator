@@ -1,5 +1,4 @@
 from fluidos_model_orchestrator.common import KnownIntent
-# from pytest import fail
 
 
 def test_intent_values():
@@ -18,12 +17,9 @@ def test_intent_values():
         "fluidos-intent-resource",
         "fluidos-intent-service",
         "fluidos-intent-throughput",
-<<<<<<< HEAD
         "fluidos-intent-bandwidth-against",
         "fluidos-intent-tee-available",
-=======
         "fluidos-intent-mspl",
->>>>>>> a355e58 (mspl-integration done and feedback.csv  route fix)
     }
 
     for intent in KnownIntent:
@@ -49,12 +45,9 @@ def test_iternal_or_external():
         "fluidos-intent-memory",
         "fluidos-intent-resource",
         "fluidos-intent-throughput",
-<<<<<<< HEAD
         "fluidos-intent-bandwidth-against",
         "fluidos-intent-tee-available",
-=======
         "fluidos-intent-mspl",
->>>>>>> a355e58 (mspl-integration done and feedback.csv  route fix)
     }
 
     for intent in KnownIntent:
