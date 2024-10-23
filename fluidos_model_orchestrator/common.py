@@ -316,7 +316,7 @@ class KnownIntent(Enum):
 
     # service
     service = "service", True, _always_true
-    
+
     #mspl
     mspl = "mspl", False, _always_true
 
