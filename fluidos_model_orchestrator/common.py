@@ -43,7 +43,7 @@ class ResourceProvider(ABC):
         return f"{self.id=}: {self.flavor=}"
 
 
-class ServiceResourceProvider(ABC):
+class ExternalResourceProvider(ABC):
     def enrich(self, container: dict[str, Any]) -> None:
         raise NotImplementedError("Abstract method")
 
@@ -374,7 +374,7 @@ class ResourceFinder(ABC):
     def find_best_match(self, resource: Resource, namespace: str) -> list[ResourceProvider]:
         raise NotImplementedError()
 
-    def find_service(self, id: str, service: Intent, namespace: str) -> list[ServiceResourceProvider]:
+    def find_service(self, id: str, service: Intent, namespace: str) -> list[ExternalResourceProvider]:
         raise NotImplementedError()
 
     def retrieve_all_flavors(self, namespace: str) -> list[Flavor]:

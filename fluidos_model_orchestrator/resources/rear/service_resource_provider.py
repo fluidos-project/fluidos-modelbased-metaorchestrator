@@ -7,13 +7,13 @@ from kubernetes.client import CoreV1Api  # type: ignore
 from kubernetes.client.api_client import ApiClient  # type: ignore
 from kubernetes.client.exceptions import ApiException  # type: ignore
 
-from fluidos_model_orchestrator.common import ServiceResourceProvider
+from fluidos_model_orchestrator.common import ExternalResourceProvider
 
 
 logger = logging.getLogger(__name__)
 
 
-class REARServiceResourceProvider(ServiceResourceProvider):
+class REARServiceResourceProvider(ExternalResourceProvider):
     def __init__(self, endpoints: str, username: str, password: str) -> None:
         # for the demo only!!
         self.endpoints = endpoints
