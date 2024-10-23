@@ -24,6 +24,7 @@ class Configuration:
     architecture: str = "arm64"
     n_try: int = 25
     API_SLEEP_TIME: float = 0.1  # 100 ms
+    SOLVER_SLEEPING_TIME: float = .5  # 500ms
 
     def check_identity(self, identity: dict[str, str]) -> bool:
         return all(
