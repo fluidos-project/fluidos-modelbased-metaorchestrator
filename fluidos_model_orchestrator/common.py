@@ -352,7 +352,8 @@ class KnownIntent(Enum):
             raise ValueError(f"Unsupported intent: {intent_name=}")
 
         name = "-".join(intent_name.split("-")[2:]).casefold()
-        return next(known_intent for known_intent in KnownIntent if known_intent.name == name)
+        logger.info(f"Received intent: {name}")
+        return next(known_intent for known_intent in KnownIntent if known_intent.label == name)
 
 
 @dataclass
