@@ -1,0 +1,7 @@
+image_name,template_resource_id,status
+caddy:latest,40,OK
+caddy:latest,60,FAIL
+caddy:latest,21,OK
+caddy:latest,7,OK
+caddy:latest,42,FAIL
+caddy:latest,11,FAIL
