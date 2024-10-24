@@ -86,7 +86,7 @@ class REARResourceFinder(ResourceFinder):
 
         solver_name = self._initiate_search(body, namespace)
 
-        # NOTE: FOR SERVICE SOLVER DOES NOT SOLVE
+        # NOTE: FOR SERVICE, SOLVER DOES NOT SOLVE
         # Check status of Allocation with .status.status == "Active" and
         # find right allocation using .spec.contract.name == "<contract name>"
         # contract name is retrieved from Reservation where .spec.solverID == "solver-name", there one finds .status.contract.name
