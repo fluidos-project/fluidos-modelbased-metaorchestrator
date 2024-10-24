@@ -20,6 +20,7 @@ from .model import get_model_object
 from .resources import get_resource_finder
 from .start_and_stop import cleanup_function  # noqa
 from .start_and_stop import configure  # noqa
+from fluidos_model_orchestrator.resources.mspl.mspl_resource_provider import MSPLIntentWrapper  # type: ignore
 # from .rescheduler import rescheduler
 
 
@@ -126,4 +127,6 @@ def _find_expanding_resources(finder: ResourceFinder, intents: list[Intent], id:
                 (resource, intent)
             )
 
-    return resources_and_intents
+    return resources_and_intents + [
+        (MSPLIntentWrapper(intent), intent) for intent in intents if intent.name == KnownIntent.mspl
+    ]
