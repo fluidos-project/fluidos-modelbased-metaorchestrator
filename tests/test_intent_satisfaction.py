@@ -163,7 +163,7 @@ def test_validate_bandwidth_against_satisfaction() -> None:
     assert not Intent(KnownIntent.bandwidth_against, "< 100ms POINT-B").validates(provider)
 
 
-def test_validate_tee_availability() -> None:
+def test_validate_tee_rediness() -> None:
     bad_no_tee = LocalResourceProvider("test", Flavor(
         metadata=FlavorMetadata(
             name="foo",
@@ -248,8 +248,8 @@ def test_validate_tee_availability() -> None:
         )
     ))
 
-    intent1 = Intent(KnownIntent.tee_available, "True")
-    intent2 = Intent(KnownIntent.tee_available, "true")
+    intent1 = Intent(KnownIntent.tee_rediness, "True")
+    intent2 = Intent(KnownIntent.tee_rediness, "true")
 
     assert intent1.validates(good)
     assert not intent1.validates(bad_no_tee)

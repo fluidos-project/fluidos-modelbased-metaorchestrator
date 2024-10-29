@@ -312,7 +312,7 @@ class KnownIntent(Enum):
 
     # TER
     bandwidth_against = "bandwidth-against", False, _validate_bandwidth_against_point
-    tee_available = "tee-available", False, _validate_tee_available
+    tee_rediness = "tee-rediness", False, _validate_tee_available
 
     # service
     service = "service", True, _always_true
