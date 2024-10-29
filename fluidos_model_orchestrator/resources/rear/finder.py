@@ -30,7 +30,6 @@ class REARResourceFinder(ResourceFinder):
     def __init__(self, configuration: Configuration = CONFIGURATION) -> None:
         self.configuration = configuration
         self.api_client: client.CustomObjectsApi = client.CustomObjectsApi(api_client=self.configuration.k8s_client)
-        self.identity: dict[str, str] = configuration.identity
 
     def find_best_match(self, resource: Resource, namespace: str) -> list[ResourceProvider]:
         logger.info("Retrieving resource best match with REAR")

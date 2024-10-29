@@ -144,7 +144,7 @@ def _retrieve_node_identity(config: Configuration, logger: logging.Logger) -> di
                 if item.metadata is None:
                     continue
 
-                if item.metadata.name == "fluidos-network-manager-identity":
+                if item.metadata.name == "fluidos-node-identity":
                     logger.info("ConfigMap identified")
 
                     if item.data is None:
