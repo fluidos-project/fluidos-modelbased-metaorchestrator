@@ -125,7 +125,7 @@ def _retrieve_architecture(config: Configuration, logger: logging.Logger) -> str
 
                     data: dict[str, str] = item.data
 
-                    return data.get("architecture", "amd64")
+                    return data.get("architecture", "arm64")
     except ApiException as e:
         logger.error(f"Unable to retrieve config map {e=}")
 

@@ -138,9 +138,11 @@ def test_validate_bandwidth_against_satisfaction() -> None:
                     characteristics=FlavorCharacteristics(cpu="1n", memory="1Gi", architecture="arm", gpu=GPUData(cores=0, memory="", model="")),
                     policies={},
                     properties={
-                        "bandwidth": {
-                            "POINT_A": "500ms",
-                            "POINT-B": "200ms",
+                        "additionalProperties": {
+                            "bandwidth": {
+                                "POINT_A": "500ms",
+                                "POINT-B": "200ms",
+                            }
                         }
                     }
                 )
@@ -175,7 +177,9 @@ def test_validate_tee_availability() -> None:
                     characteristics=FlavorCharacteristics(cpu="1n", memory="1Gi", architecture="arm", gpu=GPUData(cores=0, memory="", model="")),
                     policies={},
                     properties={
-                        "TEE": False
+                        "additionalProperties": {
+                            "TEE": False
+                        }
                     }
                 )
             ),
@@ -227,7 +231,9 @@ def test_validate_tee_availability() -> None:
                     characteristics=FlavorCharacteristics(cpu="1n", memory="1Gi", architecture="arm", gpu=GPUData(cores=0, memory="", model="")),
                     policies={},
                     properties={
-                        "TEE": True
+                        "additionalProperties": {
+                            "TEE": True
+                        }
                     }
                 )
             ),

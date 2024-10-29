@@ -254,7 +254,7 @@ def _validate_bandwidth_against_point(provider: ResourceProvider, value: str) ->
 
     type_data = cast(FlavorK8SliceData, provider.flavor.spec.flavor_type.type_data)
 
-    bandwidth_properties = type_data.properties.get("bandwidth", {}).get(point, None)
+    bandwidth_properties = type_data.properties.get("additionalProperties", {}).get("bandwidth", {}).get(point, None)
 
     if bandwidth_properties is not None:
         # assume that bandwidth_property is in ms
@@ -286,7 +286,7 @@ def _validate_architecture(provider: ResourceProvider, value: str) -> bool:
 def _validate_tee_available(provider: ResourceProvider, value: str) -> bool:
     if provider.flavor.spec.flavor_type.type_identifier is FlavorType.K8SLICE:
         properties = cast(FlavorK8SliceData, provider.flavor.spec.flavor_type.type_data).properties
-        return value.capitalize() == str(properties.get("TEE", "False")).capitalize()
+        return value.capitalize() == str(properties.get("additionalProperties", {}).get("TEE", "False")).capitalize()
     return False
 
 
