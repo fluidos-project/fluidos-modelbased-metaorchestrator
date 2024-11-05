@@ -23,6 +23,7 @@ from fluidos_model_orchestrator.resources.rear.local_resource_provider import Lo
 from fluidos_model_orchestrator.resources.rear.remote_resource_provider import RemoteResourceProvider
 from fluidos_model_orchestrator.resources.rear.service_resource_provider import build_REARServiceResourceProvider
 
+
 logger = logging.getLogger(__name__)
 
 
