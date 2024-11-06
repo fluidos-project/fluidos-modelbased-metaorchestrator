@@ -44,7 +44,7 @@ class ResourceProvider(ABC):
 
 
 class ExternalResourceProvider(ABC):
-    def enrich(self, container: dict[str, Any]) -> None:
+    def enrich(self, container: dict[str, Any], name: str) -> None:
         raise NotImplementedError("Abstract method")
 
 

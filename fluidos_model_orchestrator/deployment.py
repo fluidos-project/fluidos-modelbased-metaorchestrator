@@ -27,7 +27,7 @@ def apply_external_resource(spec: dict[str, Any], resource_and_intent: tuple[Ext
         case "Pod":
             for container in spec["spec"]["containers"]:
                 (resource, _) = resource_and_intent
-                resource.enrich(container)
+                resource.enrich(container, spec["metadata"]["name"])
             return True
         case "Deployment":
             raise ValueError(f"Unsupported type: {spec['kind']}")

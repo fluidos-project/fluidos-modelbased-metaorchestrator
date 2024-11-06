@@ -13,10 +13,11 @@ class MSPLIntentWrapper(ExternalResourceProvider):
             raise ValueError("Expected MSPL intent")
         self.intent = intent
 
-    def enrich(self, container: dict[str, Any]) -> None:
+    def enrich(self, container: dict[str, Any], name: str) -> None:
         response = request_application(
             policy=self.intent.value,
-            endpoint=CONFIGURATION.MSPL_ENDPOINT
+            endpoint=CONFIGURATION.MSPL_ENDPOINT,
+            request_name=name
         )
 
         if response == "ALL GOOD":

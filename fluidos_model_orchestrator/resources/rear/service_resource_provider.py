@@ -20,8 +20,7 @@ class REARServiceResourceProvider(ExternalResourceProvider):
         self.username = username
         self.password = password
 
-    def enrich(self, container: dict[str, Any]) -> None:
-
+    def enrich(self, container: dict[str, Any], name: str) -> None:
         if "env" not in container:
             container["env"] = []
 
