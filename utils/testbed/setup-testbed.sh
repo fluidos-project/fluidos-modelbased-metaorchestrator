@@ -32,7 +32,7 @@ liqoctl install kind --kubeconfig $PWD/provider-DE-config.yaml
 
 helm upgrade --install --devel -n fluidos --create-namespace node fluidos/node \
   --set "provider=kind" \
-  --set "common.configMaps.nodeIdentity.ip=$DE_PROVIDER_CONTROLPLANE_IP:$PROVIDER_NODE_PORT" \
+  --set "common.configMaps.nodeIdentity.ip=$DE_PROVIDER_CONTROLPLANE_IP" \
   --set "common.configMaps.nodeIdentity.domain=de.provider.fluidos.eu" \
   --set "common.configMaps.nodeIdentity.nodeId=provider-de" \
   --set "rearController.service.gateway.nodePort.port=$PROVIDER_NODE_PORT" \
@@ -53,7 +53,7 @@ liqoctl install kind --kubeconfig $PWD/provider-IT-config.yaml
 
 helm upgrade --install --devel -n fluidos --create-namespace node fluidos/node \
   --set "provider=kind" \
-  --set "common.configMaps.nodeIdentity.ip=$IT_PROVIDER_CONTROLPLANE_IP:$PROVIDER_NODE_PORT" \
+  --set "common.configMaps.nodeIdentity.ip=$IT_PROVIDER_CONTROLPLANE_IP" \
   --set "common.configMaps.nodeIdentity.domain=it.provider.fluidos.eu" \
   --set "common.configMaps.nodeIdentity.nodeId=provider-it" \
   --set "rearController.service.gateway.nodePort.port=$PROVIDER_NODE_PORT" \
@@ -70,7 +70,7 @@ liqoctl install kind --kubeconfig $PWD/consumer-config.yaml
 
 helm upgrade --install --devel -n fluidos --create-namespace node fluidos/node \
   --set "provider=kind" \
-  --set "common.configMaps.nodeIdentity.ip=$CONSUMER_CONTROLPLANE_IP:$CONSUMER_NODE_PORT" \
+  --set "common.configMaps.nodeIdentity.ip=$CONSUMER_CONTROLPLANE_IP" \
   --set "common.configMaps.nodeIdentity.domain=consumer.fluidos.eu" \
   --set "common.configMaps.nodeIdentity.nodeId=consumer" \
   --set "rearController.service.gateway.nodePort.port=$CONSUMER_NODE_PORT" \
