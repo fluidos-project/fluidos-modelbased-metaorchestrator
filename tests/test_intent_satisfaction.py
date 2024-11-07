@@ -142,6 +142,7 @@ def test_validate_bandwidth_against_satisfaction() -> None:
                             "bandwidth": {
                                 "POINT_A": "500ms",
                                 "POINT-B": "200ms",
+                                "AZURE": "100ms",
                             }
                         }
                     }
@@ -161,6 +162,7 @@ def test_validate_bandwidth_against_satisfaction() -> None:
     assert Intent(KnownIntent.bandwidth_against, "<= 200ms POINT-B").validates(provider)
     assert Intent(KnownIntent.bandwidth_against, "< 300ms POINT-B").validates(provider)
     assert not Intent(KnownIntent.bandwidth_against, "< 100ms POINT-B").validates(provider)
+    assert Intent(KnownIntent.bandwidth_against, "<= 200ms AZURE").validates(provider)
 
 
 def test_validate_tee_rediness() -> None:

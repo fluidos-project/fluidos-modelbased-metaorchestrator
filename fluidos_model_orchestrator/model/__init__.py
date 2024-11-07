@@ -137,7 +137,7 @@ def _extract_resource_intents(requests: dict[str, str]) -> list[Intent]:
 def _extract_intents(annotations: dict[str, str]) -> list[Intent]:
     logger.debug("Extracting intents from annotations")
     intents = [
-        Intent(KnownIntent.get_intent(key), str(value).casefold()) for key, value in annotations.items() if KnownIntent.is_supported(key.casefold())
+        Intent(KnownIntent.get_intent(key), str(value)) for key, value in annotations.items() if KnownIntent.is_supported(key.casefold())
     ]
 
     logger.debug(f"Extracted {len(intents)} intents from the annotations")
