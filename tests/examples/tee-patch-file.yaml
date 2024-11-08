@@ -3,4 +3,4 @@ spec:
     typeData:
       properties:
         additionalProperties:
-          TEE: True
+          TEE: true
