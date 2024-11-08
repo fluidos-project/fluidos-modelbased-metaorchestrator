@@ -165,7 +165,7 @@ def test_validate_bandwidth_against_satisfaction() -> None:
     assert Intent(KnownIntent.bandwidth_against, "<= 200ms AZURE").validates(provider)
 
 
-def test_validate_tee_rediness() -> None:
+def test_validate_tee_readiness() -> None:
     bad_no_tee = LocalResourceProvider("test", Flavor(
         metadata=FlavorMetadata(
             name="foo",
@@ -250,8 +250,8 @@ def test_validate_tee_rediness() -> None:
         )
     ))
 
-    intent1 = Intent(KnownIntent.tee_rediness, "True")
-    intent2 = Intent(KnownIntent.tee_rediness, "true")
+    intent1 = Intent(KnownIntent.tee_readiness, "True")
+    intent2 = Intent(KnownIntent.tee_readiness, "true")
 
     assert intent1.validates(good)
     assert not intent1.validates(bad_no_tee)
