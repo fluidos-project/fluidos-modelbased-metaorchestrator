@@ -185,5 +185,5 @@ class CarbonAwareOrchestrator(OrchestratorInterface):
                 return [provider]  # return list of 1 element with best node
         return []
 
-    def predict(self, req: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse | None:
+    def predict(self, req: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse | None:
         return None

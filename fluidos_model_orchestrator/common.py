@@ -164,7 +164,7 @@ class OrchestratorInterface(ABC):
         raise NotImplementedError("Not implemented: abstract method")
 
     @abstractmethod
-    def predict(self, data: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse | None:
+    def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse | None:
         raise NotImplementedError("Not implemented: abstract method")
 
     def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse, request: ModelPredictRequest) -> list[ResourceProvider]:
