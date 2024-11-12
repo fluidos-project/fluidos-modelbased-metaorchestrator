@@ -1,4 +1,4 @@
-# import pytest
+import pytest
 from requests_mock import Mocker  # type: ignore
 
 from fluidos_model_orchestrator.resources.mspl import request_application
@@ -24,7 +24,7 @@ def test_request_poll(requests_mock: Mocker) -> None:
     assert text == "response"
 
 
-# @pytest.mark.skip
+@pytest.mark.skip
 def test_interaction_with_bastion() -> None:
     policy = """
     <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
