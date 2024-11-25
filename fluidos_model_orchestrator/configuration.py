@@ -155,6 +155,7 @@ def _retrieve_node_identity(config: Configuration, logger: logging.Logger) -> di
 
     except ApiException as e:
         logger.error(f"Unable to retrieve configmap {e=}")
+        raise e
 
     logger.error("Something went wrong while retrieving node identity")
     raise ValueError("Unable to retrieve node identity")
