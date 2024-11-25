@@ -81,4 +81,10 @@ tolerations: []
 affinity: {}
 
 electricity_map:
-  key:  "<MY KEY TO BE REPLACED WITH SOMETHING MEANINGFULL>" # ElectricityMap API KEY <COMPLETE>
+  key:  "<MY KEY TO BE REPLACED WITH SOMETHING MEANINGFULL>"  # ElectricityMap API KEY <COMPLETE>
+
+configuration:
+  architecture: amd64  # default architecture, change to your preferred arch
+
+mspl:
+  endpoint: "<REPLACE WITH MY LOVELY MSPL ENDPOINT>"

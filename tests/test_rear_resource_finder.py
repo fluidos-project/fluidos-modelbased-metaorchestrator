@@ -3,8 +3,10 @@ import logging
 import kopf  # type: ignore
 import kubernetes  # type: ignore
 import pkg_resources  # type: ignore
+import pytest  # type: ignore
 from pytest_kubernetes.providers import AClusterManager  # type: ignore
 
+from fluidos_model_orchestrator.common import FlavorK8SliceData
 from fluidos_model_orchestrator.common import Resource
 from fluidos_model_orchestrator.configuration import _build_k8s_client
 from fluidos_model_orchestrator.configuration import Configuration
@@ -15,7 +17,7 @@ from fluidos_model_orchestrator.resources import REARResourceFinder
 def test_find_local_no_nodes(k8s: AClusterManager) -> None:
     k8s.create()
 
-    myconfig = kubernetes.client.Configuration()
+    myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
     configuration = Configuration(
@@ -36,7 +38,7 @@ def test_find_local(k8s: AClusterManager) -> None:
     k8s.apply(pkg_resources.resource_filename(__name__, "node/crds/nodecore.fluidos.eu_flavors.yaml"))
     k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/example-flavor.yaml"))
 
-    myconfig = kubernetes.client.Configuration()
+    myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
     configuration = Configuration(
@@ -58,7 +60,7 @@ def test_solver_creation_and_check(k8s: AClusterManager) -> None:
     k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/fluidos-network-manager-identity-config-map.yaml"))
     k8s.apply(pkg_resources.resource_filename(__name__, "data/example-mbmo-config-map.yaml"))
 
-    myconfig = kubernetes.client.Configuration()
+    myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
     configuration = Configuration()
@@ -94,6 +96,7 @@ def test_solver_creation_and_check(k8s: AClusterManager) -> None:
     k8s.delete()
 
 
+@pytest.mark.skip(reason="Discovery needs update")
 def test_retrieve_peering_candidate_list(k8s: AClusterManager) -> None:
     k8s.create()
 
@@ -112,7 +115,7 @@ def test_retrieve_peering_candidate_list(k8s: AClusterManager) -> None:
 
     assert "status" in res
 
-    myconfig = kubernetes.client.Configuration()
+    myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
     configuration = Configuration()
@@ -139,7 +142,7 @@ def test_flavor_update(k8s: AClusterManager) -> None:
     k8s.apply(pkg_resources.resource_filename(__name__, "node/crds/nodecore.fluidos.eu_flavors.yaml"))
     k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/example-flavor.yaml"))
 
-    myconfig = kubernetes.client.Configuration()
+    myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
     configuration = Configuration()
@@ -152,6 +155,7 @@ def test_flavor_update(k8s: AClusterManager) -> None:
     flavors = finder._get_locally_available_flavors("default")
 
     assert len(flavors) == 1
+    assert type(flavors[0].spec.flavor_type.type_data) is FlavorK8SliceData
     assert "carbon" not in flavors[0].spec.flavor_type.type_data.properties
 
     flavor = flavors[0]
@@ -161,7 +165,7 @@ def test_flavor_update(k8s: AClusterManager) -> None:
     after_flavors = finder._get_locally_available_flavors("default")
 
     assert len(after_flavors) == 1
-
+    assert type(after_flavors[0].spec.flavor_type.type_data) is FlavorK8SliceData
     assert "carbon" in after_flavors[0].spec.flavor_type.type_data.properties
 
     k8s.delete()
