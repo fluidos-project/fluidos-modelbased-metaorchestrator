@@ -164,7 +164,7 @@ class OrchestratorInterface(ABC):
         raise NotImplementedError("Not implemented: abstract method")
 
     @abstractmethod
-    def predict(self, data: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse | None:
+    def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse | None:
         raise NotImplementedError("Not implemented: abstract method")
 
     def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse, request: ModelPredictRequest) -> list[ResourceProvider]:
@@ -312,7 +312,7 @@ class KnownIntent(Enum):
 
     # TER
     bandwidth_against = "bandwidth-against", False, _validate_bandwidth_against_point
-    tee_rediness = "tee-readiness", False, _validate_tee_available
+    tee_readiness = "tee-readiness", False, _validate_tee_available
 
     # service
     service = "service", True, _always_true
