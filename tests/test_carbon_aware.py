@@ -32,7 +32,12 @@ def test_basic_ranking() -> None:
                                 gpu=1
                             ),
                             policies={},
-                            properties={"operational": [100, 120, 130, 150, 120, 110, 100, 90, 130, 150, 100, 80, 180, 40, 80, 130], "embodied": 1300}
+                            properties={
+                                "carbon-footprint": {
+                                    "operational": [100, 120, 130, 150, 120, 110, 100, 90, 130, 150, 100, 80, 180, 40, 80, 130],
+                                    "embodied": 1300
+                                }
+                            }
                         ),
                         type_identifier=FlavorType.K8SLICE,
                     ),
@@ -60,8 +65,10 @@ def test_basic_ranking() -> None:
                             ),
                             policies={},
                             properties={
-                                "operational": [90, 110, 120, 140, 110, 100, 90, 80, 120, 140, 90, 70, 170, 30, 70, 120],
-                                "embodied": 1200
+                                "carbon-footprint": {
+                                    "operational": [90, 110, 120, 140, 110, 100, 90, 80, 120, 140, 90, 70, 170, 30, 70, 120],
+                                    "embodied": 1200
+                                }
                             }
                         ),
                         type_identifier=FlavorType.K8SLICE,
