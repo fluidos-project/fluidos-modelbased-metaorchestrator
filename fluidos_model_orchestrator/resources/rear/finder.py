@@ -10,13 +10,13 @@ from kubernetes import client  # type: ignore
 from kubernetes.client.exceptions import ApiException  # type: ignore
 
 from fluidos_model_orchestrator.common import build_flavor
+from fluidos_model_orchestrator.common import ExternalResourceProvider
 from fluidos_model_orchestrator.common import Flavor
 from fluidos_model_orchestrator.common import FlavorType
 from fluidos_model_orchestrator.common import Intent
 from fluidos_model_orchestrator.common import Resource
 from fluidos_model_orchestrator.common import ResourceFinder
 from fluidos_model_orchestrator.common import ResourceProvider
-from fluidos_model_orchestrator.common import ServiceResourceProvider
 from fluidos_model_orchestrator.configuration import CONFIGURATION
 from fluidos_model_orchestrator.configuration import Configuration
 from fluidos_model_orchestrator.resources.rear.local_resource_provider import LocalResourceProvider
@@ -79,7 +79,7 @@ class REARResourceFinder(ResourceFinder):
 
         return (solver_request, intent_id)
 
-    def find_service(self, id: str, service: Intent, namespace: str) -> list[ServiceResourceProvider]:
+    def find_service(self, id: str, service: Intent, namespace: str) -> list[ExternalResourceProvider]:
         logger.info("Retrieving service with REAR")
 
         body, _ = self._resource_to_service_sorver_request(service, id)

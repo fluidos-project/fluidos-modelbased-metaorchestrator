@@ -26,6 +26,7 @@ class FLUIDOS_COL_NAMES:
     NON_ACCEPTABLE_CANDIDATES = "non_acceptable_configs"
     TARGET_BASIC_RESOURCE_AVAIL_AUGMENTATION_COL = "basic_resource_avail"
     TARGET_MOST_OPTIMAL_TEMPLATE_ID = "best_candidate"
+    MSPL_INTENT = "mspl_intent"
 
 
 class FLUIDOS_INPUT_OUTPUT_NAME:
@@ -38,6 +39,7 @@ KNOWN_INTENT_TO_POD_INTENT: dict[str, str] = {
     KnownIntent.memory.name: FLUIDOS_COL_NAMES.POD_MEMORY,
     KnownIntent.location.name: FLUIDOS_COL_NAMES.POD_LOCATION,
     KnownIntent.throughput.name: FLUIDOS_COL_NAMES.POD_THROUGHPUT,
+    KnownIntent.mspl.name: FLUIDOS_COL_NAMES.MSPL_INTENT,
 }
 
 
@@ -57,6 +59,7 @@ D_TYPE: dict[str, dict[str, type]] = {
     FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_LOCATION: {"type": str},
     FLUIDOS_COL_NAMES.POD_LOCATION: {"type": str},
     FLUIDOS_COL_NAMES.TARGET_BASIC_RESOURCE_AVAIL_AUGMENTATION_COL: {"type": float},
+    FLUIDOS_COL_NAMES.MSPL_INTENT: {"type": str},
 }
 
 D_UNITS = {
@@ -72,6 +75,8 @@ D_UNITS = {
     FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_LOCATION: [""],
 
     FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_ID: [""],
+    
+    FLUIDOS_COL_NAMES.MSPL_INTENT: [""],
 
 }
 

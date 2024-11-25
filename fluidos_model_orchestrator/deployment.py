@@ -8,17 +8,17 @@ import kopf  # type: ignore
 from kubernetes.utils import create_from_dict  # type: ignore
 from kubernetes.utils import FailToCreateError  # type: ignore
 
+from .common import ExternalResourceProvider
 from .common import Intent
 from .common import ModelPredictResponse
 from .common import ResourceProvider
-from .common import ServiceResourceProvider
 from .configuration import CONFIGURATION
 
 
 logger = logging.getLogger()
 
 
-def expand(spec: dict[str, Any], expanding: tuple[ServiceResourceProvider, Intent]) -> bool:
+def apply_external_resource(spec: dict[str, Any], resource_and_intent: tuple[ExternalResourceProvider, Intent]) -> bool:
     # retrieve credentials as secret named f"credentials-{contact_name}"
     # stored in namespaced called f"{contact_name}"
     # to be decoded
@@ -26,7 +26,8 @@ def expand(spec: dict[str, Any], expanding: tuple[ServiceResourceProvider, Inten
     match spec["kind"]:
         case "Pod":
             for container in spec["spec"]["containers"]:
-                expanding[0].enrich(container)
+                (resource, _) = resource_and_intent
+                resource.enrich(container, spec["metadata"]["name"])
             return True
         case "Deployment":
             raise ValueError(f"Unsupported type: {spec['kind']}")
@@ -39,7 +40,7 @@ def expand(spec: dict[str, Any], expanding: tuple[ServiceResourceProvider, Inten
 async def deploy(
         spec: dict[str, Any],
         provider: ResourceProvider,
-        expanding_resources: list[tuple[ServiceResourceProvider, Intent]],
+        expanding_resources: list[tuple[ExternalResourceProvider, Intent]],
         response: ModelPredictResponse,
         namespace: str) -> bool:
     spec_dict = {
@@ -49,7 +50,7 @@ async def deploy(
     enrich(spec_dict, provider)
 
     for expanding_resource in expanding_resources:
-        expand(spec_dict, expanding_resource)
+        apply_external_resource(spec_dict, expanding_resource)
 
     delay_time = response.delay * 60 * 60
     logger.info(f"Waiting to deploy {delay_time=}")
