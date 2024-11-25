@@ -1,8 +1,0 @@
-apiVersion: v1
-data:
-  domain: fluidos.eu
-  ip: 172.18.0.2:30000
-  nodeID: l6936ty08l
-kind: ConfigMap
-metadata:
-  name: fluidos-node-identity
