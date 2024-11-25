@@ -5,4 +5,4 @@ data:
   nodeID: l6936ty08l
 kind: ConfigMap
 metadata:
-  name: fluidos-network-manager-identity
+  name: fluidos-node-identity
