@@ -1,7 +1,8 @@
 import pytest  # type: ignore
 from requests_mock import Mocker  # type: ignore
+from typing import Any
 
-from fluidos_model_orchestrator.resources.mspl import request_application
+from fluidos_model_orchestrator.resources.mspl import request_application, create_mspl
 
 
 @pytest.mark.skip
@@ -90,3 +91,25 @@ def test_interaction_with_bastion() -> None:
     response = request_application(policy=policy, endpoint="http://fluidos-mspl.sl.cloud9.ibm.com:8002/meservice", request_name="request-name")
 
     assert response is not None
+
+
+def test_create_mspl():
+    # Arrange
+    provider = "provider1"
+    consumer = "consumer1"
+    exporter_endpoint = "http://example.com"
+    properties = {
+        "metric1": "CPU",
+        "metric2": "Memory"
+    }
+
+    # Act
+    result = create_mspl(provider, consumer, exporter_endpoint, properties)
+
+    # Assert
+    assert isinstance(result, str)
+    assert "<nameMetric>CPU</nameMetric>" in result
+    assert "<nameMetric>Memory</nameMetric>" in result
+    assert f"<domainID>{provider}</domainID>" in result
+    assert f"<flavorID>{consumer}</flavorID>" in result
+    assert f"<exporterEndpoint>{exporter_endpoint}</exporterEndpoint>" in result
