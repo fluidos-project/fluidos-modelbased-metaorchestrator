@@ -386,11 +386,9 @@ class ResourceFinder(ABC):
 
     def update_local_flavor(self, flavor: Flavor, data: Any, namespace: str) -> None:
         raise NotImplementedError()
-<<<<<<< HEAD
 
 
 def build_flavor(flavor: dict[str, Any]) -> Flavor:
-    #print(f"flavor!!!!!!!!!!!!!!!!!!!!!{flavor}!!!!!!!!!!!!!")
     
     if flavor["kind"] != "Flavor":
         raise ValueError(f"Unable to process kind {flavor['kind']}")
