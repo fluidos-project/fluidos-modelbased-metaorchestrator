@@ -94,7 +94,6 @@ def test_interaction_with_bastion() -> None:
 
 
 def test_create_mspl():
-    # Arrange
     provider = "provider1"
     consumer = "consumer1"
     exporter_endpoint = "http://example.com"

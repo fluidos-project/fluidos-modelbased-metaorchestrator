@@ -47,7 +47,6 @@ def request_application(policy: str, endpoint: str, request_name: str) -> str:
 
 def create_mspl(provider, consumer, exporterEndpoint, properties: dict[str, Any]):
     metrics_xml = '\n'.join(f'<nameMetric>{value}</nameMetric>' for value in properties.values())
-    
     xml = f"""<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
                 <ITResourceOrchestration id="omspl_46bdc9a9035540d4b257bd686a7e6bc3" 
                     xmlns="http://modeliosoft/xsddesigner/a22bd60b-ee3d-425c-8618-beb6a854051a/ITResource.xsd"
