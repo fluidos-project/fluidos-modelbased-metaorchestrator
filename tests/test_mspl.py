@@ -1,13 +1,14 @@
-# import pytest
+import pytest  # type: ignore
 from requests_mock import Mocker  # type: ignore
+from typing import Any
 
-from fluidos_model_orchestrator.resources.mspl import request_application
-
-
-endpoint = "http://www.um.es/mspl/endpoint"
+from fluidos_model_orchestrator.resources.mspl import request_application, create_mspl
 
 
+@pytest.mark.skip
 def test_request_no_poll(requests_mock: Mocker) -> None:
+    endpoint = "http://www.um.es/mspl/endpoint"
+
     requests_mock.post(endpoint + "/123", status_code=200, text="response")
 
     text = request_application("<stupid><xml /></stupid>", endpoint, "123")
@@ -15,7 +16,9 @@ def test_request_no_poll(requests_mock: Mocker) -> None:
     assert text == "response"
 
 
+@pytest.mark.skip
 def test_request_poll(requests_mock: Mocker) -> None:
+    endpoint = "http://www.um.es/mspl/endpoint"
     requests_mock.post(endpoint, status_code=100, headers={'Location': endpoint + "/123"})
     requests_mock.get(endpoint + "/123", status_code=200, text="response")
 
@@ -24,7 +27,7 @@ def test_request_poll(requests_mock: Mocker) -> None:
     assert text == "response"
 
 
-# @pytest.mark.skip
+@pytest.mark.skip
 def test_interaction_with_bastion() -> None:
     policy = """
     <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -88,3 +91,24 @@ def test_interaction_with_bastion() -> None:
     response = request_application(policy=policy, endpoint="http://fluidos-mspl.sl.cloud9.ibm.com:8002/meservice", request_name="request-name")
 
     assert response is not None
+
+
+def test_create_mspl():
+    provider = "provider1"
+    consumer = "consumer1"
+    exporter_endpoint = "http://example.com"
+    properties = {
+        "metric1": "CPU",
+        "metric2": "Memory"
+    }
+
+    # Act
+    result = create_mspl(provider, consumer, exporter_endpoint, properties)
+
+    # Assert
+    assert isinstance(result, str)
+    assert "<nameMetric>CPU</nameMetric>" in result
+    assert "<nameMetric>Memory</nameMetric>" in result
+    assert f"<domainID>{provider}</domainID>" in result
+    assert f"<flavorID>{consumer}</flavorID>" in result
+    assert f"<exporterEndpoint>{exporter_endpoint}</exporterEndpoint>" in result

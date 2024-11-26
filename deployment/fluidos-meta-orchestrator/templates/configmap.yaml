@@ -3,6 +3,13 @@ kind: ConfigMap
 metadata:
   name: fluidos-mbmo-configmap
 data:
+<<<<<<< HEAD
+  domain: fluidos.eu
+  ip: 172.18.0.2:30000
+  nodeID: l6936ty08l
+  ELECTRICITY_MAP_API_KEY: "TEST_KEY_123!"
+=======
   ELECTRICITY_API_KEY: {{ .Values.electricity_map.key }}
   architecture: {{ .Values.configuration.architecture }}
   MSPL_ENDPOINT: {{ .Values.mspl.endpoint }}
+>>>>>>> afd3b030f265d836e5e8556dc2efd92a8d5a3904

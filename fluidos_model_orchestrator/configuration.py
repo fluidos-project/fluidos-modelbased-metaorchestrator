@@ -21,7 +21,7 @@ class Configuration:
     identity: dict[str, str] = field(default_factory=dict)
     api_keys: dict[str, str] = field(default_factory=dict)
     DAEMON_SLEEP_TIME: float = 60. * 60.  # 1h in seconds
-    architecture: str = "arm64"
+    architecture: str = "amd64"
     n_try: int = 25
     API_SLEEP_TIME: float = 0.1  # 100 ms
     SOLVER_SLEEPING_TIME: float = .5  # 500ms
@@ -154,7 +154,7 @@ def _retrieve_architecture(config: Configuration, logger: logging.Logger) -> str
 
                     data: dict[str, str] = item.data
 
-                    return data.get("architecture", "arm64")
+                    return data.get("architecture", "amd64")
     except ApiException as e:
         logger.error(f"Unable to retrieve config map {e=}")
 
@@ -184,6 +184,7 @@ def _retrieve_node_identity(config: Configuration, logger: logging.Logger) -> di
 
     except ApiException as e:
         logger.error(f"Unable to retrieve configmap {e=}")
+        raise e
 
     logger.error("Something went wrong while retrieving node identity")
     raise ValueError("Unable to retrieve node identity")

@@ -16,4 +16,4 @@ metadata:
     app.kubernetes.io/part-of: node
     app.kubernetes.io/version: v0.0.4
     helm.sh/chart: node-v0.0.4
-  name: fluidos-network-manager-identity
+  name: fluidos-node-identity

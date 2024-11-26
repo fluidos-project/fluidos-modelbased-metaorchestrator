@@ -17,8 +17,11 @@ def test_intent_values():
         "fluidos-intent-resource",
         "fluidos-intent-service",
         "fluidos-intent-throughput",
+<<<<<<< HEAD
+=======
         "fluidos-intent-bandwidth-against",
         "fluidos-intent-tee-readiness",
+>>>>>>> afd3b030f265d836e5e8556dc2efd92a8d5a3904
         "fluidos-intent-mspl",
     }
 
@@ -45,8 +48,11 @@ def test_iternal_or_external():
         "fluidos-intent-memory",
         "fluidos-intent-resource",
         "fluidos-intent-throughput",
+<<<<<<< HEAD
+=======
         "fluidos-intent-bandwidth-against",
         "fluidos-intent-tee-readiness",
+>>>>>>> afd3b030f265d836e5e8556dc2efd92a8d5a3904
         "fluidos-intent-mspl",
     }
 

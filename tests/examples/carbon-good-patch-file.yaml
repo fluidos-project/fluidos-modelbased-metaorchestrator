@@ -1,0 +1,7 @@
+spec:
+  flavorType:
+    typeData:
+      properties:
+        carbon-footprint:
+          embodied: 1200
+          operational: [136, 137, 137, 138, 142, 144, 148, 143, 129, 116, 109, 103, 97, 91, 78, 95, 128, 162, 156, 152, 154, 153, 145, 143]

@@ -107,12 +107,12 @@ class CarbonAwareOrchestrator(OrchestratorInterface):
             flavours.append(
                 CarbonAwareFlavour(
                     flavor.metadata.name,
-                    type_data.properties.get("embodied", ),
+                    type_data.properties.get("carbon-footprint", {}).get("embodied", 0),
                     4,
                     cpu_to_int(type_data.characteristics.cpu),
                     memory_to_int(type_data.characteristics.memory),
                     type_data.characteristics.storage,
-                    type_data.properties.get("operational", None),
+                    type_data.properties.get("carbon-footprint", {}).get("operational", None),
                 ))
 
         logging.debug(f"flavours: {flavours}")
@@ -185,5 +185,5 @@ class CarbonAwareOrchestrator(OrchestratorInterface):
                 return [provider]  # return list of 1 element with best node
         return []
 
-    def predict(self, req: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse | None:
+    def predict(self, req: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse | None:
         return None

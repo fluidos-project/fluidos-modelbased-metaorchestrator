@@ -164,7 +164,7 @@ class OrchestratorInterface(ABC):
         raise NotImplementedError("Not implemented: abstract method")
 
     @abstractmethod
-    def predict(self, data: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse | None:
+    def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse | None:
         raise NotImplementedError("Not implemented: abstract method")
 
     def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse, request: ModelPredictRequest) -> list[ResourceProvider]:
@@ -312,7 +312,10 @@ class KnownIntent(Enum):
 
     # TER
     bandwidth_against = "bandwidth-against", False, _validate_bandwidth_against_point
-    tee_rediness = "tee-rediness", False, _validate_tee_available
+    tee_readiness = "tee-readiness", False, _validate_tee_available
+
+    #mspl
+    #mspl = "mspl", False, _always_true
 
     # service
     service = "service", True, _always_true
@@ -383,3 +386,60 @@ class ResourceFinder(ABC):
 
     def update_local_flavor(self, flavor: Flavor, data: Any, namespace: str) -> None:
         raise NotImplementedError()
+
+
+def build_flavor(flavor: dict[str, Any]) -> Flavor:
+    
+    if flavor["kind"] != "Flavor":
+        raise ValueError(f"Unable to process kind {flavor['kind']}")
+
+    return Flavor(
+        metadata=_build_metadata(flavor["metadata"]),
+        spec=_build_spec(flavor["spec"]),
+    )
+
+
+def _build_metadata(metadata: dict[str, Any]) -> FlavorMetadata:
+    return FlavorMetadata(
+        name=metadata["name"],
+        owner_references=metadata["ownerReferences"],
+    )
+
+
+def _build_spec(spec: dict[str, Any]) -> FlavorSpec:
+    return FlavorSpec(
+        availability=spec["availability"],
+        flavor_type=_build_flavor_type(spec["flavorType"]),
+        location=spec["location"],
+        network_property_type=spec["networkPropertyType"],
+        owner=spec["owner"],
+        price=spec["price"],
+        providerID=spec["providerID"],
+    )
+
+
+def _build_flavor_type(flavor_type_data: dict[str, Any]) -> FlavorTypeData:
+    flavor_type = FlavorType.factory(flavor_type_data["typeIdentifier"])
+    return FlavorTypeData(
+        type_identifier=flavor_type,
+        type_data=_build_flavor_type_data(flavor_type, flavor_type_data["typeData"])
+    )
+
+
+def _build_flavor_type_data(flavor_type: FlavorType, data: dict[str, Any]) -> FlavorK8SliceData:
+    if flavor_type is FlavorType.K8SLICE:
+        return FlavorK8SliceData(
+            characteristics=FlavorCharacteristics(
+                cpu=data["characteristics"]["cpu"],
+                architecture=data["characteristics"]["architecture"],
+                memory=data["characteristics"]["memory"],
+                gpu=data["characteristics"]["gpu"],
+                pods=data["characteristics"]["pods"],
+                storage=data["characteristics"]["storage"],
+            ),
+            policies=data.get("policies", {}),
+            properties=data.get("properties", {})
+        )
+    raise ValueError(f"Unsupported flavor type: {flavor_type}")
+=======
+>>>>>>> afd3b030f265d836e5e8556dc2efd92a8d5a3904
