@@ -33,15 +33,8 @@ _model_characteristics: list[tuple[set[KnownIntent], type[OrchestratorInterface]
 ]
 
 
-def _is_subset(s1: set[KnownIntent], s2: set[KnownIntent]) -> bool:
-    for e1 in s1:
-        for e2 in s2:
-            if e1 == e2:
-                break
-        else:
-            return False
-
-    return True
+def _is_compatible(request: set[KnownIntent], model: set[KnownIntent]) -> bool:
+    return 0 != len(model & request)
 
 
 def _get_model(model_type: type[OrchestratorInterface]) -> OrchestratorInterface:
@@ -57,14 +50,16 @@ def get_model_object(request: ModelPredictRequest) -> OrchestratorInterface:
     request_intent_signature = {intent.name for intent in request.intents}
 
     matching_models = [
-        name for (model_signature, name) in _model_characteristics if _is_subset(request_intent_signature, model_signature)
+        name for (model_signature, name) in _model_characteristics if _is_compatible(request_intent_signature, model_signature)
     ]
 
+    logger.info(f"{len(matching_models)}")
+
     if 1 == len(matching_models):
-        logger.debug(f"Returning model {matching_models[0]}")
+        logger.info(f"Returning model {matching_models[0]}")
         return _get_model(matching_models[0])
     elif 1 < len(matching_models):
-        logger.debug(f"Regurning an ensemble of the models {matching_models}")
+        logger.info(f"Returning an ensemble of the models {matching_models}")
         return FluidosModelEnsemble(
             _get_model(model_name) for model_name in matching_models
         )
@@ -82,11 +77,12 @@ def convert_to_model_request(spec: Any, namespace: str) -> ModelPredictRequest |
         logger.debug("Processing Deployment object")
         intents = _extract_intents(spec["metadata"].get("annotations", {}))
         for container in spec["spec"]["template"]["spec"]["containers"]:
-            intents.extend(
-                _extract_resource_intents(
-                    container.get("resources", {}).get("requests", {})
-                )
-            )
+            pass
+            # intents.extend(
+            #     _extract_resource_intents(
+            #         container.get("resources", {}).get("requests", {})
+            #     )
+            # )
 
         request = ModelPredictRequest(
             id=spec["metadata"]["name"],

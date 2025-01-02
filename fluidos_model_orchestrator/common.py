@@ -240,9 +240,15 @@ def validate_location(provider: ResourceProvider, value: str) -> bool:
 
     location = provider.flavor.spec.location
 
-    return any(
-        value == str(_val).casefold() for _val in location.values()
-    )
+    for val in location.values():
+        val = str(val).casefold()
+
+        if val == value:
+            logger.debug("Returning True")
+            return True
+
+    logger.debug("Returning False")
+    return False
 
 
 def _validate_bandwidth_against_point(provider: ResourceProvider, value: str) -> bool:

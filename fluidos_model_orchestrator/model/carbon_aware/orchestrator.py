@@ -18,12 +18,7 @@ from fluidos_model_orchestrator.model.carbon_aware.classes.carbon_aware_pod impo
 from fluidos_model_orchestrator.model.carbon_aware.classes.carbon_aware_timeslot import CarbonAwareTimeslot
 from fluidos_model_orchestrator.model.carbon_aware.fakers.workload_prediction_generator import generate_resource_prediction
 
-debug = True
-
-
-def _debug(message: str) -> None:
-    if debug:
-        print(message)
+logger = logging.getLogger(__name__)
 
 
 def _is_timeslot_valid(timeslot: CarbonAwareTimeslot, pod: CarbonAwarePod) -> bool:
@@ -37,27 +32,26 @@ def _check_node_resource(flavour: CarbonAwareFlavour, timeslot: CarbonAwareTimes
     cpu_used_prediction = generate_resource_prediction(flavour.totalCpu)
     ram_used_prediction = generate_resource_prediction(flavour.totalRam)
 
-    _debug(f"CPU used prediction: {cpu_used_prediction}")
-    _debug(f"RAM used prediction: {ram_used_prediction}")
+    logger.debug(f"CPU used prediction: {cpu_used_prediction}")
+    logger.debug(f"RAM used prediction: {ram_used_prediction}")
 
-    _debug(f"CPU left: {flavour.totalCpu - cpu_used_prediction}")
-    _debug(f"RAM left: {flavour.totalRam - ram_used_prediction}")
-    _debug(f"CPU request: {pod.cpuRequest}")
-    _debug(f"RAM request: {pod.ramRequest}")
+    logger.debug(f"CPU left: {flavour.totalCpu - cpu_used_prediction}")
+    logger.debug(f"RAM left: {flavour.totalRam - ram_used_prediction}")
+    logger.debug(f"CPU request: {pod.cpuRequest}")
+    logger.debug(f"RAM request: {pod.ramRequest}")
 
     if (flavour.totalCpu - cpu_used_prediction) < pod.cpuRequest or (
             flavour.totalRam - ram_used_prediction) < pod.ramRequest:
-        _debug("Node does not have enough resources to accommodate the pod.")
+        logger.debug("Node does not have enough resources to accommodate the pod.")
         return False
-    _debug("Node has enough resources to accommodate the pod.")
+    logger.debug("Node has enough resources to accommodate the pod.")
     return True
 
 
 class CarbonAwareOrchestrator(OrchestratorInterface):
     def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse,
                       request: ModelPredictRequest) -> list[ResourceProvider]:
-
-        _debug(f"ModelPredictRequest pod_request: {request.pod_request}")
+        logger.debug(f"ModelPredictRequest pod_request: {request.pod_request}")
 
         deadline = np.nan
         cpuRequest = 1
@@ -66,15 +60,15 @@ class CarbonAwareOrchestrator(OrchestratorInterface):
             if intent.name is KnownIntent.max_delay:
                 deadline = int(intent.value)
                 deadline += 1
-                _debug(f"Found deadline from intent file (+1): {deadline}")
+                logger.debug(f"Found deadline from intent file (+1): {deadline}")
             elif intent.name is KnownIntent.cpu:
                 cpuRequest = cpu_to_int(intent.value)
-                _debug(f"Found cpu request from intent file: {cpuRequest}")
+                logger.debug(f"Found cpu request from intent file: {cpuRequest}")
             elif intent.name is KnownIntent.memory:
                 ramRequest = memory_to_int(intent.value)
-                _debug(f"Found memory request from intent file: {ramRequest}")
+                logger.debug(f"Found memory request from intent file: {ramRequest}")
             else:
-                _debug(f"Intent {intent.name.name} not recognized in Carbon-Aware orchestrator")
+                logger.debug(f"Intent {intent.name.name} not recognized in Carbon-Aware orchestrator")
         if deadline == np.nan or deadline <= 0 or deadline > 24:
             logging.exception("Deadline must be provided between ]0;24]")
             return []
@@ -95,15 +89,15 @@ class CarbonAwareOrchestrator(OrchestratorInterface):
             ]
         ]
 
-        _debug(f"Generated timeslots from deadline: {len(timeslots)}")
+        logger.debug(f"Generated timeslots from deadline: {len(timeslots)}")
 
         flavours: list[CarbonAwareFlavour] = []
         for provider in providers:
             flavor = provider.flavor
             type_data = cast(FlavorK8SliceData, flavor.spec.flavor_type.type_data)
-            _debug(f"provider ID: {provider.id}")
-            _debug(f"flavor ID: {provider.flavor.metadata.name}")
-            _debug(f"flavor optional_fields: {type_data.properties}")
+            logger.debug(f"provider ID: {provider.id}")
+            logger.debug(f"flavor ID: {provider.flavor.metadata.name}")
+            logger.debug(f"flavor optional_fields: {type_data.properties}")
             flavours.append(
                 CarbonAwareFlavour(
                     flavor.metadata.name,
@@ -118,7 +112,7 @@ class CarbonAwareOrchestrator(OrchestratorInterface):
         logging.debug(f"flavours: {flavours}")
 
         for flavour in flavours:
-            _debug(
+            logger.debug(
                 f"flavour x: {flavour.id} {flavour.embodiedCarbon} {flavour.lifetime} {flavour.totalCpu} {flavour.totalRam} {flavour.totalStorage}")
 
         podToSchedule = CarbonAwarePod(request.id, deadline, 2, np.nan, cpuRequest, ramRequest, 0)
@@ -130,44 +124,44 @@ class CarbonAwareOrchestrator(OrchestratorInterface):
         best_timeslot: CarbonAwareTimeslot | None = None
 
         for ts in timeslots:
-            _debug("-------------------- New timeslot iteration --------------------")
+            logger.debug("-------------------- New timeslot iteration --------------------")
             if _is_timeslot_valid(ts, podToSchedule):
-                _debug(f"Timeslot {ts.id} is valid.")
+                logger.debug(f"Timeslot {ts.id} is valid.")
                 for flavour in flavours:
-                    _debug("-------------------- New node iteration --------------------")
-                    _debug(f"Checking node {flavour.id}")
-                    _debug(f"forecast for this timeslot and this node: {flavour.forecast[ts.id]}")
+                    logger.debug("-------------------- New node iteration --------------------")
+                    logger.debug(f"Checking node {flavour.id}")
+                    logger.debug(f"forecast for this timeslot and this node: {flavour.forecast[ts.id]}")
                     if _check_node_resource(flavour, ts, podToSchedule):
                         podToSchedule.powerConsumption = (podToSchedule.cpuRequest / flavour.totalCpu) * 0.3
-                        _debug(f"cpuRequest: {podToSchedule.cpuRequest}")
-                        _debug(f"totalCpu: {flavour.totalCpu}")
-                        _debug(f"powerConsumption of pod: {podToSchedule.powerConsumption}")
+                        logger.debug(f"cpuRequest: {podToSchedule.cpuRequest}")
+                        logger.debug(f"totalCpu: {flavour.totalCpu}")
+                        logger.debug(f"powerConsumption of pod: {podToSchedule.powerConsumption}")
                         operationalEmissions = (flavour.forecast[ts.id]) * podToSchedule.duration * podToSchedule.powerConsumption  # grams, hours, kW
                         embodiedEmissions = ((flavour.embodiedCarbon / (365 * flavour.lifetime * 24)) / (1 + 1)) * podToSchedule.duration
 
                         totalEmissions = operationalEmissions + embodiedEmissions
 
-                        _debug(f"operationalEmissions: {operationalEmissions} gCO2")
-                        _debug(f"embodiedEmissions: {embodiedEmissions} gCO2")
-                        _debug(f"Total emissions: {totalEmissions} gCO2")
+                        logger.debug(f"operationalEmissions: {operationalEmissions} gCO2")
+                        logger.debug(f"embodiedEmissions: {embodiedEmissions} gCO2")
+                        logger.debug(f"Total emissions: {totalEmissions} gCO2")
 
                         if totalEmissions < minimal_emissions:
-                            _debug("Updating best node and timeslot.")
+                            logger.debug("Updating best node and timeslot.")
                             if best_node is not None and best_timeslot is not None:
-                                _debug(f"Previous minimal emissions: {minimal_emissions} gCo2")
-                                _debug(f"Previous best timeslot: {best_timeslot.id}")
-                                _debug(f"Previous best node: {best_node.id}")
+                                logger.debug(f"Previous minimal emissions: {minimal_emissions} gCo2")
+                                logger.debug(f"Previous best timeslot: {best_timeslot.id}")
+                                logger.debug(f"Previous best node: {best_node.id}")
 
-                            _debug(f"New minimal emissions: {totalEmissions} gCo2")
-                            _debug(f"New best timeslot: {ts.id}")
-                            _debug(f"New best node: {flavour.id}")
+                            logger.debug(f"New minimal emissions: {totalEmissions} gCo2")
+                            logger.debug(f"New best timeslot: {ts.id}")
+                            logger.debug(f"New best node: {flavour.id}")
                             minimal_emissions = totalEmissions
                             best_node = flavour
                             best_timeslot = ts
                         else:
-                            _debug("Total emissions for this iteration higher than current minimal emissions.")
-                            _debug(f"Total emissions for this iteration: {totalEmissions} gCO2")
-                            _debug(f"Current minimum found : {minimal_emissions} gCO2")
+                            logger.debug("Total emissions for this iteration higher than current minimal emissions.")
+                            logger.debug(f"Total emissions for this iteration: {totalEmissions} gCO2")
+                            logger.debug(f"Current minimum found : {minimal_emissions} gCO2")
 
         if best_timeslot is None:
             logging.exception("No available timeslot found.")
@@ -176,14 +170,15 @@ class CarbonAwareOrchestrator(OrchestratorInterface):
             logging.exception("No available node found.")
             return []
 
-        _debug(f"Best node: {best_node.id}")
-        _debug(f"Best timeslot (and prediction delay): {best_timeslot.id}")
+        logger.info(f"Best node: {best_node.id}")
+        logger.info(f"Best timeslot (and prediction delay): {best_timeslot.id}")
         prediction.delay = best_timeslot.id
 
         for provider in providers:
             if provider.id == best_node.id:
                 return [provider]  # return list of 1 element with best node
-        return []
+
+        return providers
 
     def predict(self, req: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse | None:
         return None

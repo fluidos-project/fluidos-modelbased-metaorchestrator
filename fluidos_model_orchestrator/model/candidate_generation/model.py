@@ -286,10 +286,10 @@ class Orchestrator(OrchestratorInterface):
         logger.info(f"{self.feedback_db_path.absolute()}")
         try:
             feedback = pd.read_csv(self.feedback_db_path.absolute())
-        except:
+        except Exception:
             logger.warning(f"No feedback was found for {image_name} at {self.feedback_db_path.absolute()}")
             return torch.tensor([], dtype=torch.int32).unsqueeze(0), torch.tensor([], dtype=torch.int32).unsqueeze(0)
-        
+
         image_feedback = feedback[feedback['image_name'] == image_name]
         relevant_candidates_ids = image_feedback[image_feedback['status'] == FEEDBACK_STATUS.OK]['template_resource_id'].tolist()
         non_relevant_candidates_ids = image_feedback[image_feedback['status'] == FEEDBACK_STATUS.FAIL]['template_resource_id'].tolist()
@@ -346,10 +346,10 @@ class Orchestrator(OrchestratorInterface):
         )
 
 
-def _get_region(data: ModelPredictRequest) -> str:
+def _get_region(data: ModelPredictRequest) -> str | None:
     asked_region = [i for i in data.intents if i.name == KnownIntent.location]
 
     if len(asked_region):
         return asked_region[0].value
     else:
-        return "Dublin"
+        return None
