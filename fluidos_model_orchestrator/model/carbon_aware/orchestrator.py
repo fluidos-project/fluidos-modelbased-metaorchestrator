@@ -49,8 +49,8 @@ def _check_node_resource(flavour: CarbonAwareFlavour, timeslot: CarbonAwareTimes
 
 
 class CarbonAwareOrchestrator(OrchestratorInterface):
-    def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse,
-                      request: ModelPredictRequest) -> list[ResourceProvider]:
+    def rank_resources(self, providers: list[ResourceProvider], prediction: ModelPredictResponse,
+                       request: ModelPredictRequest) -> list[ResourceProvider]:
         logger.debug(f"ModelPredictRequest pod_request: {request.pod_request}")
 
         deadline = np.nan

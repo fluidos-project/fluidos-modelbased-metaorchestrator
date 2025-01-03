@@ -36,8 +36,10 @@ class FluidosModelEnsemble(OrchestratorInterface):
         )
 
     def rank_resources(self, providers: list[ResourceProvider], prediction: ModelPredictResponse, request: ModelPredictRequest) -> list[ResourceProvider]:
+        logger.info(f"Ranking {len(providers)} resource providers")
         for model in self.models:
-            providers = model.rank_resource(providers, prediction, request)
+            logger.info(f"Using {model}")
+            providers = model.rank_resources(providers, prediction, request)
 
         return providers
 

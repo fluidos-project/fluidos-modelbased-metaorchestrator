@@ -56,7 +56,7 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
     logger.debug(f"{resources=}")
 
     best_matches: list[ResourceProvider] = validate_with_intents(
-        predictor.rank_resource(
+        predictor.rank_resources(
             resources,
             prediction,
             request
