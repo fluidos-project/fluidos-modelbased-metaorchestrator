@@ -60,7 +60,7 @@ class CarbonAwareOrchestrator(OrchestratorInterface):
             if intent.name is KnownIntent.max_delay:
                 deadline = int(intent.value)
                 deadline += 1
-                logger.debug(f"Found deadline from intent file (+1): {deadline}")
+                logger.info(f"Found deadline from intent file (+1): {deadline}")
             elif intent.name is KnownIntent.cpu:
                 cpuRequest = cpu_to_int(intent.value)
                 logger.debug(f"Found cpu request from intent file: {cpuRequest}")
@@ -98,6 +98,12 @@ class CarbonAwareOrchestrator(OrchestratorInterface):
             logger.debug(f"provider ID: {provider.id}")
             logger.debug(f"flavor ID: {provider.flavor.metadata.name}")
             logger.debug(f"flavor optional_fields: {type_data.properties}")
+            operational = type_data.properties.get("carbon-footprint", {}).get("operational", None)
+
+            if operational is None:
+                logger.info(f"Skipping flavor {provider.flavor.metadata.name} from provider {provider.id} as with no carbon information")
+                continue
+
             flavours.append(
                 CarbonAwareFlavour(
                     flavor.metadata.name,
@@ -106,8 +112,9 @@ class CarbonAwareOrchestrator(OrchestratorInterface):
                     cpu_to_int(type_data.characteristics.cpu),
                     memory_to_int(type_data.characteristics.memory),
                     type_data.characteristics.storage,
-                    type_data.properties.get("carbon-footprint", {}).get("operational", None),
-                ))
+                    operational
+                )
+            )
 
         logging.debug(f"flavours: {flavours}")
 
@@ -165,17 +172,18 @@ class CarbonAwareOrchestrator(OrchestratorInterface):
 
         if best_timeslot is None:
             logging.exception("No available timeslot found.")
-            return []
+            return providers
+
         if best_node is None:
             logging.exception("No available node found.")
-            return []
+            return providers
 
         logger.info(f"Best node: {best_node.id}")
         logger.info(f"Best timeslot (and prediction delay): {best_timeslot.id}")
         prediction.delay = best_timeslot.id
 
         for provider in providers:
-            if provider.id == best_node.id:
+            if provider.flavor.metadata.name == best_node.id:
                 return [provider]  # return list of 1 element with best node
 
         return providers

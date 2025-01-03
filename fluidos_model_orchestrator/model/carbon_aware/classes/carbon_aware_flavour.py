@@ -10,3 +10,6 @@ class CarbonAwareFlavour:
         self.totalRam = totalRam
         self.totalStorage = totalStorage
         self.forecast = forecast
+
+    def __repr__(self) -> str:
+        return f"{self.__class__!s}({self.__dict__!r})"
