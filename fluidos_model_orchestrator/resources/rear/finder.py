@@ -84,7 +84,7 @@ class REARResourceFinder(ResourceFinder):
 
         body, _ = self._resource_to_service_sorver_request(service, id)
 
-        solver_name = self._initiate_search(body, namespace)
+        solver_name = self._initiate_search(body, CONFIGURATION.namespace)
 
         # NOTE: FOR SERVICE, SOLVER DOES NOT SOLVE
         # Check status of Allocation with .status.status == "Active" and

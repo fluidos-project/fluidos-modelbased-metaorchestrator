@@ -7,7 +7,7 @@ date
 ./setup-testbed.sh
 
 # create service flavor in the DE provider
-# kubectl apply -f $PWD/rabbitmq-service.yaml --kubeconfig $PWD/provider-DE-config.yaml
+kubectl apply -f $PWD/rabbitmq-service.yaml --kubeconfig $PWD/provider-IT-config.yaml
 
 # configure IT to be AZURE
 # kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/provider-IT-config.yaml | cut -f1 -d\  | xargs -I% kubectl patch flavor/%  --patch-file ../../tests/examples/bandwidth-patch-file.yaml --type merge -n fluidos --kubeconfig $PWD/provider-IT-config.yaml

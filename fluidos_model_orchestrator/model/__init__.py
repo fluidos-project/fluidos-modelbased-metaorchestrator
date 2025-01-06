@@ -45,7 +45,7 @@ def _get_model(model_type: type[OrchestratorInterface]) -> OrchestratorInterface
 
 
 def get_model_object(request: ModelPredictRequest) -> OrchestratorInterface:
-    logger.info(f"Retrieving model interface for {request}")
+    logger.info(f"Retrieving model interface for {request.id}")
 
     request_intent_signature = {intent.name for intent in request.intents}
 
