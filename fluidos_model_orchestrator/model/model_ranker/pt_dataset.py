@@ -10,8 +10,8 @@ from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 
-from fluidos_model_orchestrator.data_pipeline.data_util import FLUIDOS_COL_NAMES
-from fluidos_model_orchestrator.data_pipeline.data_util import load_ml_ready_df
+from fluidos_model_orchestrator.model.utils import FLUIDOS_COL_NAMES
+from fluidos_model_orchestrator.model.utils import load_ml_ready_df
 from fluidos_model_orchestrator.model.model_ranker.model import BasicRankerModel
 
 
