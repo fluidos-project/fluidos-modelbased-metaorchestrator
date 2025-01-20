@@ -84,4 +84,5 @@ D_UNITS = {
 class MODEL_TYPES:
     CG = "model_cg"
     CG_LEGACY = "model_cg_legacy"
+    BASIC_RANKER = "pytorch_ranker"
     TEMPLATE_MODEL = "model_template"
