@@ -3,7 +3,7 @@ import pytest  # type: ignore
 from fluidos_model_orchestrator.common import ModelPredictRequest
 from fluidos_model_orchestrator.common import ModelPredictResponse
 from fluidos_model_orchestrator.model.candidate_generation.model import Orchestrator as CGOrchestrator
-from fluidos_model_orchestrator.model.basic_ranker.model import Orchestrator as BasicRankerOrchestrator
+from fluidos_model_orchestrator.model.model_ranker.model import Orchestrator as BasicRankerOrchestrator
 from fluidos_model_orchestrator.model.orchestrator_factory import OrchestratorFactory
 from fluidos_model_orchestrator.model.utils import MODEL_TYPES
 

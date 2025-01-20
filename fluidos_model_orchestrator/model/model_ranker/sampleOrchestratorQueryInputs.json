@@ -1,0 +1,17 @@
+{
+    "pod_filename": [
+        "pod_4674626.yaml"
+    ],
+    "pod_manifest": [
+        "{'apiVersion': 'v1', 'kind': 'Pod', 'metadata': {'name': 'nginx'}, 'spec': {'containers': [{'image': 'nginx:1.14.2', 'name': 'nginx', 'ports': [{'containerPort': 80}], 'resources': {'requests': {'cpu': '545m', 'memory': '1064Mi'}}}]}}"
+    ],
+    "pod_cpu": [
+        545
+    ],
+    "pod_memory": [
+        1064
+    ],
+    "pod_location": [
+        "-1"
+    ]
+}
