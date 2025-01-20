@@ -7,9 +7,8 @@ from fluidos_model_orchestrator.model.model_ranker.model import Orchestrator as 
 from fluidos_model_orchestrator.model.orchestrator_factory import OrchestratorFactory
 from fluidos_model_orchestrator.model.utils import MODEL_TYPES
 
-# ORCHESTRATOR_MODELS_TO_TEST = [MODEL_TYPES.CG, MODEL_TYPES.CG_LEGACY, MODEL_TYPES.BASIC_RANKER]
-ORCHESTRATOR_MODELS_TO_TEST = [MODEL_TYPES.BASIC_RANKER]
-
+ORCHESTRATOR_MODELS_TO_TEST = [MODEL_TYPES.CG, MODEL_TYPES.CG_LEGACY, MODEL_TYPES.BASIC_RANKER]
+# ORCHESTRATOR_MODELS_TO_TEST = [MODEL_TYPES.BASIC_RANKER]
 
 def create_orchestrator_sample_request(model_type: str) -> ModelPredictRequest:
     if model_type == MODEL_TYPES.CG:

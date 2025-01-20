@@ -130,13 +130,14 @@ class BasicRankerModel(nn.Module, ModelInterface):
     #     # return self.ranking_model((features[FLUIDOS_COL_NAMES.POD_FILE_NAME], features[FLUIDOS_COL_NAMES.POD_MANIFEST]))
 
     @staticmethod
-    def load_from_hugging_face() -> Any:
+    def load_from_hugging_face(model_name: str = None) -> Any:
         from huggingface_hub import hf_hub_download
 
+        model_to_load = model_name if model_name else "model.pt"
         # Download the model file from Hugging Face
         downloaded_model_path = hf_hub_download(
             repo_id=REPO_ID,
-            filename="model.pt",
+            filename=model_to_load,
             repo_type="model"
         )
         # Load the model from the downloaded path
@@ -176,7 +177,7 @@ class Orchestrator(OrchestratorInterface):
             pass
 
     def load(self) -> Any:
-        return BasicRankerModel.load_from_hugging_face()
+        return BasicRankerModel.load_from_hugging_face(model_name="model_2025_01_16.pt")
 
     def create_sample_request() -> Any:
         pod_info_path = Path('fluidos_model_orchestrator/model/model_ranker/sampleOrchestratorQueryInputs.json')
