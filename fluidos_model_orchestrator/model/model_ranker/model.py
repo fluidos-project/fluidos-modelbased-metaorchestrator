@@ -177,7 +177,7 @@ class Orchestrator(OrchestratorInterface):
             pass
 
     def load(self) -> Any:
-        return BasicRankerModel.load_from_hugging_face(model_name="model_2025_01_16.pt")
+        return BasicRankerModel.load_from_hugging_face(model_name="model_2025_01_16_dataset_full.pt")
 
     def create_sample_request() -> Any:
         pod_info_path = Path('fluidos_model_orchestrator/model/model_ranker/sampleOrchestratorQueryInputs.json')
