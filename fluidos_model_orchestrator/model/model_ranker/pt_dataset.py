@@ -1,21 +1,16 @@
-from pathlib import Path
 from typing import Any
 
-import numpy as np
+import numpy as np  # type: ignore
 import pandas as pd
-import torch
-import torch.optim as optim
+import torch  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
-from sklearn.preprocessing import LabelEncoder
-from torch.utils.data import DataLoader
-from torch.utils.data import Dataset
+from sklearn.preprocessing import LabelEncoder  # type: ignore
+from torch.utils.data import Dataset  # type: ignore
 
 from fluidos_model_orchestrator.model.utils import FLUIDOS_COL_NAMES
-from fluidos_model_orchestrator.model.utils import load_ml_ready_df
-from fluidos_model_orchestrator.model.model_ranker.model import BasicRankerModel
 
 
-class RankerDataset(Dataset):
+class RankerDataset(Dataset[Any]):
     def __init__(self, dataframe: pd.DataFrame):
         self.data = dataframe
         # pod_columns = POD_TEMPLATE_RESOURCE_DF_VALUES[FLUIDOS_DATASETS.GCT]
@@ -93,10 +88,10 @@ class RankerDataset(Dataset):
 
         return pod_id, pod_manifest_embeddings, pod_cpu, pod_mem, pod_location, template_resource_id, template_cpu, template_mem, template_location
 
-    def encode_sentence(self, sentence: Any, vocab: Any):
+    def encode_sentence(self, sentence: Any, vocab: dict[str, Any]) -> list[Any]:
         return [vocab.get(token, vocab["<unk>"]) for token in self.tokenize(sentence)]
 
-    def build_vocab(self, data: Any):
+    def build_vocab(self, data: Any) -> dict[str, int]:
         tokenized_data = [self.tokenize(sentence) for sentence in data]
         vocab = {"<pad>": 0, "<unk>": 1}  # Special tokens
         index = len(vocab)
@@ -108,20 +103,20 @@ class RankerDataset(Dataset):
                     index += 1
         return vocab
 
-    def tokenize(self, text: Any):
-        return text.lower().split()
+    def tokenize(self, text: Any) -> list[str]:
+        return str(text).lower().split()
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.pod_id)
 
-    def __getitem__(self, idx: Any):
+    def __getitem__(self, idx: Any) -> tuple[tuple[Any, Any, Any, Any, Any, Any, Any, Any, Any], torch.Tensor]:
         # features = torch.tensor(self.features[idx], dtype=torch.float32)
         # label = torch.tensor(self.labels[idx], dtype=torch.long)
         # self.pod_embeddings[index]
         return (self.pod_id[idx], self.pod_cpu[idx], self.pod_mem[idx], self.pod_location[idx], self.pod_manifest_embeddings[idx], self.template_resource_id[idx], self.template_cpu[idx], self.template_mem[idx], self.template_location[idx]), self.target_performance[idx]
 
 
-def get_tensor_input(pods_assigment_df: Any, dataset: Any):
+def get_tensor_input(pods_assigment_df: Any, dataset: Any) -> tuple[Any, Any, Any, Any, Any, Any, Any, Any, Any]:
     pod_filename_list = pods_assigment_df[FLUIDOS_COL_NAMES.POD_FILE_NAME].values
     pod_manifest_list = pods_assigment_df[FLUIDOS_COL_NAMES.POD_MANIFEST].values
     pod_cpu_list = pods_assigment_df[FLUIDOS_COL_NAMES.POD_CPU].values
@@ -146,48 +141,3 @@ def get_tensor_input(pods_assigment_df: Any, dataset: Any):
 
     input_sample_batch = (pod_id, pod_cpu, pod_mem, pod_location, pod_manifest_embeddings, template_resource_id, template_cpu, template_mem, template_location)
     return input_sample_batch
-
-
-if __name__ == "__main__":
-    dataset_path = Path("/Users/killianlevacher/GIT/project-fluidos/TO_KEEP_TF_MODELS_2024-10-10/ml_ready_augmented/performance_rating")
-    model_path = "/Users/killianlevacher/GIT/project-fluidos/fluidos-model-orchestrator/tmp_fluidos/models/model.pth"
-    pods_assigment_df, template_resources_df = load_ml_ready_df(dataset_path)
-    dataset = RankerDataset(pods_assigment_df)
-    data_loader = DataLoader(dataset, batch_size=8, shuffle=True, num_workers=0)
-
-    model = BasicRankerModel(dataset.unique_pod_ids, dataset.unique_template_resource_ids, dataset.unique_pod_locations, dataset.template_location, FLUIDOS_COL_NAMES.TARGET_PERFORMANCE_RESOURCES_AUGMENTATION_COL)
-    optimizer = optim.SGD(model.parameters(), lr=0.01)
-
-    num_epochs = 100
-
-    # model_training(data_loader, 100)
-
-    model.train()  # Set the model to training mode
-
-    for epoch in range(num_epochs):
-        for batch in data_loader:
-            # pod_id, pod_cpu, pod_manifest, template_resource_id = batch[0]
-            # return (self.user_id[idx], self.pod_cpu[idx], self.pod_manifest_embeddings[idx]), self.template_resource_id[idx],self.target_performance[idx]
-            targets = batch[1]
-
-            # Forward pass
-            outputs = model(batch[0])
-            loss = model.loss_fn(outputs, targets)
-
-            # Backward pass and optimization
-            optimizer.zero_grad()  # Clear gradients
-            loss.backward()        # Backpropagation
-            optimizer.step()       # Update weights
-
-        if (epoch + 1) % 5 == 0:
-            print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
-            # torch.save(model, model_path)
-
-    model.eval()
-    # model = torch.load(model_path)
-
-    input_sample_batch = get_tensor_input(pods_assigment_df, dataset)
-    rating_output = model(input_sample_batch)
-    print(rating_output.tolist())
-    print("Finished")
-    # make the model do predictions and incorporate it in orchestrator model

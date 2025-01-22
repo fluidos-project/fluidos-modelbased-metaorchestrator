@@ -99,7 +99,7 @@ def test_basic_ranking() -> None:
 
     orchestrator = CarbonAwareOrchestrator()
 
-    ranked = orchestrator.rank_resource(providers, prediction, request)
+    ranked = orchestrator.rank_resources(providers, prediction, request)
 
     assert ranked is not None
     assert len(ranked) == 1

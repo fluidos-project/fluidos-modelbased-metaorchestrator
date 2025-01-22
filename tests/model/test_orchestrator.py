@@ -10,6 +10,7 @@ from fluidos_model_orchestrator.model.utils import MODEL_TYPES
 ORCHESTRATOR_MODELS_TO_TEST = [MODEL_TYPES.CG, MODEL_TYPES.CG_LEGACY, MODEL_TYPES.BASIC_RANKER]
 # ORCHESTRATOR_MODELS_TO_TEST = [MODEL_TYPES.BASIC_RANKER]
 
+
 def create_orchestrator_sample_request(model_type: str) -> ModelPredictRequest:
     if model_type == MODEL_TYPES.CG:
         return CGOrchestrator.create_sample_request()
@@ -38,7 +39,7 @@ def test_cg_orchestrator_predict_values() -> None:
     orchestrator = OrchestratorFactory.create_orchestrator(MODEL_TYPES.CG)
     response = orchestrator.predict(create_orchestrator_sample_request(MODEL_TYPES.CG))
     assert response is not None
-    assert response.resource_profile.region == 'Dublin'
+    assert response.resource_profile.region is None
     assert response.resource_profile.cpu == "1000m"
     assert response.resource_profile.memory == "509Mi"
 
@@ -47,6 +48,6 @@ def test_cg_legacy_orchestrator_predict_values() -> None:
     orchestrator = OrchestratorFactory.create_orchestrator(MODEL_TYPES.CG_LEGACY)
     response = orchestrator.predict(create_orchestrator_sample_request(MODEL_TYPES.CG_LEGACY))
     assert response is not None
-    assert response.resource_profile.region == 'Dublin'
+    assert response.resource_profile.region is None
     assert response.resource_profile.cpu == "1000mm"  # double units are because of the legacy template resources list format, legacy will be dropped as soon as v2 is stable
     assert response.resource_profile.memory == "509MiMi"  # double units are because of the legacy template resources list format

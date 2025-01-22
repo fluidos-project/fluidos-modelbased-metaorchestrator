@@ -56,7 +56,7 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
     logger.debug(f"{resources=}")
 
     best_matches: list[ResourceProvider] = validate_with_intents(
-        predictor.rank_resource(
+        predictor.rank_resources(
             resources,
             prediction,
             request
@@ -69,8 +69,12 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
             "status": "Failure",
             "msg": "Unable to find resource matching requirement"
         }
+    else:
+        logger.info(f"Retrieved {len(best_matches)} valid resource providers")
 
     best_match = best_matches[0]
+
+    logger.info(f"Selected {best_match.id} of type {type(best_match)}")
 
     if not best_match.acquire(namespace):
         logger.info(f"Unable to acquire {best_match}")
@@ -102,6 +106,8 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
 
 def validate_with_intents(providers: list[ResourceProvider], intents: list[Intent], logger: Logger) -> list[ResourceProvider]:
     valid_providers: list[ResourceProvider] = []
+
+    logger.info(intents)
 
     for provider in providers:
         for intent in intents:
