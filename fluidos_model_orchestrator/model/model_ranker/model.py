@@ -4,16 +4,15 @@ import json
 from pathlib import Path
 from typing import Any
 
-import numpy as np
+import numpy as np  # type: ignore
 import pandas as pd
-import torch
-import torch.nn as nn
+import torch  # type: ignore
+import torch.nn as nn  # type: ignore
 
 from fluidos_model_orchestrator.common import ModelPredictRequest
 from fluidos_model_orchestrator.common import ModelPredictResponse
 from fluidos_model_orchestrator.common import OrchestratorInterface
 from fluidos_model_orchestrator.common import Resource
-from fluidos_model_orchestrator.common import ResourceProvider
 from fluidos_model_orchestrator.model.common import ModelInterface
 from fluidos_model_orchestrator.model.utils import D_UNITS
 from fluidos_model_orchestrator.model.utils import DATA_DEPENDENCY
@@ -23,7 +22,7 @@ REPO_ID = "fluidos/basic_ranker"
 
 
 class BasicRankerModel(nn.Module, ModelInterface):
-    def __init__(self, unique_pod_ids: np.array, unique_pod_location_ids: np.array, unique_template_ids: np.array, unique_template_location_ids: np.array, target_column: str):
+    def __init__(self, unique_pod_ids: np.ndarray[Any, Any], unique_pod_location_ids: np.ndarray[Any, Any], unique_template_ids: np.ndarray[Any, Any], unique_template_location_ids: np.ndarray[Any, Any], target_column: str):
         super().__init__()
         embedding_dimension = 32
         self.unique_pod_ids = unique_pod_ids
@@ -82,7 +81,7 @@ class BasicRankerModel(nn.Module, ModelInterface):
         pod_manifest_embedding = self.pod_manifest_transform(pod_manifest)
 
         #TODO shouldn't that be moved to the preprocessing? maybe not since this can be done on the fly with input values only
-        def min_max_normalize(tensor: Any, eps=1e-8) -> Any:
+        def min_max_normalize(tensor: Any, eps: float = 1e-8) -> Any:
             min_val = tensor.min(dim=0, keepdim=True).values
             max_val = tensor.max(dim=0, keepdim=True).values
             return (tensor - min_val) / (max_val - min_val + eps)
@@ -130,8 +129,8 @@ class BasicRankerModel(nn.Module, ModelInterface):
     #     # return self.ranking_model((features[FLUIDOS_COL_NAMES.POD_FILE_NAME], features[FLUIDOS_COL_NAMES.POD_MANIFEST]))
 
     @staticmethod
-    def load_from_hugging_face(model_name: str = None) -> Any:
-        from huggingface_hub import hf_hub_download
+    def load_from_hugging_face(model_name: str | None = None) -> Any:
+        from huggingface_hub import hf_hub_download  # type: ignore
 
         model_to_load = model_name if model_name else "model.pt"
         # Download the model file from Hugging Face
@@ -144,7 +143,7 @@ class BasicRankerModel(nn.Module, ModelInterface):
         return torch.load(downloaded_model_path)
 
     @staticmethod
-    def prepare_model_input(input_dict):
+    def prepare_model_input(input_dict: dict[Any, Any]) -> tuple[Any, Any, Any, Any, Any, Any, Any, Any, Any]:
         from fluidos_model_orchestrator.model.model_ranker.pt_dataset import get_tensor_input
         from fluidos_model_orchestrator.model.model_ranker.pt_dataset import RankerDataset
         input_df = pd.DataFrame(input_dict)
@@ -179,6 +178,7 @@ class Orchestrator(OrchestratorInterface):
     def load(self) -> Any:
         return BasicRankerModel.load_from_hugging_face(model_name="model_2025_01_16_dataset_full.pt")
 
+    @staticmethod
     def create_sample_request() -> Any:
         pod_info_path = Path('fluidos_model_orchestrator/model/model_ranker/sampleOrchestratorQueryInputs.json')
 
@@ -230,6 +230,3 @@ class Orchestrator(OrchestratorInterface):
                 memory=f"{input_df_extended.iloc[best_match_index][FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_MEMORY]}{D_UNITS[FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_MEMORY][0]}",
                 architecture=architecture)
         )
-
-    def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse, request: ModelPredictRequest) -> list[ResourceProvider]:
-        return providers
