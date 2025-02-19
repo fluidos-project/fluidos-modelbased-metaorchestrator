@@ -1,6 +1,8 @@
 from enum import Enum
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
+
 from ..common import KnownIntent
 
 
@@ -37,10 +39,10 @@ class FLUIDOS_COL_NAMES:
     NON_ACCEPTABLE_CANDIDATES = "non_acceptable_configs"
     TARGET_PERFORMANCE_RESOURCES_AUGMENTATION_COL = "performance_resources"
     TARGET_MOST_OPTIMAL_TEMPLATE_ID = "best_candidate"
-    TARGET_PERFORMANCE_RESOURCES_AUGMENTATION_COL = "performance_resources"
+    # TARGET_BASIC_RESOURCE_AVAIL_AUGMENTATION_COL = "performance_resources"
     MSPL_INTENT = "mspl_intent"
-    
-  
+
+
 class PIPELINE_FILES:
     POD_TEMPLATE_RESOURCE_ASSIGNMENTS = "pod_template_resource_assignments.csv"
     TEMPLATE_RESOURCE_RESOURCES = "template_resource_resources.csv"
@@ -54,6 +56,7 @@ class PIPELINE_FILES:
 
     IMAGE_FEATURES_NAME = "image_features.json"
     TEMPLATE_RESOURCES_TO_CLASS_ID = "template_resources2id.json"
+
 
 def load_ml_ready_df(ml_ready_path: Path) -> tuple[pd.DataFrame, pd.DataFrame]:  # TODO ml_ready_path check everywhere for the path
     """_summary_
@@ -99,7 +102,6 @@ def load_ml_ready_df(ml_ready_path: Path) -> tuple[pd.DataFrame, pd.DataFrame]: 
     return pods_assigment_df, template_resources_df
 
 
-
 class FLUIDOS_INPUT_OUTPUT_NAME:
     POD_NAME = "pod"
     TEMPLATE_RESOURCE_NAME = "template_resource"
@@ -129,7 +131,8 @@ D_TYPE: dict[str, dict[str, type]] = {
     FLUIDOS_COL_NAMES.OUTPUT: {"type": int},
     FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_LOCATION: {"type": str},
     FLUIDOS_COL_NAMES.POD_LOCATION: {"type": str},
-    FLUIDOS_COL_NAMES.TARGET_BASIC_RESOURCE_AVAIL_AUGMENTATION_COL: {"type": float},
+    # FLUIDOS_COL_NAMES.TARGET_BASIC_RESOURCE_AVAIL_AUGMENTATION_COL: {"type": float},
+    FLUIDOS_COL_NAMES.TARGET_PERFORMANCE_RESOURCES_AUGMENTATION_COL: {"type": float},
     FLUIDOS_COL_NAMES.MSPL_INTENT: {"type": str},
 }
 
@@ -148,7 +151,7 @@ D_UNITS = {
     FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_LOCATION: [""],
 
     FLUIDOS_COL_NAMES.TEMPLATE_RESOURCE_ID: [""],
-    
+
     FLUIDOS_COL_NAMES.MSPL_INTENT: [""],
 
 }

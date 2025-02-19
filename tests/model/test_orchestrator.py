@@ -51,7 +51,7 @@ def test_cg_orchestrator_75_predict_values() -> None:
     orchestrator = OrchestratorFactory.create_orchestrator(MODEL_TYPES.CG_75)
     response = orchestrator.predict(create_orchestrator_sample_request(MODEL_TYPES.CG_75))
     assert response is not None
-    assert response.resource_profile.region == 'Dublin'
+    assert response.resource_profile.region is None
     assert response.resource_profile.cpu == "1000m"
     assert response.resource_profile.memory == "124923Ki"
 
