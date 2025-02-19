@@ -32,7 +32,7 @@ class ResourceProvider(ABC):
         self.flavor = flavor
 
     @abstractmethod
-    def acquire(self) -> bool:
+    def acquire(self, namespace: str) -> bool:
         raise NotImplementedError("Abstract method")
 
     @abstractmethod
@@ -43,8 +43,8 @@ class ResourceProvider(ABC):
         return f"{self.id=}: {self.flavor=}"
 
 
-class ServiceResourceProvider(ABC):
-    def enrich(self, container: dict[str, Any]) -> None:
+class ExternalResourceProvider(ABC):
+    def enrich(self, container: dict[str, Any], name: str) -> None:
         raise NotImplementedError("Abstract method")
 
 
@@ -164,10 +164,10 @@ class OrchestratorInterface(ABC):
         raise NotImplementedError("Not implemented: abstract method")
 
     @abstractmethod
-    def predict(self, data: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse | None:
+    def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse | None:
         raise NotImplementedError("Not implemented: abstract method")
 
-    def rank_resource(self, providers: list[ResourceProvider], prediction: ModelPredictResponse, request: ModelPredictRequest) -> list[ResourceProvider]:
+    def rank_resources(self, providers: list[ResourceProvider], prediction: ModelPredictResponse, request: ModelPredictRequest) -> list[ResourceProvider]:
         return providers
 
 
@@ -240,9 +240,15 @@ def validate_location(provider: ResourceProvider, value: str) -> bool:
 
     location = provider.flavor.spec.location
 
-    return any(
-        value == str(_val).casefold() for _val in location.values()
-    )
+    for val in location.values():
+        val = str(val).casefold()
+
+        if val == value:
+            logger.debug("Returning True")
+            return True
+
+    logger.debug("Returning False")
+    return False
 
 
 def _validate_bandwidth_against_point(provider: ResourceProvider, value: str) -> bool:
@@ -254,7 +260,7 @@ def _validate_bandwidth_against_point(provider: ResourceProvider, value: str) ->
 
     type_data = cast(FlavorK8SliceData, provider.flavor.spec.flavor_type.type_data)
 
-    bandwidth_properties = type_data.properties.get("bandwidth", {}).get(point, None)
+    bandwidth_properties = type_data.properties.get("additionalProperties", {}).get("bandwidth", {}).get(point, None)
 
     if bandwidth_properties is not None:
         # assume that bandwidth_property is in ms
@@ -283,6 +289,13 @@ def _validate_architecture(provider: ResourceProvider, value: str) -> bool:
     return False
 
 
+def _validate_tee_available(provider: ResourceProvider, value: str) -> bool:
+    if provider.flavor.spec.flavor_type.type_identifier is FlavorType.K8SLICE:
+        properties = cast(FlavorK8SliceData, provider.flavor.spec.flavor_type.type_data).properties
+        return value.capitalize() == str(properties.get("additionalProperties", {}).get("TEE", "False")).capitalize()
+    return False
+
+
 @unique
 class KnownIntent(Enum):
     # k8s resources
@@ -300,26 +313,31 @@ class KnownIntent(Enum):
     battery = "battery", False, _always_true
 
     # carbon aware requests
-    max_delay = "max_delay", False, _always_true
-    carbon_aware = "carbon_aware", False, _always_true
+    max_delay = "max-delay", False, _always_true
+    carbon_aware = "carbon-aware", False, _always_true
 
     # TER
-    bandwidth_against = "bandwidth-against-point", False, _validate_bandwidth_against_point
+    bandwidth_against = "bandwidth-against", False, _validate_bandwidth_against_point
+    tee_readiness = "tee-readiness", False, _validate_tee_available
 
     # service
     service = "service", True, _always_true
+
+    #mspl
+    mspl = "mspl", False, _always_true
 
     def __new__(cls, *args: str, **kwds: str) -> KnownIntent:
         obj = object.__new__(cls)
         obj._value_ = args[0]
         return obj
 
-    def __init__(self, _: str, external: bool, validator: Callable[[ResourceProvider, str], bool]):
+    def __init__(self, label: str, external: bool, validator: Callable[[ResourceProvider, str], bool]):
+        self.label = label
         self._external = external
         self._validator = validator
 
     def to_intent_key(self) -> str:
-        return f"fluidos-intent-{self.name}"
+        return f"fluidos-intent-{self.label}"
 
     def is_external_requirement(self) -> bool:
         return self._external
@@ -333,7 +351,7 @@ class KnownIntent(Enum):
             intent_name = "-".join(intent_name.split("-")[2:])
 
         return any(
-            known_intent.name == intent_name for known_intent in KnownIntent
+            known_intent.label == intent_name for known_intent in KnownIntent
         )
 
     @staticmethod
@@ -343,7 +361,8 @@ class KnownIntent(Enum):
             raise ValueError(f"Unsupported intent: {intent_name=}")
 
         name = "-".join(intent_name.split("-")[2:]).casefold()
-        return next(known_intent for known_intent in KnownIntent if known_intent.name == name)
+        logger.info(f"Received intent: {name}")
+        return next(known_intent for known_intent in KnownIntent if known_intent.label == name)
 
 
 @dataclass
@@ -362,7 +381,7 @@ class ResourceFinder(ABC):
     def find_best_match(self, resource: Resource, namespace: str) -> list[ResourceProvider]:
         raise NotImplementedError()
 
-    def find_service(self, id: str, service: Intent, namespace: str) -> list[ServiceResourceProvider]:
+    def find_service(self, id: str, service: Intent, namespace: str) -> list[ExternalResourceProvider]:
         raise NotImplementedError()
 
     def retrieve_all_flavors(self, namespace: str) -> list[Flavor]:

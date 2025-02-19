@@ -3,13 +3,14 @@ from typing import Any
 
 import kopf  # type: ignore
 
+from .common import ExternalResourceProvider
 from .common import Intent
+from .common import KnownIntent
 from .common import ModelPredictRequest
 from .common import ModelPredictResponse
 from .common import OrchestratorInterface
 from .common import ResourceFinder
 from .common import ResourceProvider
-from .common import ServiceResourceProvider
 from .configuration import CONFIGURATION
 from .daemons_and_times.flavor import daemons_for_flavours_observation  # noqa
 from .deployment import deploy
@@ -19,6 +20,7 @@ from .model import get_model_object
 from .resources import get_resource_finder
 from .start_and_stop import cleanup_function  # noqa
 from .start_and_stop import configure  # noqa
+from fluidos_model_orchestrator.resources.mspl.mspl_resource_provider import MSPLIntentWrapper  # type: ignore
 # from .rescheduler import rescheduler
 
 
@@ -54,7 +56,7 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
     logger.debug(f"{resources=}")
 
     best_matches: list[ResourceProvider] = validate_with_intents(
-        predictor.rank_resource(
+        predictor.rank_resources(
             resources,
             prediction,
             request
@@ -67,10 +69,14 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
             "status": "Failure",
             "msg": "Unable to find resource matching requirement"
         }
+    else:
+        logger.info(f"Retrieved {len(best_matches)} valid resource providers")
 
     best_match = best_matches[0]
 
-    if not best_match.acquire():
+    logger.info(f"Selected {best_match.id} of type {type(best_match)}")
+
+    if not best_match.acquire(namespace):
         logger.info(f"Unable to acquire {best_match}")
 
         return {
@@ -79,7 +85,7 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
         }
 
     # find other resources types based on the intents
-    expanding_resources: list[tuple[ServiceResourceProvider, Intent]] = _find_expanding_resources(finder, request.intents, name, namespace)
+    expanding_resources: list[tuple[ExternalResourceProvider, Intent]] = _find_expanding_resources(finder, request.intents, name, namespace)
 
     if not await deploy(spec, best_match, expanding_resources, prediction, namespace):
         logger.info("Unable to deploy")
@@ -101,6 +107,8 @@ async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logg
 def validate_with_intents(providers: list[ResourceProvider], intents: list[Intent], logger: Logger) -> list[ResourceProvider]:
     valid_providers: list[ResourceProvider] = []
 
+    logger.info(intents)
+
     for provider in providers:
         for intent in intents:
             if not intent.validates(provider):
@@ -113,16 +121,18 @@ def validate_with_intents(providers: list[ResourceProvider], intents: list[Inten
     return valid_providers
 
 
-def _find_expanding_resources(finder: ResourceFinder, intents: list[Intent], id: str, namespace: str) -> list[tuple[ServiceResourceProvider, Intent]]:
-    resources_and_intents: list[tuple[ServiceResourceProvider, Intent]] = list()
+def _find_expanding_resources(finder: ResourceFinder, intents: list[Intent], id: str, namespace: str) -> list[tuple[ExternalResourceProvider, Intent]]:
+    resources_and_intents: list[tuple[ExternalResourceProvider, Intent]] = list()
 
     for (resources, intent) in [
-        (finder.find_service(id, intent, namespace), intent) for intent in intents if intent.is_external_requirement()
+        (finder.find_service(id, intent, namespace), intent) for intent in intents if intent.name == KnownIntent.service
     ]:
         if len(resources):
-            resource: ServiceResourceProvider = resources[0]
+            resource: ExternalResourceProvider = resources[0]
             resources_and_intents.append(
                 (resource, intent)
             )
 
-    return resources_and_intents
+    return resources_and_intents + [
+        (MSPLIntentWrapper(intent), intent) for intent in intents if intent.name == KnownIntent.mspl
+    ]

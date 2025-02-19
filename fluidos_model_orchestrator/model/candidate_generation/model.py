@@ -299,7 +299,7 @@ class OrchestrationModel(BaseOrchestrationModel, PyTorchModelHubMixin):
 class Orchestrator(OrchestratorInterface):
     embedding_model_name: str = "distiluse-base-multilingual-cased-v2"  # TODO read from metadata
 
-    def __init__(self, model_name: str = "fluidos/candidate-generation-v2", device: str = "cpu", feedback_db_path: Path = Path("feedback.csv")) -> None:
+    def __init__(self, model_name: str = "fluidos/candidate-generation-v2", device: str = "cpu", feedback_db_path: Path = Path("tests/model/feedback/feedback.csv")) -> None:
 
         self.model_name = model_name
         self.resource_types = {}
@@ -413,7 +413,14 @@ class Orchestrator(OrchestratorInterface):
         )
 
     def _check_feedback_for_relevant_candidates(self, image_name: str) -> tuple[torch.Tensor, torch.Tensor]:
-        feedback = pd.read_csv(self.feedback_db_path)
+
+        logger.info(f"{self.feedback_db_path.absolute()}")
+        try:
+            feedback = pd.read_csv(self.feedback_db_path.absolute())
+        except Exception:
+            logger.warning(f"No feedback was found for {image_name} at {self.feedback_db_path.absolute()}")
+            return torch.tensor([], dtype=torch.int32).unsqueeze(0), torch.tensor([], dtype=torch.int32).unsqueeze(0)
+
         image_feedback = feedback[feedback['image_name'] == image_name]
         relevant_candidates_ids = image_feedback[image_feedback['status'] == "OK"]['template_resource_id'].tolist()
         non_relevant_candidates_ids = image_feedback[image_feedback['status'] == "FAIL"]['template_resource_id'].tolist()
@@ -487,10 +494,10 @@ class Orchestrator(OrchestratorInterface):
         )
 
 
-def _get_region(data: ModelPredictRequest) -> str:
+def _get_region(data: ModelPredictRequest) -> str | None:
     asked_region = [i for i in data.intents if i.name == KnownIntent.location]
 
     if len(asked_region):
         return asked_region[0].value
     else:
-        return "Dublin"
+        return None

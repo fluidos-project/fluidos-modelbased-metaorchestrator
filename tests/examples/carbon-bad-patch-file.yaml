@@ -1,0 +1,7 @@
+spec:
+  flavorType:
+    typeData:
+      properties:
+        carbon-footprint:
+          embodied: 1800
+          operational: [453, 428, 433, 413, 449, 459, 447, 402, 388, 383, 358, 334, 345, 336, 455, 529, 563, 553, 534, 516, 474, 442, 464, 465]

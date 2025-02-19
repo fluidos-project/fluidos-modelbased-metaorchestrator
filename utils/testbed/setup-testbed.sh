@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -xeuo pipefail
+set -euo pipefail
 
 
 function _get_command {
@@ -22,6 +22,7 @@ PROVIDER_NODE_PORT=30001
 COMMAND=$(_get_command)
 
 
+
 # setup provider DE
 kind create cluster --name provider-germany --config $PWD/provider-cluster-config.yaml --kubeconfig $PWD/provider-DE-config.yaml
 
@@ -31,10 +32,11 @@ liqoctl install kind --kubeconfig $PWD/provider-DE-config.yaml
 
 helm upgrade --install --devel -n fluidos --create-namespace node fluidos/node \
   --set "provider=kind" \
-  --set "networkManager.configMaps.nodeIdentity.ip=$DE_PROVIDER_CONTROLPLANE_IP:$PROVIDER_NODE_PORT" \
-  --set "networkManager.configMaps.nodeIdentity.domain=provider.fluidos.eu" \
-  --set "networkManager.configMaps.nodeIdentity.nodeId=provider_DE" \
+  --set "common.configMaps.nodeIdentity.ip=$DE_PROVIDER_CONTROLPLANE_IP" \
+  --set "common.configMaps.nodeIdentity.domain=de.provider.fluidos.eu" \
+  --set "common.configMaps.nodeIdentity.nodeId=provider-de" \
   --set "rearController.service.gateway.nodePort.port=$PROVIDER_NODE_PORT" \
+  --set "networkManager.config.enableLocalDiscovery=false" \
   --wait \
   --kubeconfig $PWD/provider-DE-config.yaml
 
@@ -51,10 +53,11 @@ liqoctl install kind --kubeconfig $PWD/provider-IT-config.yaml
 
 helm upgrade --install --devel -n fluidos --create-namespace node fluidos/node \
   --set "provider=kind" \
-  --set "networkManager.configMaps.nodeIdentity.ip=$IT_PROVIDER_CONTROLPLANE_IP:$PROVIDER_NODE_PORT" \
-  --set "networkManager.configMaps.nodeIdentity.domain=provider.fluidos.eu" \
-  --set "networkManager.configMaps.nodeIdentity.nodeId=provider_IT" \
+  --set "common.configMaps.nodeIdentity.ip=$IT_PROVIDER_CONTROLPLANE_IP" \
+  --set "common.configMaps.nodeIdentity.domain=it.provider.fluidos.eu" \
+  --set "common.configMaps.nodeIdentity.nodeId=provider-it" \
   --set "rearController.service.gateway.nodePort.port=$PROVIDER_NODE_PORT" \
+  --set "networkManager.config.enableLocalDiscovery=false" \
   --wait \
   --kubeconfig $PWD/provider-IT-config.yaml
 
@@ -67,11 +70,11 @@ liqoctl install kind --kubeconfig $PWD/consumer-config.yaml
 
 helm upgrade --install --devel -n fluidos --create-namespace node fluidos/node \
   --set "provider=kind" \
-  --set "networkManager.configMaps.nodeIdentity.ip=$CONSUMER_CONTROLPLANE_IP:$CONSUMER_NODE_PORT" \
-  --set "networkManager.configMaps.providers.local='$IT_PROVIDER_CONTROLPLANE_IP:$PROVIDER_NODE_PORT\,$DE_PROVIDER_CONTROLPLANE_IP:$PROVIDER_NODE_PORT'" \
-  --set "networkManager.configMaps.nodeIdentity.domain=consumer.fluidos.eu" \
-  --set "networkManager.configMaps.nodeIdentity.nodeId=consumer" \
+  --set "common.configMaps.nodeIdentity.ip=$CONSUMER_CONTROLPLANE_IP" \
+  --set "common.configMaps.nodeIdentity.domain=consumer.fluidos.eu" \
+  --set "common.configMaps.nodeIdentity.nodeId=consumer" \
   --set "rearController.service.gateway.nodePort.port=$CONSUMER_NODE_PORT" \
+  --set "networkManager.config.enableLocalDiscovery=false" \
   --wait \
   --kubeconfig $PWD/consumer-config.yaml
 
@@ -84,3 +87,27 @@ kubectl apply --kubeconfig $PWD/consumer-config.yaml -f $PWD/../../deployment/fl
 
 # pretend the consumer cluster is in Dublin, Ireland
 kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/consumer-config.yaml | cut -f1 -d\  | xargs -I% kubectl patch flavor/%  --patch-file $PWD/flavors-location-ireland.yaml --type merge -n fluidos --kubeconfig $PWD/consumer-config.yaml
+
+# create KnowCluster resources in the consumer
+
+cat <<-EOF | kubectl apply -f - --kubeconfig $PWD/consumer-config.yaml
+apiVersion: network.fluidos.eu/v1alpha1
+kind: KnownCluster
+metadata:
+  name: knowncluster-provider-de
+  namespace: fluidos
+spec:
+  # Set ip:port with the provider cluster control plane
+  address: ${DE_PROVIDER_CONTROLPLANE_IP}:${PROVIDER_NODE_PORT}
+EOF
+
+cat <<-EOF | kubectl apply -f - --kubeconfig $PWD/consumer-config.yaml
+apiVersion: network.fluidos.eu/v1alpha1
+kind: KnownCluster
+metadata:
+  name: knowncluster-provider-it
+  namespace: fluidos
+spec:
+  # Set ip:port with the provider cluster control plane
+  address: ${IT_PROVIDER_CONTROLPLANE_IP}:${PROVIDER_NODE_PORT}
+EOF
