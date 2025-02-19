@@ -15,6 +15,8 @@ class OrchestratorFactory:
         print("Creating orchestrator")
         if model_type == MODEL_TYPES.CG:
             return CGOrchestrator(model_name="fluidos/candidate-generation-v2", device="cpu", feedback_db_path=Path("tests/model/feedback/feedback.csv"))
+        elif model_type == MODEL_TYPES.CG_75:
+            return CGOrchestrator(model_name="fluidos/candidate-generation-75", device="cpu", feedback_db_path=Path("tests/model/feedback/feedback_75.csv"))
         elif model_type == MODEL_TYPES.CG_LEGACY:
             return CGOrchestrator(model_name="fluidos/candidate-generation", device="cpu", feedback_db_path=Path("tests/model/feedback/feedback_legacy.csv"))
         elif model_type == MODEL_TYPES.BASIC_RANKER:
