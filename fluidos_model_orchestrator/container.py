@@ -12,6 +12,9 @@ from .common import ContainerImageEmbedding
 
 
 def extract_image_embedding(image: str) -> ContainerImageEmbedding:
+    return ContainerImageEmbedding(
+        image=image,
+    )
     docker.errors.DockerException
     image_data: ImageData = _retrieve_image(image)
     if image_data.is_valid():
@@ -39,9 +42,19 @@ def _compute_embedding(image_data: ImageData | None) -> str | None:
 
 
 def _get_image_name_parts(image_name: str) -> tuple[str, str | None]:
+    if "@" in image_name:
+        # as regitry/namespace/image:tag@sha
+        image_name = image_name.split("@")[0]
     if ":" in image_name:
-        [a, b] = image_name.split(":")
-        return (a, b)
+        try:
+            path_parts = image_name.split("/")
+
+            [image, tag] = path_parts[-1].split(":")
+        except ValueError as e:
+            print(image_name)
+            raise e
+
+        return ("/".join(path_parts[:-1]) + image, tag)
     else:
         return image_name, None  # None defaults to latest
 

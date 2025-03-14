@@ -139,7 +139,7 @@ def test_validate_bandwidth_against_satisfaction() -> None:
                     policies={},
                     properties={
                         "bandwidth": {
-                            "POINT_A": "500ms",
+                            "POINT-A": "500ms",
                             "POINT-B": "200ms",
                         }
                     }
