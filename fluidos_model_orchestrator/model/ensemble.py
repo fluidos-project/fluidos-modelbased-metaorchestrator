@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import uuid
 from collections.abc import Iterable
 
@@ -12,18 +13,33 @@ from fluidos_model_orchestrator.common import Resource
 from fluidos_model_orchestrator.common import ResourceProvider
 
 
+logger = logging.getLogger(__name__)
+
+
 class FluidosModelEnsemble(OrchestratorInterface):
     def __init__(self, models: Iterable[OrchestratorInterface]):
         self.models = list(models)
+        logger.debug(f"Ensemble of {self.models}")
 
-    def predict(self, data: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse | None:
+    def predict(self, data: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse | None:
+        predictions: list[ModelPredictResponse | None] = [model.predict(data, architecture) for model in self.models]
+        valid_predictions: list[ModelPredictResponse] = [
+            prediction
+            for prediction in predictions
+            if prediction is not None
+        ]
+
+        logger.info(f"Merging {len(valid_predictions)} out of {len(predictions)}")
+
         return _merge_prediction_responses(
-            model.predict(data, architecture) for model in self.models
+            valid_predictions
         )
 
     def rank_resources(self, providers: list[ResourceProvider], prediction: ModelPredictResponse, request: ModelPredictRequest) -> list[ResourceProvider]:
+        logger.info(f"Ranking {len(providers)} resource providers")
         for model in self.models:
-            providers = model.rank_resource(providers, prediction, request)
+            logger.info(f"Using {model}")
+            providers = model.rank_resources(providers, prediction, request)
 
         return providers
 

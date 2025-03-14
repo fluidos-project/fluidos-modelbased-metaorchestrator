@@ -10,18 +10,19 @@ from kubernetes import client  # type: ignore
 from kubernetes.client.exceptions import ApiException  # type: ignore
 
 from fluidos_model_orchestrator.common import build_flavor
+from fluidos_model_orchestrator.common import ExternalResourceProvider
 from fluidos_model_orchestrator.common import Flavor
 from fluidos_model_orchestrator.common import FlavorType
 from fluidos_model_orchestrator.common import Intent
 from fluidos_model_orchestrator.common import Resource
 from fluidos_model_orchestrator.common import ResourceFinder
 from fluidos_model_orchestrator.common import ResourceProvider
-from fluidos_model_orchestrator.common import ServiceResourceProvider
 from fluidos_model_orchestrator.configuration import CONFIGURATION
 from fluidos_model_orchestrator.configuration import Configuration
 from fluidos_model_orchestrator.resources.rear.local_resource_provider import LocalResourceProvider
 from fluidos_model_orchestrator.resources.rear.remote_resource_provider import RemoteResourceProvider
 from fluidos_model_orchestrator.resources.rear.service_resource_provider import build_REARServiceResourceProvider
+
 
 logger = logging.getLogger(__name__)
 
@@ -30,19 +31,18 @@ class REARResourceFinder(ResourceFinder):
     def __init__(self, configuration: Configuration = CONFIGURATION) -> None:
         self.configuration = configuration
         self.api_client: client.CustomObjectsApi = client.CustomObjectsApi(api_client=self.configuration.k8s_client)
-        self.identity: dict[str, str] = configuration.identity
 
     def find_best_match(self, resource: Resource, namespace: str) -> list[ResourceProvider]:
         logger.info("Retrieving resource best match with REAR")
 
-        local: list[ResourceProvider] = self._find_local(resource, namespace)
+        local: list[ResourceProvider] = self._find_local(resource, CONFIGURATION.namespace)
 
         if len(local):
             logger.info(f"Found local resource {local=}")
         else:
             logger.info("No local resource compatible")
 
-        remote = self._find_remote(resource, namespace)
+        remote = self._find_remote(resource, CONFIGURATION.namespace)
 
         logger.info(f"Found remote resource {remote=}")
 
@@ -79,14 +79,14 @@ class REARResourceFinder(ResourceFinder):
 
         return (solver_request, intent_id)
 
-    def find_service(self, id: str, service: Intent, namespace: str) -> list[ServiceResourceProvider]:
+    def find_service(self, id: str, service: Intent, namespace: str) -> list[ExternalResourceProvider]:
         logger.info("Retrieving service with REAR")
 
         body, _ = self._resource_to_service_sorver_request(service, id)
 
-        solver_name = self._initiate_search(body, namespace)
+        solver_name = self._initiate_search(body, CONFIGURATION.namespace)
 
-        # NOTE: FOR SERVICE SOLVER DOES NOT SOLVE
+        # NOTE: FOR SERVICE, SOLVER DOES NOT SOLVE
         # Check status of Allocation with .status.status == "Active" and
         # find right allocation using .spec.contract.name == "<contract name>"
         # contract name is retrieved from Reservation where .spec.solverID == "solver-name", there one finds .status.contract.name
@@ -154,6 +154,7 @@ class REARResourceFinder(ResourceFinder):
             return []
 
     def retrieve_all_flavors(self, namespace: str) -> list[Flavor]:
+
         logger.info("Retrieving all flavours")
 
         locally_available_flavours = self._get_locally_available_flavors(namespace)
@@ -306,16 +307,6 @@ class REARResourceFinder(ResourceFinder):
             logger.debug(f"Reason: {e=}")
             return None
 
-    # def _reserve_all_service_peering_candidate(self, solver_name: str, peering_candidates: list[dict[str, Any]], namespace: str) -> list[ServiceResourceProvider]:
-    #     logger.info("Reserving all peering candidates, just in case")
-    #     return [
-    #         resource for resource in
-    #         [
-    #             self._reserve_service_peering_candidate(solver_name, candidate, namespace) for candidate in peering_candidates
-    #             if candidate is not None and candidate["spec"]["available"] is True
-    #         ]
-    #     ]
-
     def _reserve_all(self, solver_name: str, peering_candidates: list[dict[str, Any]], namespace: str) -> list[ResourceProvider]:
         logger.info("Reserving all peering candidates, just in case")
         return [
@@ -334,7 +325,6 @@ class REARResourceFinder(ResourceFinder):
             flavor=build_flavor(candidate["spec"]["flavor"]),
             peering_candidate=candidate["metadata"]["name"],
             reservation="",  # response["metadata"]["name"],
-            namespace=namespace,
             api_client=self.api_client,
             seller=candidate["spec"]["flavor"]["spec"]["owner"]
         )

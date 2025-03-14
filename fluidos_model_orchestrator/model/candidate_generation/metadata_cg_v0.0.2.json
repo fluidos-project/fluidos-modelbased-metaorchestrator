@@ -11,8 +11,6 @@
     "pod_embedding_size": 512,
     "tr_embedding_size": 8,
     "num_configs": 300,
-    "dataset_path": "/dccstor/fluidos/luba_dev/datasets/bitbrains_v300_train/ml_ready_augmented",
-    "output_dir": "/dccstor/fluidos/luba_dev/cg_images_run3/model_training",
     "dataset_size": 100,
     "dataset_version": "v0",
     "embeddings_batch_size": 32,
