@@ -1,0 +1,35 @@
+apiVersion: fluidos.eu/v1
+kind: FLUIDOSDeployment
+metadata:
+  name: se-pod-33
+spec:
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: se-pod-33
+    annotations:
+      fluidos-intent-latency: 100ms
+      fluidos-intent-carbon-aware: "true"
+      fluidos-intent-max-delay: "0"
+    labels:
+      app: se
+  spec:
+    containers:
+      - name: se
+        image: secret_image:mylabel
+        ports:
+          - containerPort: 80
+        env:
+          - name: REDIS_HOST
+            value: "173.26.126.257"
+          - name: REDIS_PORT
+            value: "6385"
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "64Mi"
+          limits:
+            cpu: "500m"
+            memory: "128Mi"
+    imagePullSecrets:
+    - name: gitlab-registry

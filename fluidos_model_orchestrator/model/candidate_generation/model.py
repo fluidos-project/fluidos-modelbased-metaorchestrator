@@ -451,7 +451,9 @@ class Orchestrator(OrchestratorInterface):
         pod_embedding = self.__compute_embedding_for_sentence(str(modified_pod_manifest))
         intents_dict: dict[str, Any] = {}
         for intent in data.intents:
-            intent_name = KNOWN_INTENT_TO_POD_INTENT[intent.name.name]
+            intent_name = KNOWN_INTENT_TO_POD_INTENT.get(intent.name.name, None)
+            if intent_name is None:
+                continue
             unit_len = -1 * len(D_UNITS[intent_name][0])
             intent_value = intent.value[:unit_len]
             intents_dict[intent_name] = D_TYPE[intent_name]["type"](intent_value)
