@@ -41,17 +41,16 @@ async def daemons_for_flavours_observation(
         logger.info("Not locally managed flavor, exit")
         return
 
-    while True:
-        stopped.wait(CONFIGURATION.FLAVOR_UPDATE_SLEEP_TIME)
-        logger.info(f"Repeating observation for {uid}")
-        logger.info(f"Spec: {spec}")
-        if stopped:
-            logger.info("Stopped by external")
-            return
-        flavor = build_flavor({
-            "metadata": meta,
-            "spec": spec
-        })
+        while not stopped:
+            logger.info(f"Repeating observation for {uid}")
+            logger.info(f"Spec: {spec}")
+            if stopped:
+                logger.info("Stopped by external")
+                return
+            flavor = build_flavor({
+                "metadata": meta,
+                "spec": spec
+            })
 
         if namespace is None:
             namespace = "default"
