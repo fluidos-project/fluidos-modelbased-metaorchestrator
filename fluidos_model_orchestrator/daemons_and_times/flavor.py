@@ -39,7 +39,7 @@ async def daemons_for_flavours_observation(
             logger.info("Not locally managed flavor, exit")
             return
 
-        while True:
+        while not stopped:
             logger.info(f"Repeating observation for {uid}")
             logger.info(f"Spec: {spec}")
             if stopped:
@@ -55,6 +55,6 @@ async def daemons_for_flavours_observation(
 
             update_local_flavor_forecasted_data(flavor, namespace)
 
-            await asyncio.sleep(CONFIGURATION.DAEMON_SLEEP_TIME)
+            stopped.wait(CONFIGURATION.DAEMON_SLEEP_TIME)
     except asyncio.CancelledError:
         logger.info(f"We are done for {uid}. Exiting")
