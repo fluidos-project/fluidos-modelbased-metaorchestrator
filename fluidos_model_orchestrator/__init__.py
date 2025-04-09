@@ -12,7 +12,7 @@ from .common import OrchestratorInterface
 from .common import ResourceFinder
 from .common import ResourceProvider
 from .configuration import CONFIGURATION
-from .daemons_and_times.flavor import daemons_for_flavours_observation  # noqa
+from .daemons_and_times.flavor import daemons_for_flavors_observation  # noqa
 from .deployment import deploy
 from .healthz import healtz_get_current_timestamp  # noqa
 from .model import convert_to_model_request

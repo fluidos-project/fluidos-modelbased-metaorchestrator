@@ -13,7 +13,7 @@ from fluidos_model_orchestrator.model.carbon_aware.forecast_updater import updat
 
 
 # @kopf.daemon("flavors", cancellation_timeout=1.0)  # type: ignore
-async def daemons_for_flavours_observation(
+async def daemons_for_flavors_observation(
         stopped: kopf.DaemonStopped,
         retry: int,
         started: datetime.datetime,
