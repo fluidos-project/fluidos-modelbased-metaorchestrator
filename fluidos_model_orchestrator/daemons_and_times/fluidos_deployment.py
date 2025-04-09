@@ -16,6 +16,10 @@ def requires_validation(intent: Intent) -> bool:
     return intent.needs_monitoring()
 
 
+def has_intent_validation_failed(intent: Intent, prometheus_ref: str) -> bool:
+    return False
+
+
 def requires_monitoring(spec: dict[str, Any], namespace: str | None) -> list[Intent]:
     if namespace is None:
         namespace = "default"
@@ -51,9 +55,30 @@ async def daemons_for_fluidos_deployment(
         param: Any,
         **kwargs: dict[str, Any]) -> None:
     # check if the spec require monitoring (based on the intents)
-    if not requires_monitoring(spec, namespace):
+    intents_to_monitor: list[Intent] = requires_monitoring(spec, namespace)
+
+    if len(intents_to_monitor) == 0:
+        logger.info(f"{namespace}/{name} requires no monitoring")
         return
+    else:
+        logger.info(f"{namespace}/{name} requires monitoring for {len(intents_to_monitor)} intents")
+        for intent in intents_to_monitor:
+            logger.debug(f"{namespace}/{name} requires monitoring for {str(intent)} intents")
 
     while not stopped:
+        stopped.wait(CONFIGURATION.MONITOR_SLEEP_TIME)
 
-        stopped.wait(CONFIGURATION.DAEMON_SLEEP_TIME)
+        # check if status is set to "completed"
+        metaorchestration_status: str = status.get("metaorchestration", {}).get("status", "")
+
+        if metaorchestration_status == "":
+            continue  # go to sleep
+
+        if metaorchestration_status == "Failure":
+            logger.info(f"{namespace}/{name} failed in allocating the system, kill the monitoring process too")
+            return
+
+        if metaorchestration_status == "Success":
+            for intent in intents_to_monitor:
+                if has_intent_validation_failed(intent, CONFIGURATION.local_prometheus):
+                    pass
