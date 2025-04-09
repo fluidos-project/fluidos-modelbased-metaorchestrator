@@ -304,19 +304,19 @@ class KnownIntent(Enum):
     architecture = "architecture", False, _validate_architecture
 
     # high order requests
-    latency = "latency", False, _always_true
+    latency = "latency", False, _always_true, True
     location = "location", False, validate_location
-    throughput = "throughput", False, _always_true
+    throughput = "throughput", False, _always_true, True
     compliance = "compliance", False, _validate_regulations
-    energy = "energy", False, _always_true
-    battery = "battery", False, _always_true
+    energy = "energy", False, _always_true, True
+    battery = "battery", False, _always_true, True
 
     # carbon aware requests
     max_delay = "max-delay", False, _always_true
     carbon_aware = "carbon-aware", False, _always_true
 
     # TER
-    bandwidth_against = "bandwidth-against", False, _validate_bandwidth_against_point
+    bandwidth_against = "bandwidth-against", False, _validate_bandwidth_against_point, True
     tee_readiness = "tee-readiness", False, _validate_tee_available
 
     # service
@@ -330,10 +330,11 @@ class KnownIntent(Enum):
         obj._value_ = args[0]
         return obj
 
-    def __init__(self, label: str, external: bool, validator: Callable[[ResourceProvider, str], bool]):
+    def __init__(self, label: str, external: bool, validator: Callable[[ResourceProvider, str], bool], needs_monitoring: bool = False):
         self.label = label
         self._external = external
         self._validator = validator
+        self._needs_monitoring = needs_monitoring
 
     def to_intent_key(self) -> str:
         return f"fluidos-intent-{self.label}"
@@ -374,6 +375,9 @@ class Intent:
 
     def validates(self, provider: ResourceProvider) -> bool:
         return self.name.validates(provider, self.value)
+
+    def needs_monitoring(self) -> bool:
+        return self.name._needs_monitoring
 
 
 class ResourceFinder(ABC):
