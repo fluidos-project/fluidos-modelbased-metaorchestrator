@@ -34,7 +34,7 @@ def requires_monitoring(spec: dict[str, Any], namespace: str | None) -> list[Int
     ]
 
 
-@kopf.daemon("fluidosdeployments")  # type: ignore
+@kopf.daemon("fluidosdeployments", cancellation_timeout=5)  # type: ignore
 async def daemons_for_fluidos_deployment(
         stopped: kopf.DaemonStopped,
         retry: int,
@@ -82,4 +82,10 @@ async def daemons_for_fluidos_deployment(
             for intent in intents_to_monitor:
                 if has_intent_validation_failed(intent, CONFIGURATION.local_prometheus):
                     logger.info(f"{namespace}/{name} failed when validating {intent.name}")
-                    pass
+
+                    # reorchestrate
+
+                    stopped.wait(CONFIGURATION.MONITOR_SLEEP_TIME * 2)
+
+            else:
+                logger.info(f"{namespace}/{name} is still valid")
