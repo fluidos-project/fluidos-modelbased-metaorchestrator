@@ -13,6 +13,7 @@ from .common import ResourceFinder
 from .common import ResourceProvider
 from .configuration import CONFIGURATION
 from .daemons_and_times.flavor import daemons_for_flavors_observation  # noqa
+from .daemons_and_times.fluidos_deployment import daemons_for_fluidos_deployment  # noqa
 from .deployment import deploy
 from .healthz import healtz_get_current_timestamp  # noqa
 from .model import convert_to_model_request
@@ -25,7 +26,7 @@ from fluidos_model_orchestrator.resources.mspl.mspl_resource_provider import MSP
 
 
 @kopf.on.create("fluidosdeployments")  # type: ignore
-async def creation_handler(spec: dict[str, Any], name: str, namespace: str, logger: Logger, errors: kopf.ErrorsMode = kopf.ErrorsMode.PERMANENT, **kwargs: str) -> dict[str, dict[str, ResourceProvider | list[str] | None | str] | str]:
+async def metaorchestration(spec: dict[str, Any], name: str, namespace: str, logger: Logger, errors: kopf.ErrorsMode = kopf.ErrorsMode.PERMANENT, **kwargs: str) -> dict[str, dict[str, ResourceProvider | list[str] | None | str] | str]:
     logger.info("Processing incoming request")
     logger.debug(f"Received request: {spec}")
 
