@@ -79,6 +79,7 @@ async def daemons_for_fluidos_deployment(
             return
 
         if metaorchestration_status == "Success":
+            logger.info
             for intent in intents_to_monitor:
                 if has_intent_validation_failed(intent, CONFIGURATION.local_prometheus):
                     logger.info(f"{namespace}/{name} failed when validating {intent.name}")
