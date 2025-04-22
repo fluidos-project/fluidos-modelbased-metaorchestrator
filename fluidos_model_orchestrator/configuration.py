@@ -71,7 +71,7 @@ def _retrieve_update_flavor(config: Configuration, logger: logging.Logger) -> tu
 
                     data: dict[str, str] = item.data
                     return (
-                        data.get("UPDATE_FLAVORS", "False") == "True",  # disable by default
+                        data.get("UPDATE_FLAVORS", "False").casefold() == "True".casefold(),  # disable by default
                         float(data.get("FLAVOR_UPDATE_SLEEP_TIME", 60. * 60.))  # 1h in seconds
                     )
     except ApiException as e:
