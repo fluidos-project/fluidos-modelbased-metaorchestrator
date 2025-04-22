@@ -3,8 +3,8 @@ import logging
 import requests
 
 from fluidos_model_orchestrator.common import Flavor
+from fluidos_model_orchestrator.common import FlavorType
 from fluidos_model_orchestrator.configuration import CONFIGURATION
-from fluidos_model_orchestrator.resources import get_resource_finder
 
 
 def _get_live_carbon_intensity(lat: str, lon: str) -> int:
@@ -36,6 +36,7 @@ def _get_forecasted_carbon_intensity(lat: str, lon: str) -> list[int] | None:
     url = f"{BASE_URL}/carbon-intensity/forecast"
     params = {'lat': lat, 'lon': lon}
     response = requests.get(url, headers=HEADERS, params=params)
+
     if response.status_code == 200:
         forecast_values: list[int] = []
         for forecast_item in response.json()["forecast"]:
@@ -47,22 +48,47 @@ def _get_forecasted_carbon_intensity(lat: str, lon: str) -> list[int] | None:
         return None
 
 
-def update_local_flavor_forecasted_data(flavor: Flavor, namespace: str) -> None:
+def update_local_flavor_forecasted_data(flavor: Flavor, namespace: str) -> Flavor | None:
+    flavor_type = flavor.spec.flavor_type
+
+    if flavor_type is not FlavorType.K8SLICE:
+        logging.error("Flavor type is not K8S")
+        return None
+
+    location = flavor.spec.location
+
+    if location is None:
+        logging.error("Flavor location is None")
+        return flavor
+
+    if "latitude" not in location or "longitude" not in location:
+        logging.error("Flavor location does not contain latitude or longitude")
+        return None
+
     lat = str(flavor.spec.location.get("latitude"))
     lon = str(flavor.spec.location.get("longitude"))
-    logging.debug(f"Found latitude: {flavor.spec.location.get('latitude')}")
-    logging.debug(f"Found longitude: {flavor.spec.location.get('longitude')}")
+
+    logging.debug(f"Updating flavor's forecasted carbon emission for {lat=}, {lon=}")
+
     new_forecast = _get_forecasted_carbon_intensity(lat, lon)
+
     if new_forecast is None:
         logging.exception("Unable to retrieve forecast")
         return None
 
     new_forecast.insert(0, _get_live_carbon_intensity(lat, lon))  # index 0 = current intensity. Forecast starts at index 1
+
     new_forecast_timeslots = []
     for i in range(len(new_forecast) - 1):
         average = (new_forecast[i] + new_forecast[i + 1]) / 2
         new_forecast_timeslots.append(average)
+
     logging.debug("new_forecast from external API: ", new_forecast)
     logging.debug("new_forecast_timeslots: ", new_forecast_timeslots)
-    optionalField = {"operational": new_forecast_timeslots}
-    get_resource_finder(None, None).update_local_flavor(flavor, optionalField, namespace)
+
+    flavor.spec.flavor_type.type_data.properties["carbon-footprint"] = {
+        "embodied": flavor.spec.flavor_type.type_data.properties["carbon-footprint"].get("embodied", 0),
+        "operational": new_forecast_timeslots
+    }
+
+    return flavor
