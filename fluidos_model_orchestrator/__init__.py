@@ -35,6 +35,7 @@ async def metaorchestration(spec: dict[str, Any], name: str, namespace: str, log
     if request is None:
         logger.error("Request is not valid, discarding")
         return {
+            "status": "Failure",
             "msg": "Invalid request"
         }
 
@@ -45,6 +46,7 @@ async def metaorchestration(spec: dict[str, Any], name: str, namespace: str, log
     if prediction is None:
         logger.error("Model unable to provide valid prediction")
         return {
+            "status": "Failure",
             "msg": "Model unable to provide valid prediction"
         }
     else:
