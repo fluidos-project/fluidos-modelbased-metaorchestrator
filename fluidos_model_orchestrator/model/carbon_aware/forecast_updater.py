@@ -50,8 +50,8 @@ def _get_forecasted_carbon_intensity(lat: str, lon: str) -> list[int] | None:
 def update_local_flavor_forecasted_data(flavor: Flavor, namespace: str) -> None:
     lat = str(flavor.spec.location.get("latitude"))
     lon = str(flavor.spec.location.get("longitude"))
-    logging.debug(f"Found latitude: {flavor.spec.location}")
-    logging.debug(f"Found longitude: {flavor.spec.location.values()}")
+    logging.debug(f"Found latitude: {flavor.spec.location.get('latitude')}")
+    logging.debug(f"Found longitude: {flavor.spec.location.get('longitude')}")
     new_forecast = _get_forecasted_carbon_intensity(lat, lon)
     if new_forecast is None:
         logging.exception("Unable to retrieve forecast")
