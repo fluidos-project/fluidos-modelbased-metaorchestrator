@@ -8,6 +8,7 @@ from ..common import OrchestratorInterface
 from ..container import extract_image_embedding
 from .candidate_generation.model import Orchestrator as CandidateGenerator
 from .carbon_aware.orchestrator import CarbonAwareOrchestrator
+from .rlice.model import Orchestrator as Rlice
 from .ensemble import FluidosModelEnsemble
 from fluidos_model_orchestrator.model.utils import FLUIDOS_COL_NAMES
 # from .model_basic_ranker.model import Orchestrator as BasicRanker
