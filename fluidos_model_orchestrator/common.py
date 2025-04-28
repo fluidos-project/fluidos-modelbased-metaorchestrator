@@ -126,7 +126,7 @@ def _cpu_compatible(req_spec: str | None, offer_spec: str | None) -> bool:
 
 
 def cpu_to_int(spec: str) -> int:
-    if spec[-1] == 'n':
+    if spec[-1] == "n":
         return int(spec[:-1])
     elif spec[-1] == "m":
         return int(spec[:-1]) * 1000
