@@ -22,8 +22,23 @@ from fluidos_model_orchestrator.common import ResourceProvider
 from fluidos_model_orchestrator.common import Resource
 
 logger = logging.getLogger(__name__)
+REPO_ID = "fluidos/rlice"
 
 class RliceOrchestrator(OrchestratorInterface):
+
+    @staticmethod
+    def load_from_hugging_face(model_name: str | None = None) -> Any:
+        from huggingface_hub import hf_hub_download  # type: ignore
+
+        model_to_load = model_name if model_name else "model.pt"
+        # Download the model file from Hugging Face
+        downloaded_model_path = hf_hub_download(
+            repo_id=REPO_ID,
+            filename=model_to_load,
+            repo_type="model"
+        )
+        # Load the model from the downloaded path
+        return torch.load(downloaded_model_path)
 
     def predict(self, request: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse:
         
@@ -34,7 +49,10 @@ class RliceOrchestrator(OrchestratorInterface):
                        request: ModelPredictRequest) -> list[ResourceProvider]:
 
         logger.debug(f"ModelPredictRequest pod_request: {request.pod_request}")
+
         nodes_features = []
+        
+        # build input 
         for intent in request.intents:
             if intent.name is KnownIntent.cpu:
                 cpuRequest = cpu_to_int(intent.value)
@@ -43,8 +61,30 @@ class RliceOrchestrator(OrchestratorInterface):
                 ramRequest = memory_to_int(intent.value)
                 logger.debug(f"Found memory request from intent file: {ramRequest}")
 
+        if cpuRequest == np.nan or cpuRequest <= 0:
+            logging.exception("CPU request must be provided greater than 0")
+            return []
+
+        if ramRequest == np.nan or ramRequest <= 0:
+            logging.exception("RAM request must be provided greater than 0")
+            return []
+
         for provider in providers:
+
             flavor = provider.flavor
+            price_dict = flavor.spec.price
+
+            if len(price_dict.keys()) == 0:
+                logging.exception(f"Skipping flavor {provider.flavor.metadata.name} from provider {provider.id} as with no price information")
+                continue
+
+            amount = price_dict.amount
+            period = price_dict.period
+            if period == "weekly":
+                hourly_price = amount/(24*7)
+            if period == "monthly"
+                hourly_price = amount/(24*30)
+            
             type_data = cast(FlavorK8SliceData, flavor.spec.flavor_type.type_data)
            
             logger.debug(f"provider ID: {provider.id}")
@@ -54,9 +94,12 @@ class RliceOrchestrator(OrchestratorInterface):
 
             cpu = cpu_to_int(type_data.characteristics.cpu)
             mem = memory_to_int(type_data.characteristics.memory)
-            bw = type_data.properties.get("additionalProperties", {}).get("bandwidth", {})
-            row = [cpu,mem,bw,cpuRequest,ramRequest]
+            
+            row = [cpu,mem,hourly_price,cpuRequest,ramRequest]
             nodes_features.append(row)
+
+        # TO-DO: normalize input 
+        
 
         
            
