@@ -31,7 +31,7 @@ def test_validate_provider_characteristics() -> None:
             flavor_type=FlavorTypeData(
                 type_identifier=FlavorType.K8SLICE,
                 type_data=FlavorK8SliceData(
-                    characteristics=FlavorCharacteristics(cpu="2000n", memory="10Gi", architecture="arm", gpu=GPUData(cores=0, memory="", model="")),
+                    characteristics=FlavorCharacteristics(cpu="500m", memory="1Gi", architecture="arm", gpu=GPUData(cores=0, memory="", model="")),
                     policies={},
                     properties={},
                 )
@@ -58,7 +58,7 @@ def test_validate_provider_characteristics() -> None:
             flavor_type=FlavorTypeData(
                 type_identifier=FlavorType.K8SLICE,
                 type_data=FlavorK8SliceData(
-                    characteristics=FlavorCharacteristics(cpu="2000n", memory="10Gi", architecture="arm", gpu=GPUData(cores=0, memory="", model="")),
+                    characteristics=FlavorCharacteristics(cpu="500m", memory="1Gi", architecture="arm", gpu=GPUData(cores=0, memory="", model="")),
                     policies={},
                     properties={},
                 )
@@ -78,24 +78,53 @@ def test_validate_provider_characteristics() -> None:
         )
     ))
 
-    providers: list[ResourceProvider] = [bad_no_price,good]
+    less_cost = LocalResourceProvider("test", Flavor(
+        metadata=FlavorMetadata(
+            name="foo",
+            owner_references={}
+        ),
+        spec=FlavorSpec(
+            availability=True,
+            flavor_type=FlavorTypeData(
+                type_identifier=FlavorType.K8SLICE,
+                type_data=FlavorK8SliceData(
+                    characteristics=FlavorCharacteristics(cpu="500m", memory="1Gi", architecture="arm", gpu=GPUData(cores=0, memory="", model="")),
+                    policies={},
+                    properties={},
+                )
+            ),
+            location={
+                "city": "Dublin",
+                "country": "Ireland",
+            },
+            network_property_type="",
+            owner={},
+            providerID="provider_id",
+            price={
+                "amount":"0.06",
+                "currency":"USD",
+                "period":"hourly"
+            }
+        )
+    ))
+
+    providers: list[ResourceProvider] = [bad_no_price,good,less_cost]
 
     with pkg_resources.resource_stream(__name__, "examples/test-pod-w-intent.yaml") as stream:
         request = convert_to_model_request(
             yaml.safe_load(stream)["spec"],
             "fluidos"
         )
-        print(request)
+       
     prediction = ModelPredictResponse(
         "resp-123",
         Resource(id="res-123", architecture="amd64", cpu="250m", memory="64Mi"),
         delay=0
     )
-    orchestrator = RliceOrchestrator()
 
+    orchestrator = RliceOrchestrator()
     ranked = orchestrator.rank_resources(providers, prediction, request)
 
-    #assert ranked is not None
-    #assert len(ranked) == 1
-
-test_validate_provider_characteristics()
+    assert ranked is not None
+    assert ranked[0] != 0
+    assert len(ranked) == 1
