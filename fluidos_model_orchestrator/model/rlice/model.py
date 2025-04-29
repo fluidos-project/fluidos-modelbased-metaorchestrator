@@ -38,9 +38,7 @@ class EquivariantLayer(nn.Module):
     def forward(self, x: torch.Tensor):
    
         xm, _ = torch.max(x, dim=1, keepdim=True)
-  
         out = self.Lambda(x) - self.Gamma(xm)
-       
         return out
 
 
@@ -84,7 +82,6 @@ class OrchestrationModel(nn.Module, PyTorchModelHubMixin):
     def forward(self, obs: list[torch.Tensor]) -> torch.Tensor:
         with torch.no_grad():
             q_values = self.dqn(torch.Tensor(obs).unsqueeze(0))
-            print(q_values)
             actions = torch.argmax(q_values, dim=1).cpu().numpy()
             node_id = actions[0]
         return node_id
@@ -106,11 +103,9 @@ class RliceOrchestrator(OrchestratorInterface):
 
         return normalized_state
 
-
     def predict(self, request: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse:
         
         return None
-        #return ModelPredictResponse(id='pod-1', resource_profile=Resource(id='pod-1', cpu='2000m', memory='8192Ki', architecture='amd64', gpu=None, storage=None, region=None, pods=None), delay=0)
 
     def rank_resources(self, providers: list[ResourceProvider], prediction: ModelPredictResponse,
                        request: ModelPredictRequest) -> list[ResourceProvider]:
@@ -118,6 +113,8 @@ class RliceOrchestrator(OrchestratorInterface):
         logger.debug(f"ModelPredictRequest pod_request: {request.pod_request}")
 
         nodes_features = []
+        considered_providers = []
+
         cpuRequest,ramRequest=None,None
 
         # build input 
@@ -167,9 +164,15 @@ class RliceOrchestrator(OrchestratorInterface):
             
             row = [cpu,mem,hourly_price,cpuRequest,ramRequest]
             nodes_features.append(row)
+            considered_providers.append(flavor.metadata.name)
 
         model_input = self.min_max_normalization(nodes_features)
         index = self.model.forward(model_input)
+        best_node_id = considered_providers[index]
+
+        for provider in providers:
+            if provider.flavor.metadata.name == best_node_id:
+                return [provider]  # return list of 1 element with best node
 
 
 

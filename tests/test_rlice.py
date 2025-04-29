@@ -2,7 +2,6 @@ import pkg_resources
 import yaml
 
 from fluidos_model_orchestrator.model import convert_to_model_request
-from fluidos_model_orchestrator.model import get_model_object
 from fluidos_model_orchestrator.common import Flavor
 from fluidos_model_orchestrator.common import FlavorCharacteristics
 from fluidos_model_orchestrator.common import FlavorK8SliceData
@@ -13,17 +12,16 @@ from fluidos_model_orchestrator.common import FlavorTypeData
 from fluidos_model_orchestrator.common import GPUData
 from fluidos_model_orchestrator.common import Intent
 from fluidos_model_orchestrator.common import KnownIntent
-from fluidos_model_orchestrator.common import ModelPredictRequest
 from fluidos_model_orchestrator.common import ModelPredictResponse
 from fluidos_model_orchestrator.common import Resource
 from fluidos_model_orchestrator.resources.rear.local_resource_provider import LocalResourceProvider
 from fluidos_model_orchestrator.model.rlice.model import RliceOrchestrator
 
-def test_validate_provider_characteristics() -> None:
+def test_validate_output() -> None:
 
     bad_no_price = LocalResourceProvider("test", Flavor(
         metadata=FlavorMetadata(
-            name="foo",
+            name="foo1",
             owner_references={}
         ),
         spec=FlavorSpec(
@@ -50,7 +48,7 @@ def test_validate_provider_characteristics() -> None:
 
     good = LocalResourceProvider("test", Flavor(
         metadata=FlavorMetadata(
-            name="foo",
+            name="foo2",
             owner_references={}
         ),
         spec=FlavorSpec(
@@ -80,7 +78,7 @@ def test_validate_provider_characteristics() -> None:
 
     less_cost = LocalResourceProvider("test", Flavor(
         metadata=FlavorMetadata(
-            name="foo",
+            name="foo3",
             owner_references={}
         ),
         spec=FlavorSpec(
@@ -124,7 +122,6 @@ def test_validate_provider_characteristics() -> None:
 
     orchestrator = RliceOrchestrator()
     ranked = orchestrator.rank_resources(providers, prediction, request)
-
+    
     assert ranked is not None
-    assert ranked[0] != 0
     assert len(ranked) == 1
