@@ -30,7 +30,8 @@ _model_characteristics: list[tuple[set[KnownIntent], type[OrchestratorInterface]
         KnownIntent.throughput,
     }, CandidateGenerator),
     # ({KnownIntent.latency, KnownIntent.location, KnownIntent.memory, KnownIntent.cpu}, BasicRanker),
-    ({KnownIntent.carbon_aware, KnownIntent.max_delay}, CarbonAwareOrchestrator)
+    ({KnownIntent.carbon_aware, KnownIntent.max_delay}, CarbonAwareOrchestrator),
+    ({KnownIntent.cpu, KnownIntent.memory}, RliceOrchestrator)
 ]
 
 

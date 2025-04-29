@@ -138,7 +138,6 @@ class RliceOrchestrator(OrchestratorInterface):
             logger.debug(f"provider ID: {provider.id}")
             logger.debug(f"flavor ID: {flavor.metadata.name}")
             logger.debug(f"flavor characteristics: {type_data.characteristics}")
-            logger.debug(f"flavor price_dict: {flavor.spec.price}")
 
             price_dict = flavor.spec.price
 
@@ -165,6 +164,10 @@ class RliceOrchestrator(OrchestratorInterface):
             row = [cpu,mem,hourly_price,cpuRequest,ramRequest]
             nodes_features.append(row)
             considered_providers.append(flavor.metadata.name)
+
+        if len(nodes_features) == 0:
+            logging.exception("No provider supported")
+            return []
 
         model_input = self.min_max_normalization(nodes_features)
         index = self.model.forward(model_input)
