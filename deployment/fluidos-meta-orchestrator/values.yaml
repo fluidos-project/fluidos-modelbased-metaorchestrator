@@ -83,6 +83,9 @@ affinity: {}
 electricity_map:
   key:  "<MY KEY TO BE REPLACED WITH SOMETHING MEANINGFULL>"  # ElectricityMap API KEY <COMPLETE>
 
+update_flavors: "False"  # true or false
+update_flavors_interval: 360  # in seconds, default is 1 hour
+
 configuration:
   architecture: amd64  # default architecture, change to your preferred arch
 

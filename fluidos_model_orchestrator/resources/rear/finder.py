@@ -165,8 +165,8 @@ class REARResourceFinder(ResourceFinder):
 
         return locally_available_flavours + remotely_available_flavours
 
-    def update_local_flavor(self, flavor: Flavor, data: Any, namespace: str) -> None:
-        logger.info(f"Updating {flavor=} with {data=}")
+    def update_local_flavor(self, flavor: Flavor, properties: Any, namespace: str) -> None:
+        logger.info(f"Updating {flavor=} with {properties=}")
 
         response = self.api_client.patch_namespaced_custom_object(
             group="nodecore.fluidos.eu",
@@ -178,7 +178,7 @@ class REARResourceFinder(ResourceFinder):
                 "spec": {
                     "flavorType": {
                         "typeData": {
-                            "properties": data
+                            "properties": properties
                         }
                     }
                 }
