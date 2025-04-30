@@ -8,6 +8,7 @@ from ..common import OrchestratorInterface
 from ..container import extract_image_embedding
 from .candidate_generation.model import Orchestrator as CandidateGenerator
 from .carbon_aware.orchestrator import CarbonAwareOrchestrator
+from .rlice.model import RliceOrchestrator
 from .ensemble import FluidosModelEnsemble
 from fluidos_model_orchestrator.model.utils import FLUIDOS_COL_NAMES
 # from .model_basic_ranker.model import Orchestrator as BasicRanker
@@ -29,7 +30,8 @@ _model_characteristics: list[tuple[set[KnownIntent], type[OrchestratorInterface]
         KnownIntent.throughput,
     }, CandidateGenerator),
     # ({KnownIntent.latency, KnownIntent.location, KnownIntent.memory, KnownIntent.cpu}, BasicRanker),
-    ({KnownIntent.carbon_aware, KnownIntent.max_delay}, CarbonAwareOrchestrator)
+    ({KnownIntent.carbon_aware, KnownIntent.max_delay}, CarbonAwareOrchestrator),
+    ({KnownIntent.cpu, KnownIntent.memory}, RliceOrchestrator)
 ]
 
 
