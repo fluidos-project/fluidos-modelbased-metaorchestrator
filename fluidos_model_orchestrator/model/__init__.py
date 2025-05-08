@@ -74,8 +74,8 @@ def convert_to_model_request(spec: Any, namespace: str) -> ModelPredictRequest |
     logger.info("Converting incoming custom resource to model request")
 
     request: ModelPredictRequest | None = None
-
-    if spec["kind"] == "Deployment":
+    print(f"!!!!!!!!!!!!!!!!!!!!!!{spec}!!!!!!!!!!!!!!!!!")
+    if spec["pod_manifest"]["kind"] == "Deployment":
         logger.debug("Processing Deployment object")
         intents = _extract_intents(spec["metadata"].get("annotations", {}))
         for container in spec["spec"]["template"]["spec"]["containers"]:
@@ -96,11 +96,11 @@ def convert_to_model_request(spec: Any, namespace: str) -> ModelPredictRequest |
             container_image_embeddings=[extract_image_embedding(container["image"]) for container in spec["spec"]["template"]["spec"]["containers"]]
         )
 
-    if spec["kind"] == "Pod":
+    if spec["pod_manifest"]["kind"] == "Pod":
         logger.debug("Processing Pod object")
-        intents = _extract_intents(spec["metadata"].get("annotations", {}))
+        intents = _extract_intents(spec["pod_manifest"]["metadata"].get("annotations", {}))
 
-        for container in spec["spec"]["containers"]:
+        for container in spec["pod_manifest"]["spec"]["containers"]:
             intents.extend(
                 _extract_resource_intents(
                     container.get("resources", {}).get("requests", {})
@@ -108,13 +108,13 @@ def convert_to_model_request(spec: Any, namespace: str) -> ModelPredictRequest |
             )
 
         request = ModelPredictRequest(
-            id=spec["metadata"]["name"],
+            id=spec["pod_manifest"]["metadata"]["name"],
             namespace=namespace,
             pod_request={
                 FLUIDOS_COL_NAMES.POD_MANIFEST: spec
             },
             intents=intents,
-            container_image_embeddings=[extract_image_embedding(container["image"]) for container in spec["spec"]["containers"]]
+            container_image_embeddings=[extract_image_embedding(container["image"]) for container in spec["pod_manifest"]["spec"]["containers"]]
         )
 
     if request is not None:
