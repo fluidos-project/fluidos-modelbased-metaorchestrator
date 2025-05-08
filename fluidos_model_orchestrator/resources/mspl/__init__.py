@@ -1,3 +1,4 @@
+import json
 import logging
 from time import sleep
 from typing import Any
@@ -45,10 +46,25 @@ def request_application(policy: str, endpoint: str, request_name: str) -> str:
     raise RuntimeError("Unable to receive a response in the required time")
 
 
-def create_mspl(provider, consumer, exporterEndpoint, properties: dict[str, Any]):
-    metrics_xml = '\n'.join(f'<nameMetric>{value}</nameMetric>' for value in properties.values())
+def create_mspl(provider: str, consumer: str, exporterEndpoint: str, properties: dict[str, Any]) -> str:
+    # exported endpoint is the URL to the proxy fluidos: http://otel-prometheus-proxy.proxy-prom-test.svc.cluster.local:8080/api/v1/write
+
+    # metrics_xml = '\n'.join(f'<nameMetric>{value}</nameMetric>' for value in properties.values())
+    metrics_xml = json.dumps(
+        [{
+            "filter/basicmetricsDomainIDFlavorID": {
+                "error_mode": "ignore",
+                "metrics": {
+                    "metric": [
+                        "resource.attributes[\"container.id\"] != \"testing\""
+                    ]
+                }
+            }
+        }
+        ])
+
     xml = f"""<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-                <ITResourceOrchestration id="omspl_46bdc9a9035540d4b257bd686a7e6bc3" 
+                <ITResourceOrchestration id="omspl_46bdc9a9035540d4b257bd686a7e6bc3"
                     xmlns="http://modeliosoft/xsddesigner/a22bd60b-ee3d-425c-8618-beb6a854051a/ITResource.xsd"
                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                     xsi:schemaLocation="http://modeliosoft/xsddesigner/a22bd60b-ee3d-425c-8618-beb6a854051a/ITResource.xsd mspl.xsd">
@@ -60,16 +76,16 @@ def create_mspl(provider, consumer, exporterEndpoint, properties: dict[str, Any]
                             <configurationRule>
                                 <configurationRuleAction xsi:type="TelemetryAction">
                                 <telemetryActionType>TRANSFER</telemetryActionType>
-                                </configurationRuleAction> 
+                                </configurationRuleAction>
                                 <configurationCondition xsi:type='TransferConfigurationConditions'>
                                     <isCNF>false</isCNF>
                                     <transferConfigurationCondition>
                                         <domainID>{provider}</domainID>
                                         <flavorID>{consumer}</flavorID>
                                         <exporterEndpoint>{exporterEndpoint}</exporterEndpoint>
-                                        <advancedMetrics>
+                                        <properties>
                                             {metrics_xml}
-                                        </advancedMetrics>
+                                        </properties>
                                     </transferConfigurationCondition>
                                 </configurationCondition>
                                 <Description>Transfer metrics from cluster UMU (flavorID {consumer}) to IBM</Description>
