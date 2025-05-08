@@ -441,5 +441,4 @@ def _build_flavor_type_data(flavor_type: FlavorType, data: dict[str, Any]) -> Fl
             properties=data.get("properties", {})
         )
     raise ValueError(f"Unsupported flavor type: {flavor_type}")
-=======
->>>>>>> afd3b030f265d836e5e8556dc2efd92a8d5a3904
+

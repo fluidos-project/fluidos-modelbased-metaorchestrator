@@ -88,7 +88,7 @@ def test_interaction_with_bastion() -> None:
 </ITResourceOrchestration>
     """
 
-    response = request_application(policy=policy, endpoint="http://fluidos-mspl.sl.cloud9.ibm.com:8002/meservice", request_name="request-name")
+    response = request_application(policy=policy, endpoint="http://10.208.99.114:8002/meservice", request_name="request-name")
 
     assert response is not None
 
@@ -96,7 +96,7 @@ def test_interaction_with_bastion() -> None:
 def test_create_mspl():
     provider = "provider1"
     consumer = "consumer1"
-    exporter_endpoint = "http://example.com"
+    exporter_endpoint = "http://10.208.99.114:8002/meservice"
     properties = {
         "metric1": "CPU",
         "metric2": "Memory"
