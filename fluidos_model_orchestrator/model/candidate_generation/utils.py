@@ -19,7 +19,6 @@ def resource_dict_to_values(resources: dict[str, Any]) -> dict[str, Any]:
 
 
 def resource_to_value(resource_name: str, resource_value: Any) -> Any:
-
     translated_value: Any = resource_value
     if resource_value != "empty" and resource_value != "none":
         match resource_name:
