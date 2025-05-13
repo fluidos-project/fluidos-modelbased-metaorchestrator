@@ -52,16 +52,16 @@ def create_mspl(provider: str, consumer: str, exporterEndpoint: str, properties:
     # metrics_xml = '\n'.join(f'<nameMetric>{value}</nameMetric>' for value in properties.values())
     metrics_xml = json.dumps(
         [{
-            "filter/basicmetricsDomainIDFlavorID": {
+            "filter/sendSpecificMetric": {
                 "error_mode": "ignore",
                 "metrics": {
-                    "metric": [
-                        "resource.attributes[\"container.id\"] != \"testing\""
-                    ]
+                "metric": [
+                    "not (\n  IsMatch(name, \"^node.fluidos.*\") or\n  resource.attributes[\"container.id\"] == \"testing\"\n)"
+                ]
                 }
             }
-        }
-        ])
+        }]
+        )
 
     xml = f"""<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
                 <ITResourceOrchestration id="omspl_46bdc9a9035540d4b257bd686a7e6bc3"
