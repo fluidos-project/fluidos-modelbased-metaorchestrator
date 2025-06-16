@@ -77,6 +77,7 @@ def convert_to_model_request(spec: Any, namespace: str) -> ModelPredictRequest |
 
     if spec["kind"] == "Pod":
         logger.debug("Processing Pod object")
+
         intents = _extract_intents(spec["metadata"].get("annotations", {}))
 
         for container in spec["spec"]["containers"]:
@@ -109,7 +110,7 @@ def convert_to_model_request(spec: Any, namespace: str) -> ModelPredictRequest |
             # )
 
         request = ModelPredictRequest(
-            id=spec["metadata"]["name"],
+            id=spec["pod_manifest"]["metadata"]["name"],
             namespace=namespace,
             pod_request={
                 FLUIDOS_COL_NAMES.POD_MANIFEST: spec["spec"]["template"]

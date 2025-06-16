@@ -16,7 +16,7 @@ consumer_controlplane_ip=$(podman inspect -f '{{range .NetworkSettings.Networks}
 # setup provider
 
 liqoctl install kind --kubeconfig $PWD/provider-config.yaml
-helm upgrade --install --version 0.0.6 --devel -n fluidos --create-namespace node fluidos/node \
+helm upgrade --install --devel -n fluidos --create-namespace node fluidos/node \
   --set "provider=kind" \
   --set "networkManager.configMaps.nodeIdentity.ip=$provider_controlplane_ip:$provider_node_port" \
   --set "networkManager.configMaps.nodeIdentity.domain=provider.fluidos.eu" \
@@ -27,7 +27,7 @@ helm upgrade --install --version 0.0.6 --devel -n fluidos --create-namespace nod
 # setup consumer
 liqoctl install kind --kubeconfig $PWD/consumer-config.yaml
 
-helm upgrade --install --version 0.0.6 --devel -n fluidos --create-namespace node fluidos/node \
+helm upgrade --install --devel -n fluidos --create-namespace node fluidos/node \
   --set "provider=kind" \
   --set "networkManager.configMaps.nodeIdentity.ip=$consumer_controlplane_ip:$consumer_node_port" \
   --set "networkManager.configMaps.providers.local=$provider_controlplane_ip:$provider_node_port" \

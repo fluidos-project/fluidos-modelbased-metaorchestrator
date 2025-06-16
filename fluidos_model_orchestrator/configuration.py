@@ -160,7 +160,7 @@ def _retrieve_mspl_endpoint(config: Configuration, logger: logging.Logger) -> st
 
                     data: dict[str, str] = item.data
 
-                    return data.get("MSPL_ENDPOINT", "http://fluidos-mspl.sl.cloud9.ibm.com:8002/meservice")
+                    return data.get("MSPL_ENDPOINT", "http://155.54.210.136:8002/meservice")
     except ApiException as e:
         logger.error(f"Unable to retrieve config map {e=}")
 
