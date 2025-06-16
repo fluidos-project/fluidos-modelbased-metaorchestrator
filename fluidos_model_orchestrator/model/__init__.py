@@ -8,8 +8,8 @@ from ..common import OrchestratorInterface
 from ..container import extract_image_embedding
 from .candidate_generation.model import Orchestrator as CandidateGenerator
 from .carbon_aware.orchestrator import CarbonAwareOrchestrator
-from .rlice.model import RliceOrchestrator
 from .ensemble import FluidosModelEnsemble
+from .rlice.model import RliceOrchestrator
 from fluidos_model_orchestrator.model.utils import FLUIDOS_COL_NAMES
 # from .model_basic_ranker.model import Orchestrator as BasicRanker
 
@@ -75,8 +75,30 @@ def convert_to_model_request(spec: Any, namespace: str) -> ModelPredictRequest |
 
     request: ModelPredictRequest | None = None
 
-    if spec["kind"] == "Deployment":
-        logger.debug("Processing Deployment object")
+    if spec["kind"] == "Pod":
+        logger.debug("Processing Pod object")
+        intents = _extract_intents(spec["metadata"].get("annotations", {}))
+
+        for container in spec["spec"]["containers"]:
+            pass
+            # intents.extend(
+            #     _extract_resource_intents(
+            #         container.get("resources", {}).get("requests", {})
+            #     )
+            # )
+
+        request = ModelPredictRequest(
+            id=spec["metadata"]["name"],
+            namespace=namespace,
+            pod_request={
+                FLUIDOS_COL_NAMES.POD_MANIFEST: spec
+            },
+            intents=intents,
+            container_image_embeddings=[extract_image_embedding(container["image"]) for container in spec["spec"]["containers"]]
+        )
+
+    if spec["kind"] == "Deployment" or spec["kind"] == "Job":
+        logger.debug(f"Processing {spec['kind']} object")
         intents = _extract_intents(spec["metadata"].get("annotations", {}))
         for container in spec["spec"]["template"]["spec"]["containers"]:
             pass
@@ -94,27 +116,6 @@ def convert_to_model_request(spec: Any, namespace: str) -> ModelPredictRequest |
             },
             intents=intents,
             container_image_embeddings=[extract_image_embedding(container["image"]) for container in spec["spec"]["template"]["spec"]["containers"]]
-        )
-
-    if spec["kind"] == "Pod":
-        logger.debug("Processing Pod object")
-        intents = _extract_intents(spec["metadata"].get("annotations", {}))
-
-        for container in spec["spec"]["containers"]:
-            intents.extend(
-                _extract_resource_intents(
-                    container.get("resources", {}).get("requests", {})
-                )
-            )
-
-        request = ModelPredictRequest(
-            id=spec["metadata"]["name"],
-            namespace=namespace,
-            pod_request={
-                FLUIDOS_COL_NAMES.POD_MANIFEST: spec
-            },
-            intents=intents,
-            container_image_embeddings=[extract_image_embedding(container["image"]) for container in spec["spec"]["containers"]]
         )
 
     if request is not None:
