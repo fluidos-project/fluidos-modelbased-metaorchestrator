@@ -55,13 +55,13 @@ def create_mspl(provider: str, consumer: str, exporterEndpoint: str, properties:
             "filter/sendSpecificMetric": {
                 "error_mode": "ignore",
                 "metrics": {
-                "metric": [
-                    "not (\n  IsMatch(name, \"^node.fluidos.*\") or\n  resource.attributes[\"container.id\"] == \"testing\"\n)"
-                ]
+                    "metric": [
+                        "not (\n  IsMatch(name, \"^node.fluidos.*\") or\n  resource.attributes[\"container.id\"] == \"testing\"\n)"
+                    ]
                 }
             }
         }]
-        )
+    )
 
     xml = f"""<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
                 <ITResourceOrchestration id="omspl_46bdc9a9035540d4b257bd686a7e6bc3"

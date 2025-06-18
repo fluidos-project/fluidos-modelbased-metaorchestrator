@@ -1,11 +1,10 @@
 import pytest  # type: ignore
 from requests_mock import Mocker  # type: ignore
-from typing import Any
 
-from fluidos_model_orchestrator.resources.mspl import request_application, create_mspl
+from fluidos_model_orchestrator.resources.mspl import create_mspl
+from fluidos_model_orchestrator.resources.mspl import request_application
 
 
-@pytest.mark.skip
 def test_request_no_poll(requests_mock: Mocker) -> None:
     endpoint = "http://www.um.es/mspl/endpoint"
 
@@ -16,10 +15,9 @@ def test_request_no_poll(requests_mock: Mocker) -> None:
     assert text == "response"
 
 
-@pytest.mark.skip
 def test_request_poll(requests_mock: Mocker) -> None:
     endpoint = "http://www.um.es/mspl/endpoint"
-    requests_mock.post(endpoint, status_code=100, headers={'Location': endpoint + "/123"})
+    requests_mock.post(endpoint + "/123", status_code=100, headers={"Location": endpoint + "/123"}, text="")
     requests_mock.get(endpoint + "/123", status_code=200, text="response")
 
     text = request_application("<stupid><xml /></stupid>", endpoint, "123")
@@ -93,6 +91,7 @@ def test_interaction_with_bastion() -> None:
     assert response is not None
 
 
+@pytest.mark.skip
 def test_create_mspl():
     provider = "provider1"
     consumer = "consumer1"
