@@ -86,7 +86,8 @@ async def daemons_for_fluidos_deployment(
 
                     # reorchestrate
 
+                    # find the resource
                     stopped.wait(CONFIGURATION.MONITOR_SLEEP_TIME * 2)
-
+                    break
             else:
                 logger.info(f"{namespace}/{name} is still valid")

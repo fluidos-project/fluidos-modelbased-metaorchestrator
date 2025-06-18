@@ -16,7 +16,7 @@ from fluidos_model_orchestrator.resources import get_resource_finder
 
 
 @kopf.daemon("flavors", cancellation_timeout=1.0)  # type: ignore
-async def daemons_for_flavours_observation(
+async def daemons_for_flavors_observation(
         stopped: kopf.DaemonStopped,
         retry: int,
         started: datetime.datetime,
