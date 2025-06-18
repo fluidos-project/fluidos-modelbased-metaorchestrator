@@ -58,7 +58,7 @@ def _retrieve_update_flavor(config: Configuration, logger: logging.Logger) -> tu
     api_endpoint = CoreV1Api(config.k8s_client)
 
     try:
-        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(CONFIGURATION.namespace)
+        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(config.namespace)
         if len(config_maps.items):
             for item in config_maps.items:
                 if item.metadata is None:
@@ -146,7 +146,7 @@ def _retrieve_mspl_endpoint(config: Configuration, logger: logging.Logger) -> st
     api_endpoint = CoreV1Api(config.k8s_client)
 
     try:
-        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(CONFIGURATION.namespace)
+        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(config.namespace)
         if len(config_maps.items):
             for item in config_maps.items:
                 if item.metadata is None:
@@ -173,7 +173,7 @@ def _retrieve_architecture(config: Configuration, logger: logging.Logger) -> str
     api_endpoint = CoreV1Api(config.k8s_client)
 
     try:
-        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(CONFIGURATION.namespace)
+        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(config.namespace)
         if len(config_maps.items):
             for item in config_maps.items:
                 if item.metadata is None:
@@ -200,7 +200,7 @@ def _retrieve_node_identity(config: Configuration, logger: logging.Logger) -> di
     api_endpoint = CoreV1Api(config.k8s_client)
 
     try:
-        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(CONFIGURATION.namespace)
+        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(config.namespace)
         if len(config_maps.items):
             for item in config_maps.items:
                 if item.metadata is None:

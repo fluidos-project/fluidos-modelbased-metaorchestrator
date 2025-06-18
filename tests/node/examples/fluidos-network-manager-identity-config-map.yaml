@@ -17,3 +17,4 @@ metadata:
     app.kubernetes.io/version: v0.0.4
     helm.sh/chart: node-v0.0.4
   name: fluidos-node-identity
+  # namespace: fluidos

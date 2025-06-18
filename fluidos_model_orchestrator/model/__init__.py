@@ -110,7 +110,7 @@ def convert_to_model_request(spec: Any, namespace: str) -> ModelPredictRequest |
             # )
 
         request = ModelPredictRequest(
-            id=spec["pod_manifest"]["metadata"]["name"],
+            id=spec["metadata"]["name"],
             namespace=namespace,
             pod_request={
                 FLUIDOS_COL_NAMES.POD_MANIFEST: spec["spec"]["template"]

@@ -53,7 +53,7 @@ def test_configuration_enrichment_with_k8s(k8s: AClusterManager) -> None:
     myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
-    config = Configuration()
+    config = Configuration(namespace="default")
 
     logger = logging.getLogger(__name__)
 
