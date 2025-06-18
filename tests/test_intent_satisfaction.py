@@ -1,14 +1,14 @@
-from fluidos_model_orchestrator.common import Flavor
-from fluidos_model_orchestrator.common import FlavorCharacteristics
-from fluidos_model_orchestrator.common import FlavorK8SliceData
-from fluidos_model_orchestrator.common import FlavorMetadata
-from fluidos_model_orchestrator.common import FlavorSpec
-from fluidos_model_orchestrator.common import FlavorType
-from fluidos_model_orchestrator.common import FlavorTypeData
-from fluidos_model_orchestrator.common import GPUData
-from fluidos_model_orchestrator.common import Intent
-from fluidos_model_orchestrator.common import KnownIntent
-from fluidos_model_orchestrator.common import validate_location
+from fluidos_model_orchestrator.common.flavor import Flavor
+from fluidos_model_orchestrator.common.flavor import FlavorCharacteristics
+from fluidos_model_orchestrator.common.flavor import FlavorK8SliceData
+from fluidos_model_orchestrator.common.flavor import FlavorMetadata
+from fluidos_model_orchestrator.common.flavor import FlavorSpec
+from fluidos_model_orchestrator.common.flavor import FlavorType
+from fluidos_model_orchestrator.common.flavor import FlavorTypeData
+from fluidos_model_orchestrator.common.flavor import GPUData
+from fluidos_model_orchestrator.common.intent import Intent
+from fluidos_model_orchestrator.common.intent import KnownIntent
+from fluidos_model_orchestrator.common.intent import validate_location
 from fluidos_model_orchestrator.resources.rear.local_resource_provider import LocalResourceProvider
 
 

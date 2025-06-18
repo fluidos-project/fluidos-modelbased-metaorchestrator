@@ -5,13 +5,13 @@ import pkg_resources  # type: ignore
 import pytest  # type: ignore
 from pytest_kubernetes.providers.base import AClusterManager  # type: ignore
 
-from fluidos_model_orchestrator.common import Flavor
-from fluidos_model_orchestrator.common import FlavorCharacteristics
-from fluidos_model_orchestrator.common import FlavorK8SliceData
-from fluidos_model_orchestrator.common import FlavorMetadata
-from fluidos_model_orchestrator.common import FlavorSpec
-from fluidos_model_orchestrator.common import FlavorType
-from fluidos_model_orchestrator.common import FlavorTypeData
+from fluidos_model_orchestrator.common.flavor import Flavor
+from fluidos_model_orchestrator.common.flavor import FlavorCharacteristics
+from fluidos_model_orchestrator.common.flavor import FlavorK8SliceData
+from fluidos_model_orchestrator.common.flavor import FlavorMetadata
+from fluidos_model_orchestrator.common.flavor import FlavorSpec
+from fluidos_model_orchestrator.common.flavor import FlavorType
+from fluidos_model_orchestrator.common.flavor import FlavorTypeData
 from fluidos_model_orchestrator.configuration import _build_k8s_client
 from fluidos_model_orchestrator.resources.rear.remote_resource_provider import RemoteResourceProvider
 

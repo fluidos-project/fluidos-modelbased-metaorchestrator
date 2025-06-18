@@ -1,4 +1,4 @@
-from fluidos_model_orchestrator.common import KnownIntent
+from fluidos_model_orchestrator.common.intent import KnownIntent
 
 
 def test_intent_values():

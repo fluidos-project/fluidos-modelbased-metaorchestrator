@@ -92,9 +92,7 @@ class RliceOrchestrator(OrchestratorInterface):
 
         return normalized_state
 
-    def rank_resources(self, providers: list[ResourceProvider], prediction: ModelPredictResponse,
-                       request: ModelPredictRequest) -> list[ResourceProvider]:
-
+    def rank_resources(self, providers: list[ResourceProvider], prediction: ModelPredictResponse, request: ModelPredictRequest) -> list[ResourceProvider]:
         logger.debug(f"ModelPredictRequest pod_request: {request.pod_request}")
 
         nodes_features = []
