@@ -7,31 +7,9 @@ from kopf._cogs.structs import bodies  # type: ignore
 from kopf._cogs.structs import patches  # type: ignore
 
 from fluidos_model_orchestrator.common import Intent
-from fluidos_model_orchestrator.common import ModelPredictRequest
+from fluidos_model_orchestrator.common import requires_monitoring
+from fluidos_model_orchestrator.common.intent import has_intent_validation_failed
 from fluidos_model_orchestrator.configuration import CONFIGURATION
-from fluidos_model_orchestrator.model import convert_to_model_request
-
-
-def requires_validation(intent: Intent) -> bool:
-    return intent.needs_monitoring()
-
-
-def has_intent_validation_failed(intent: Intent, prometheus_ref: str) -> bool:
-    return False
-
-
-def requires_monitoring(spec: dict[str, Any], namespace: str | None) -> list[Intent]:
-    if namespace is None:
-        namespace = "default"
-    request: ModelPredictRequest | None = convert_to_model_request(spec, namespace)
-
-    if request is None:
-        return []
-
-    return [
-        intent for intent in request.intents
-        if requires_validation(intent)
-    ]
 
 
 @kopf.daemon("fluidosdeployments", cancellation_timeout=5)  # type: ignore

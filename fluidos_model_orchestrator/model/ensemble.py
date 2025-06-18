@@ -4,13 +4,13 @@ import logging
 import uuid
 from collections.abc import Iterable
 
-from fluidos_model_orchestrator.common import cpu_to_int
-from fluidos_model_orchestrator.common import memory_to_int
 from fluidos_model_orchestrator.common import ModelPredictRequest
 from fluidos_model_orchestrator.common import ModelPredictResponse
-from fluidos_model_orchestrator.common import OrchestratorInterface
 from fluidos_model_orchestrator.common import Resource
 from fluidos_model_orchestrator.common import ResourceProvider
+from fluidos_model_orchestrator.common.model import OrchestratorInterface
+from fluidos_model_orchestrator.common.resource import cpu_to_int
+from fluidos_model_orchestrator.common.resource import memory_to_int
 
 
 logger = logging.getLogger(__name__)

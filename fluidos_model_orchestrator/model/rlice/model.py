@@ -7,13 +7,13 @@ import torch  # type: ignore
 import torch.nn as nn  # type: ignore
 from huggingface_hub import PyTorchModelHubMixin  # type: ignore
 
-from fluidos_model_orchestrator.common import cpu_to_int
-from fluidos_model_orchestrator.common import FlavorK8SliceData
-from fluidos_model_orchestrator.common import memory_to_int
 from fluidos_model_orchestrator.common import ModelPredictRequest
 from fluidos_model_orchestrator.common import ModelPredictResponse
-from fluidos_model_orchestrator.common import OrchestratorInterface
 from fluidos_model_orchestrator.common import ResourceProvider
+from fluidos_model_orchestrator.common.flavor import FlavorK8SliceData
+from fluidos_model_orchestrator.common.model import OrchestratorInterface
+from fluidos_model_orchestrator.common.resource import cpu_to_int
+from fluidos_model_orchestrator.common.resource import memory_to_int
 from fluidos_model_orchestrator.model.utils import convert_cpu_to_n
 from fluidos_model_orchestrator.model.utils import convert_memory_to_Ki
 from fluidos_model_orchestrator.model.utils import FLUIDOS_COL_NAMES

@@ -7,10 +7,10 @@ import kopf  # type: ignore
 from kopf._cogs.structs import bodies  # type: ignore
 from kopf._cogs.structs import patches  # type: ignore
 
-from fluidos_model_orchestrator.common import build_flavor
 from fluidos_model_orchestrator.common import ResourceFinder
+from fluidos_model_orchestrator.common.flavor import build_flavor
+from fluidos_model_orchestrator.common.flavor import FlavorK8SliceData
 from fluidos_model_orchestrator.configuration import CONFIGURATION
-from fluidos_model_orchestrator.flavor import FlavorK8SliceData
 from fluidos_model_orchestrator.model.carbon_aware.forecast_updater import update_local_flavor_forecasted_data
 from fluidos_model_orchestrator.resources import get_resource_finder
 

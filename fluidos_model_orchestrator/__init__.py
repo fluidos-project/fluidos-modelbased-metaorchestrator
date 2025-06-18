@@ -3,14 +3,6 @@ from typing import Any
 
 import kopf  # type: ignore
 
-from .common import ExternalResourceProvider
-from .common import Intent
-from .common import KnownIntent
-from .common import ModelPredictRequest
-from .common import ModelPredictResponse
-from .common import OrchestratorInterface
-from .common import ResourceFinder
-from .common import ResourceProvider
 from .configuration import CONFIGURATION
 from .daemons_and_times.flavor import daemons_for_flavors_observation  # noqa
 from .daemons_and_times.fluidos_deployment import daemons_for_fluidos_deployment  # noqa
@@ -21,7 +13,15 @@ from .model import get_model_object
 from .resources import get_resource_finder
 from .start_and_stop import cleanup_function  # noqa
 from .start_and_stop import configure  # noqa
-from fluidos_model_orchestrator.resources.mspl.mspl_resource_provider import MSPLIntentWrapper  # type: ignore
+from fluidos_model_orchestrator.common import ResourceFinder
+from fluidos_model_orchestrator.common.intent import Intent
+from fluidos_model_orchestrator.common.intent import KnownIntent
+from fluidos_model_orchestrator.common.model import ModelPredictRequest
+from fluidos_model_orchestrator.common.model import ModelPredictResponse
+from fluidos_model_orchestrator.common.model import OrchestratorInterface
+from fluidos_model_orchestrator.common.resource import ExternalResourceProvider
+from fluidos_model_orchestrator.common.resource import ResourceProvider
+from fluidos_model_orchestrator.resources.mspl.mspl_resource_provider import MSPLIntentWrapper
 # from .rescheduler import rescheduler
 
 
@@ -97,6 +97,8 @@ async def metaorchestration(spec: dict[str, Any], name: str, namespace: str, log
             "status": "Failure",
             "msg": "Unable to find resource matching requirement"
         }
+
+    logger.info("Checking if monitoring is required")
 
     return {
         "status": "Success",
