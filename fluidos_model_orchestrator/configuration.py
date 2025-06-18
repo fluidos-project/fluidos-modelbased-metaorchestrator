@@ -5,8 +5,8 @@ from typing import Any
 
 import kopf  # type: ignore
 from kubernetes.client import CoreV1Api  # type: ignore
-from kubernetes.client import V1ConfigMapList
-from kubernetes.client import V1SecretList
+from kubernetes.client import V1ConfigMapList  # type: ignore
+from kubernetes.client import V1SecretList  # type: ignore
 from kubernetes.client.api_client import ApiClient  # type: ignore
 from kubernetes.client.configuration import Configuration as K8SConfig  # type: ignore
 from kubernetes.client.exceptions import ApiException  # type: ignore
@@ -58,7 +58,7 @@ def _retrieve_update_flavor(config: Configuration, logger: logging.Logger) -> tu
     api_endpoint = CoreV1Api(config.k8s_client)
 
     try:
-        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(CONFIGURATION.namespace)
+        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(config.namespace)
         if len(config_maps.items):
             for item in config_maps.items:
                 if item.metadata is None:
@@ -122,7 +122,8 @@ def _retrieve_api_key(config: Configuration, logger: logging.Logger) -> dict[str
                 if config_map.metadata.name == "fluidos-mbmo-configmap":
                     logger.info("ConfigMap identified")
                     if config_map.data is None:
-                        raise ValueError("ConfigMap data missing.")
+                        logger.error("Unable to retrieve API Keys. ConfigMap data missing.")
+                        raise ValueError("Unable to retrieve API Keys. ConfigMap data missing.")
 
                     data: dict[str, str] = config_map.data
                     return {
@@ -145,7 +146,7 @@ def _retrieve_mspl_endpoint(config: Configuration, logger: logging.Logger) -> st
     api_endpoint = CoreV1Api(config.k8s_client)
 
     try:
-        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(CONFIGURATION.namespace)
+        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(config.namespace)
         if len(config_maps.items):
             for item in config_maps.items:
                 if item.metadata is None:
@@ -154,7 +155,8 @@ def _retrieve_mspl_endpoint(config: Configuration, logger: logging.Logger) -> st
                 if item.metadata.name == "fluidos-mbmo-configmap":
                     logger.info("ConfigMap identified")
                     if item.data is None:
-                        raise ValueError("ConfigMap data missing.")
+                        logger.error("Unable to retrieve MSPL endpoint. ConfigMap data missing.")
+                        raise ValueError("Unable to retrieve MSPL endpoint. ConfigMap data missing.")
 
                     data: dict[str, str] = item.data
 
@@ -171,7 +173,7 @@ def _retrieve_architecture(config: Configuration, logger: logging.Logger) -> str
     api_endpoint = CoreV1Api(config.k8s_client)
 
     try:
-        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(CONFIGURATION.namespace)
+        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(config.namespace)
         if len(config_maps.items):
             for item in config_maps.items:
                 if item.metadata is None:
@@ -180,7 +182,8 @@ def _retrieve_architecture(config: Configuration, logger: logging.Logger) -> str
                 if item.metadata.name == "fluidos-mbmo-configmap":
                     logger.info("ConfigMap identified")
                     if item.data is None:
-                        raise ValueError("ConfigMap data missing.")
+                        logger.error("Unable to retrieve architecture. ConfigMap data missing.")
+                        raise ValueError("Unable to retrieve architecture. ConfigMap data missing.")
 
                     data: dict[str, str] = item.data
 
@@ -197,7 +200,7 @@ def _retrieve_node_identity(config: Configuration, logger: logging.Logger) -> di
     api_endpoint = CoreV1Api(config.k8s_client)
 
     try:
-        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(CONFIGURATION.namespace)
+        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(config.namespace)
         if len(config_maps.items):
             for item in config_maps.items:
                 if item.metadata is None:
@@ -216,8 +219,8 @@ def _retrieve_node_identity(config: Configuration, logger: logging.Logger) -> di
         logger.error(f"Unable to retrieve configmap {e=}")
         raise e
 
-    logger.error("Something went wrong while retrieving node identity")
-    raise ValueError("Unable to retrieve node identity")
+    logger.error("Something went wrong while retrieving node identity. Check that meta-orchestrator connected to a FLUIDOS Node.")
+    raise ValueError("Something went wrong while retrieving node identity. Check that the meta-orchestrator connected to a FLUIDOS Node.")
 
 
 CONFIGURATION = Configuration()

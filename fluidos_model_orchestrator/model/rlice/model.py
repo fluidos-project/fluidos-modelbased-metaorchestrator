@@ -1,70 +1,63 @@
-import json
 import logging
-from pathlib import Path
-from typing import Any,cast
+from typing import Any
+from typing import cast
 
-import pandas as pd
-import numpy as np
-import pkg_resources
+import numpy as np  # type: ignore
 import torch  # type: ignore
 import torch.nn as nn  # type: ignore
-import torch.nn.functional as F  # type: ignore
 from huggingface_hub import PyTorchModelHubMixin  # type: ignore
-from sentence_transformers import SentenceTransformer  # type: ignore
 
-from fluidos_model_orchestrator.model.utils import convert_cpu_to_n
-from fluidos_model_orchestrator.model.utils import convert_memory_to_Ki
 from fluidos_model_orchestrator.common import cpu_to_int
-from fluidos_model_orchestrator.common import memory_to_int
 from fluidos_model_orchestrator.common import FlavorK8SliceData
+from fluidos_model_orchestrator.common import memory_to_int
 from fluidos_model_orchestrator.common import ModelPredictRequest
 from fluidos_model_orchestrator.common import ModelPredictResponse
 from fluidos_model_orchestrator.common import OrchestratorInterface
 from fluidos_model_orchestrator.common import ResourceProvider
-from fluidos_model_orchestrator.common import Resource
+from fluidos_model_orchestrator.model.utils import convert_cpu_to_n
+from fluidos_model_orchestrator.model.utils import convert_memory_to_Ki
 from fluidos_model_orchestrator.model.utils import FLUIDOS_COL_NAMES
 
 logger = logging.getLogger(__name__)
 REPO_ID = "fluidos/rlice"
 
+
 class EquivariantLayer(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels: int, out_channels: int) -> None:
         super().__init__()
         self.Gamma = nn.Linear(in_channels, out_channels, bias=False)
         self.Lambda = nn.Linear(in_channels, out_channels, bias=False)
         nn.init.kaiming_uniform_(self.Gamma.weight, nonlinearity='linear')
         nn.init.kaiming_uniform_(self.Lambda.weight, nonlinearity='linear')
-    
-    def forward(self, x: torch.Tensor):
-   
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         xm, _ = torch.max(x, dim=1, keepdim=True)
         out = self.Lambda(x) - self.Gamma(xm)
         return out
 
 
 class QNetwork(nn.Module):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.network = nn.Sequential(
-                EquivariantLayer(5, 128),
-                nn.ReLU(),
-                EquivariantLayer(128, 64),
-                nn.ReLU(),
-                EquivariantLayer(64, 1),
-            )
+            EquivariantLayer(5, 128),
+            nn.ReLU(),
+            EquivariantLayer(128, 64),
+            nn.ReLU(),
+            EquivariantLayer(64, 1),
+        )
 
-    def forward(self, x):
-        
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = self.network(x)
         return torch.squeeze(out, dim=-1)
 
+
 class OrchestrationModel(nn.Module, PyTorchModelHubMixin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.dqn = QNetwork()
         self.load_from_hugging_face(model_name="deepset_dqn.cleanrl_model")
-        
-        
+
     def load_from_hugging_face(self, model_name: str | None = None) -> Any:
         from huggingface_hub import hf_hub_download  # type: ignore
 
@@ -77,7 +70,6 @@ class OrchestrationModel(nn.Module, PyTorchModelHubMixin):
         # Load the model from the downloaded path
         self.dqn.load_state_dict(torch.load(downloaded_model_path))
         self.dqn.eval()
-        
 
     def forward(self, obs: list[torch.Tensor]) -> torch.Tensor:
         with torch.no_grad():
@@ -85,27 +77,20 @@ class OrchestrationModel(nn.Module, PyTorchModelHubMixin):
             actions = torch.argmax(q_values, dim=1).cpu().numpy()
             node_id = actions[0]
         return node_id
-        
+
 
 class RliceOrchestrator(OrchestratorInterface):
-
     def __init__(self) -> None:
-
         self.model = OrchestrationModel()
-        
-    def min_max_normalization(self, state: list) -> torch.Tensor:
-        
+
+    def min_max_normalization(self, state: list[list[int | float | str]]) -> list[torch.Tensor]:
         num_nodes = len(state)
-        min_vals = np.tile([0,0,0,0,0],(num_nodes,1))
-        max_vals = np.tile([1000*1000,64*1024*1024,2,1000*1000,64*1024*1024],(num_nodes,1))
+        min_vals = np.tile([0, 0, 0, 0, 0], (num_nodes, 1))
+        max_vals = np.tile([1000 * 1000, 64 * 1024 * 1024, 2, 1000 * 1000, 64 * 1024 * 1024], (num_nodes, 1))
         normalized_state = (state - min_vals) / (max_vals - min_vals)
         normalized_state = np.clip(normalized_state, 0, 1)
 
         return normalized_state
-
-    def predict(self, request: ModelPredictRequest, architecture: str = "amd64") -> ModelPredictResponse:
-        
-        return None
 
     def rank_resources(self, providers: list[ResourceProvider], prediction: ModelPredictResponse,
                        request: ModelPredictRequest) -> list[ResourceProvider]:
@@ -115,19 +100,19 @@ class RliceOrchestrator(OrchestratorInterface):
         nodes_features = []
         considered_providers = []
 
-        cpuRequest,ramRequest=None,None
+        cpuRequest, ramRequest = None, None
 
-        # build input 
+        # build input
         modified_pod_manifest = request.pod_request[FLUIDOS_COL_NAMES.POD_MANIFEST]
         if "requests" in modified_pod_manifest['spec']['containers'][0]["resources"]:
             cpuRequest = convert_cpu_to_n(modified_pod_manifest['spec']['containers'][0]['resources']['requests']['cpu'], FLUIDOS_COL_NAMES.POD_CPU)
             ramRequest = convert_memory_to_Ki(modified_pod_manifest['spec']['containers'][0]['resources']['requests']['memory'], FLUIDOS_COL_NAMES.POD_MEMORY)
 
-        if cpuRequest == None or cpuRequest <= 0:
+        if cpuRequest is None or int(cpuRequest) <= 0:
             logging.exception("CPU request must be provided greater than 0")
             return []
 
-        if ramRequest == None or ramRequest <= 0:
+        if ramRequest is None or int(ramRequest) <= 0:
             logging.exception("RAM request must be provided greater than 0")
             return []
 
@@ -149,9 +134,9 @@ class RliceOrchestrator(OrchestratorInterface):
             period = price_dict['period']
 
             if period == "weekly":
-                hourly_price = amount/(24*7)
+                hourly_price = amount / (24 * 7)
             elif period == "monthly":
-                hourly_price = amount/(24*30)
+                hourly_price = amount / (24 * 30)
             elif period == "hourly":
                 hourly_price = amount
             else:
@@ -160,8 +145,8 @@ class RliceOrchestrator(OrchestratorInterface):
 
             cpu = cpu_to_int(type_data.characteristics.cpu)
             mem = memory_to_int(type_data.characteristics.memory)
-            
-            row = [cpu,mem,hourly_price,cpuRequest,ramRequest]
+
+            row = [cpu, mem, hourly_price, cpuRequest, ramRequest]
             nodes_features.append(row)
             considered_providers.append(flavor.metadata.name)
 
@@ -177,8 +162,4 @@ class RliceOrchestrator(OrchestratorInterface):
             if provider.flavor.metadata.name == best_node_id:
                 return [provider]  # return list of 1 element with best node
 
-
-
-        
-           
-
+        raise RuntimeError("This should not happen")

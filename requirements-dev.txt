@@ -5,9 +5,8 @@ faker
 flake8
 kubernetes-stubs
 mypy
-numpy
-pytest==7.4.4
-pytest-kubernetes==0.3.1
+pytest==8.4.0
+pytest-kubernetes==0.6.0
 requests-mock==1.12.1
 tqdm
 types-PyYAML
