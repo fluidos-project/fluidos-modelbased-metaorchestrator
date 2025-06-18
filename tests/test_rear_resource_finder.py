@@ -42,7 +42,8 @@ def test_find_local(k8s: AClusterManager) -> None:
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
     configuration = Configuration(
-        k8s_client=_build_k8s_client(myconfig)
+        k8s_client=_build_k8s_client(myconfig),
+        namespace="default"
     )
 
     finder = REARResourceFinder(configuration)
@@ -63,7 +64,9 @@ def test_solver_creation_and_check(k8s: AClusterManager) -> None:
     myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
-    configuration = Configuration()
+    configuration = Configuration(
+        namespace="default"
+    )
 
     logger = logging.getLogger(__name__)
 
@@ -118,7 +121,9 @@ def test_retrieve_peering_candidate_list(k8s: AClusterManager) -> None:
     myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
-    configuration = Configuration()
+    configuration = Configuration(
+        namespace="default"
+    )
 
     logger = logging.getLogger(__name__)
 
@@ -145,7 +150,9 @@ def test_flavor_update(k8s: AClusterManager) -> None:
     myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
-    configuration = Configuration()
+    configuration = Configuration(
+        namespace="default"
+    )
     logger = logging.getLogger(__name__)
 
     enrich_configuration(configuration, kopf.OperatorSettings(), None, None, {}, logger, myconfig)
