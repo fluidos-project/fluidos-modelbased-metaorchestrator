@@ -54,7 +54,7 @@ def _get_image_name_parts(image_name: str) -> tuple[str, str | None]:
             print(image_name)
             raise e
 
-        return ("/".join(path_parts[:-1]) + image, tag)
+        return ("/".join(path_parts[:-1] + [image]), tag)
     else:
         return image_name, None  # None defaults to latest
 
