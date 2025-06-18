@@ -63,8 +63,10 @@ async def daemons_for_fluidos_deployment(
                     logger.info(f"{namespace}/{name} failed when validating {intent.name}")
 
                     # reorchestrate
+                    # find new resource
+                    # move workload
+                    # ??? deallocate ???
 
-                    # find the resource
                     stopped.wait(CONFIGURATION.MONITOR_SLEEP_TIME * 2)
                     break
             else:
