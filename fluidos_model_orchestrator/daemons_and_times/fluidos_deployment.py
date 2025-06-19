@@ -64,6 +64,7 @@ async def daemons_for_fluidos_deployment(
 
                     # reorchestrate
                     # find new resource
+
                     # move workload
                     # ??? deallocate ???
 

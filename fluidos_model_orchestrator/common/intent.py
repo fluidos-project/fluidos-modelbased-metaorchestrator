@@ -110,6 +110,13 @@ def _check_memory(provider: ResourceProvider, value: str) -> bool:
     return False
 
 
+def _validate_vm_type(provider: ResourceProvider, value: str) -> bool:
+    if provider.flavor.spec.flavor_type.type_identifier is FlavorType.K8SLICE:
+        return cast(FlavorK8SliceData, provider.flavor.spec.flavor_type.type_data).properties.get("additionalProperties", {}).get("vm-type", "") == value
+
+    return False
+
+
 @unique
 class KnownIntent(Enum):
     # k8s resources
@@ -117,6 +124,9 @@ class KnownIntent(Enum):
     memory = "memory", False, _check_memory
     gpu = "gpu", False, _check_gpu
     architecture = "architecture", False, _validate_architecture
+
+    # Node VM charactecteristics
+    vm_type = "vm-type", False, _validate_vm_type
 
     # high order requests
     latency = "latency", False, _always_true, True
