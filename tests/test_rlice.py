@@ -1,21 +1,21 @@
 import pkg_resources
 import yaml
 
-from fluidos_model_orchestrator.model import convert_to_model_request
-from fluidos_model_orchestrator.common import Flavor
-from fluidos_model_orchestrator.common import FlavorCharacteristics
-from fluidos_model_orchestrator.common import FlavorK8SliceData
-from fluidos_model_orchestrator.common import FlavorMetadata
-from fluidos_model_orchestrator.common import FlavorSpec
-from fluidos_model_orchestrator.common import FlavorType
-from fluidos_model_orchestrator.common import FlavorTypeData
-from fluidos_model_orchestrator.common import GPUData
-from fluidos_model_orchestrator.common import Intent
-from fluidos_model_orchestrator.common import KnownIntent
 from fluidos_model_orchestrator.common import ModelPredictResponse
 from fluidos_model_orchestrator.common import Resource
-from fluidos_model_orchestrator.resources.rear.local_resource_provider import LocalResourceProvider
+from fluidos_model_orchestrator.common.flavor import Flavor
+from fluidos_model_orchestrator.common.flavor import FlavorCharacteristics
+from fluidos_model_orchestrator.common.flavor import FlavorK8SliceData
+from fluidos_model_orchestrator.common.flavor import FlavorMetadata
+from fluidos_model_orchestrator.common.flavor import FlavorSpec
+from fluidos_model_orchestrator.common.flavor import FlavorType
+from fluidos_model_orchestrator.common.flavor import FlavorTypeData
+from fluidos_model_orchestrator.common.flavor import GPUData
+from fluidos_model_orchestrator.common.resource import ResourceProvider
+from fluidos_model_orchestrator.model import convert_to_model_request
 from fluidos_model_orchestrator.model.rlice.model import RliceOrchestrator
+from fluidos_model_orchestrator.resources.rear.local_resource_provider import LocalResourceProvider
+
 
 def test_validate_output() -> None:
 
@@ -69,9 +69,9 @@ def test_validate_output() -> None:
             owner={},
             providerID="provider_id",
             price={
-                "amount":"0.16",
-                "currency":"USD",
-                "period":"hourly"
+                "amount": "0.16",
+                "currency": "USD",
+                "period": "hourly"
             }
         )
     ))
@@ -99,21 +99,22 @@ def test_validate_output() -> None:
             owner={},
             providerID="provider_id",
             price={
-                "amount":"0.06",
-                "currency":"USD",
-                "period":"hourly"
+                "amount": "0.06",
+                "currency": "USD",
+                "period": "hourly"
             }
         )
     ))
 
-    providers: list[ResourceProvider] = [bad_no_price,good,less_cost]
+    providers: list[ResourceProvider] = [bad_no_price, good, less_cost]
 
     with pkg_resources.resource_stream(__name__, "examples/test-pod-w-intent.yaml") as stream:
         request = convert_to_model_request(
             yaml.safe_load(stream)["spec"],
             "fluidos"
         )
-       
+    assert request is not None
+
     prediction = ModelPredictResponse(
         "resp-123",
         Resource(id="res-123", architecture="amd64", cpu="250m", memory="64Mi"),
@@ -122,6 +123,6 @@ def test_validate_output() -> None:
 
     orchestrator = RliceOrchestrator()
     ranked = orchestrator.rank_resources(providers, prediction, request)
-    
+
     assert ranked is not None
     assert len(ranked) == 1

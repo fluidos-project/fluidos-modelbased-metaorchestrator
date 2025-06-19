@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from fluidos_model_orchestrator.common import OrchestratorInterface
+from fluidos_model_orchestrator.common.model import OrchestratorInterface
 from fluidos_model_orchestrator.model.candidate_generation.model import Orchestrator as CGOrchestrator
 from fluidos_model_orchestrator.model.model_ranker.model import Orchestrator as BasicRankerOrchestrator
 from fluidos_model_orchestrator.model.utils import MODEL_TYPES

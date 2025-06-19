@@ -5,14 +5,14 @@ from typing import cast
 
 import numpy as np  # type: ignore
 
-from fluidos_model_orchestrator.common import cpu_to_int
-from fluidos_model_orchestrator.common import FlavorK8SliceData
-from fluidos_model_orchestrator.common import KnownIntent
-from fluidos_model_orchestrator.common import memory_to_int
 from fluidos_model_orchestrator.common import ModelPredictRequest
 from fluidos_model_orchestrator.common import ModelPredictResponse
-from fluidos_model_orchestrator.common import OrchestratorInterface
 from fluidos_model_orchestrator.common import ResourceProvider
+from fluidos_model_orchestrator.common.flavor import FlavorK8SliceData
+from fluidos_model_orchestrator.common.intent import KnownIntent
+from fluidos_model_orchestrator.common.model import OrchestratorInterface
+from fluidos_model_orchestrator.common.resource import cpu_to_int
+from fluidos_model_orchestrator.common.resource import memory_to_int
 from fluidos_model_orchestrator.model.carbon_aware.classes.carbon_aware_flavour import CarbonAwareFlavour
 from fluidos_model_orchestrator.model.carbon_aware.classes.carbon_aware_pod import CarbonAwarePod
 from fluidos_model_orchestrator.model.carbon_aware.classes.carbon_aware_timeslot import CarbonAwareTimeslot

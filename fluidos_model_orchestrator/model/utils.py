@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from ..common import KnownIntent
+from fluidos_model_orchestrator.common.intent import KnownIntent
 
 
 class DATA_DEPENDENCY(Enum):

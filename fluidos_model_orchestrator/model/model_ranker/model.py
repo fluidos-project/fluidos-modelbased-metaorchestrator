@@ -9,10 +9,10 @@ import pandas as pd
 import torch  # type: ignore
 import torch.nn as nn  # type: ignore
 
-from fluidos_model_orchestrator.common import ModelPredictRequest
-from fluidos_model_orchestrator.common import ModelPredictResponse
-from fluidos_model_orchestrator.common import OrchestratorInterface
 from fluidos_model_orchestrator.common import Resource
+from fluidos_model_orchestrator.common.model import ModelPredictRequest
+from fluidos_model_orchestrator.common.model import ModelPredictResponse
+from fluidos_model_orchestrator.common.model import OrchestratorInterface
 from fluidos_model_orchestrator.model.common import ModelInterface
 from fluidos_model_orchestrator.model.utils import D_UNITS
 from fluidos_model_orchestrator.model.utils import DATA_DEPENDENCY

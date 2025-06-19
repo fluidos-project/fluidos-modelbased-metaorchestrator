@@ -1,8 +1,8 @@
 from typing import Any
 
-from fluidos_model_orchestrator.common import ExternalResourceProvider
-from fluidos_model_orchestrator.common import Intent
-from fluidos_model_orchestrator.common import KnownIntent
+from fluidos_model_orchestrator.common.intent import Intent
+from fluidos_model_orchestrator.common.intent import KnownIntent
+from fluidos_model_orchestrator.common.resource import ExternalResourceProvider
 from fluidos_model_orchestrator.configuration import CONFIGURATION
 from fluidos_model_orchestrator.resources.mspl import request_application
 

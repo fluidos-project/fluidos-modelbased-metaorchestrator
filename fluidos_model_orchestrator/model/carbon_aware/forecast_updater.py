@@ -2,8 +2,8 @@ import logging
 
 import requests
 
-from fluidos_model_orchestrator.common import Flavor
-from fluidos_model_orchestrator.common import FlavorType
+from fluidos_model_orchestrator.common.flavor import Flavor
+from fluidos_model_orchestrator.common.flavor import FlavorType
 from fluidos_model_orchestrator.configuration import CONFIGURATION
 
 
