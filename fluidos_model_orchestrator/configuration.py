@@ -20,6 +20,8 @@ class Configuration:
     k8s_client: ApiClient | None = None
     identity: dict[str, str] = field(default_factory=dict)
     api_keys: dict[str, str] = field(default_factory=dict)
+    DAEMON_SLEEP_TIME: float = 60. * 60.  # 1h in seconds
+    MONITOR_SLEEP_TIME: float = 5.  # 5 seconds
     UPDATE_FLAVORS: bool = True
     FLAVOR_UPDATE_SLEEP_TIME: float = 60. * 60.  # 1h in seconds
     architecture: str = "amd64"
@@ -27,6 +29,7 @@ class Configuration:
     API_SLEEP_TIME: float = 0.1  # 100 ms
     SOLVER_SLEEPING_TIME: float = .5  # 500ms
     MSPL_ENDPOINT: str = ""
+    local_prometheus: str = "localhost:9090"  # TODO: should be loaded from configuration
 
     def check_identity(self, identity: dict[str, str]) -> bool:
         return all(

@@ -8,7 +8,7 @@ import docker  # type: ignore
 from docker.errors import DockerException  # type: ignore
 from docker.models.images import Image  # type: ignore
 
-from .common import ContainerImageEmbedding
+from fluidos_model_orchestrator.common.model import ContainerImageEmbedding  # type: ignore
 
 
 def extract_image_embedding(image: str) -> ContainerImageEmbedding:

@@ -1,14 +1,14 @@
-from fluidos_model_orchestrator.common import Flavor
-from fluidos_model_orchestrator.common import FlavorCharacteristics
-from fluidos_model_orchestrator.common import FlavorK8SliceData
-from fluidos_model_orchestrator.common import FlavorMetadata
-from fluidos_model_orchestrator.common import FlavorSpec
-from fluidos_model_orchestrator.common import FlavorType
-from fluidos_model_orchestrator.common import FlavorTypeData
-from fluidos_model_orchestrator.common import GPUData
-from fluidos_model_orchestrator.common import Intent
-from fluidos_model_orchestrator.common import KnownIntent
-from fluidos_model_orchestrator.common import validate_location
+from fluidos_model_orchestrator.common.flavor import Flavor
+from fluidos_model_orchestrator.common.flavor import FlavorCharacteristics
+from fluidos_model_orchestrator.common.flavor import FlavorK8SliceData
+from fluidos_model_orchestrator.common.flavor import FlavorMetadata
+from fluidos_model_orchestrator.common.flavor import FlavorSpec
+from fluidos_model_orchestrator.common.flavor import FlavorType
+from fluidos_model_orchestrator.common.flavor import FlavorTypeData
+from fluidos_model_orchestrator.common.flavor import GPUData
+from fluidos_model_orchestrator.common.intent import Intent
+from fluidos_model_orchestrator.common.intent import KnownIntent
+from fluidos_model_orchestrator.common.intent import validate_location
 from fluidos_model_orchestrator.resources.rear.local_resource_provider import LocalResourceProvider
 
 
@@ -260,3 +260,98 @@ def test_validate_tee_readiness() -> None:
     assert intent2.validates(good)
     assert not intent2.validates(bad_no_tee)
     assert not intent2.validates(bad_no_information)
+
+
+def test_validate_vm_type_satisfaction() -> None:
+    provider_bad_wrong_value = LocalResourceProvider("test", Flavor(
+        metadata=FlavorMetadata(
+            name="foo",
+            owner_references={}
+        ),
+        spec=FlavorSpec(
+            availability=True,
+            flavor_type=FlavorTypeData(
+                type_identifier=FlavorType.K8SLICE,
+                type_data=FlavorK8SliceData(
+                    characteristics=FlavorCharacteristics(cpu="1n", memory="1Gi", architecture="arm", gpu=GPUData(cores=0, memory="", model="")),
+                    policies={},
+                    properties={
+                        "additionalProperties": {
+                            "vm-type": "the-wrong-vm-type"
+                        }
+                    }
+                )
+            ),
+            location={
+                "city": "Dublin",
+                "country": "Ireland",
+            },
+            network_property_type="",
+            owner={},
+            providerID="provider_id",
+            price={}
+        )
+    ))
+    provider_bad_no_value = LocalResourceProvider("test", Flavor(
+        metadata=FlavorMetadata(
+            name="foo",
+            owner_references={}
+        ),
+        spec=FlavorSpec(
+            availability=True,
+            flavor_type=FlavorTypeData(
+                type_identifier=FlavorType.K8SLICE,
+                type_data=FlavorK8SliceData(
+                    characteristics=FlavorCharacteristics(cpu="1n", memory="1Gi", architecture="arm", gpu=GPUData(cores=0, memory="", model="")),
+                    policies={},
+                    properties={
+                        "additionalProperties": {
+                        }
+                    }
+                )
+            ),
+            location={
+                "city": "Dublin",
+                "country": "Ireland",
+            },
+            network_property_type="",
+            owner={},
+            providerID="provider_id",
+            price={}
+        )
+    ))
+    provider_good = LocalResourceProvider("test", Flavor(
+        metadata=FlavorMetadata(
+            name="foo",
+            owner_references={}
+        ),
+        spec=FlavorSpec(
+            availability=True,
+            flavor_type=FlavorTypeData(
+                type_identifier=FlavorType.K8SLICE,
+                type_data=FlavorK8SliceData(
+                    characteristics=FlavorCharacteristics(cpu="1n", memory="1Gi", architecture="arm", gpu=GPUData(cores=0, memory="", model="")),
+                    policies={},
+                    properties={
+                        "additionalProperties": {
+                            "vm-type": "my-vm-type"
+                        }
+                    }
+                )
+            ),
+            location={
+                "city": "Dublin",
+                "country": "Ireland",
+            },
+            network_property_type="",
+            owner={},
+            providerID="provider_id",
+            price={}
+        )
+    ))
+
+    intent = Intent(KnownIntent.vm_type, "my-vm-type")
+
+    assert intent.validates(provider_good)
+    assert not intent.validates(provider_bad_wrong_value)
+    assert not intent.validates(provider_bad_no_value)

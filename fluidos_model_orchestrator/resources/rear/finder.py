@@ -9,14 +9,14 @@ from typing import Any
 from kubernetes import client  # type: ignore
 from kubernetes.client.exceptions import ApiException  # type: ignore
 
-from fluidos_model_orchestrator.common import build_flavor
-from fluidos_model_orchestrator.common import ExternalResourceProvider
-from fluidos_model_orchestrator.common import Flavor
-from fluidos_model_orchestrator.common import FlavorType
-from fluidos_model_orchestrator.common import Intent
-from fluidos_model_orchestrator.common import Resource
 from fluidos_model_orchestrator.common import ResourceFinder
-from fluidos_model_orchestrator.common import ResourceProvider
+from fluidos_model_orchestrator.common.flavor import build_flavor
+from fluidos_model_orchestrator.common.flavor import Flavor
+from fluidos_model_orchestrator.common.flavor import FlavorType
+from fluidos_model_orchestrator.common.intent import Intent
+from fluidos_model_orchestrator.common.resource import ExternalResourceProvider
+from fluidos_model_orchestrator.common.resource import Resource
+from fluidos_model_orchestrator.common.resource import ResourceProvider
 from fluidos_model_orchestrator.configuration import CONFIGURATION
 from fluidos_model_orchestrator.configuration import Configuration
 from fluidos_model_orchestrator.resources.rear.local_resource_provider import LocalResourceProvider

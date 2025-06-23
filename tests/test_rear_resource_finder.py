@@ -6,8 +6,8 @@ import pkg_resources  # type: ignore
 import pytest  # type: ignore
 from pytest_kubernetes.providers import AClusterManager  # type: ignore
 
-from fluidos_model_orchestrator.common import FlavorK8SliceData
-from fluidos_model_orchestrator.common import Resource
+from fluidos_model_orchestrator.common.flavor import FlavorK8SliceData
+from fluidos_model_orchestrator.common.resource import Resource
 from fluidos_model_orchestrator.configuration import _build_k8s_client
 from fluidos_model_orchestrator.configuration import Configuration
 from fluidos_model_orchestrator.configuration import enrich_configuration

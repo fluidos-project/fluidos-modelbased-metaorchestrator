@@ -11,11 +11,11 @@ import torch.nn.functional as F  # type: ignore
 from huggingface_hub import PyTorchModelHubMixin  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 
-from ...common import KnownIntent
-from ...common import ModelPredictRequest
-from ...common import ModelPredictResponse
-from ...common import OrchestratorInterface
-from ...common import Resource
+from fluidos_model_orchestrator.common import ModelPredictRequest
+from fluidos_model_orchestrator.common import ModelPredictResponse
+from fluidos_model_orchestrator.common import Resource
+from fluidos_model_orchestrator.common.intent import KnownIntent
+from fluidos_model_orchestrator.common.model import OrchestratorInterface
 from fluidos_model_orchestrator.model.candidate_generation.utils import tr2id_from_str_to_list
 from fluidos_model_orchestrator.model.utils import convert_cpu_to_m
 from fluidos_model_orchestrator.model.utils import convert_memory_to_Ki

@@ -2,7 +2,7 @@ from typing import Any
 
 import yaml
 
-from fluidos_model_orchestrator.common import build_flavor
+from fluidos_model_orchestrator.common.flavor import build_flavor
 
 
 def test_flavor_construction() -> None:
