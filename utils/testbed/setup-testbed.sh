@@ -21,7 +21,10 @@ PROVIDER_NODE_PORT=30001
 
 COMMAND=$(_get_command)
 
-
+# Mitigate issues related to resource usage on Kind, see https://github.com/fluidos-project/node/blob/main/docs/installation/installation.md
+sudo swapoff -a
+sudo sysctl fs.inotify.max_user_instances=8192
+sudo sysctl fs.inotify.max_user_watches=524288
 
 # setup provider DE
 kind create cluster --name provider-germany --config $PWD/provider-cluster-config.yaml --kubeconfig $PWD/provider-DE-config.yaml
