@@ -95,7 +95,7 @@ kubectl apply --kubeconfig $PWD/consumer-config.yaml -f $PWD/../../deployment/fl
 
 # Wait until at least one flavor resource is present
 until kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/provider-IT-config.yaml | grep -q .; do
-  echo "Waiting for flavor resource to be created in provider-DE..."
+  echo "Waiting for flavor resource to be created in provider-IT..."
   sleep 2
 done
 
