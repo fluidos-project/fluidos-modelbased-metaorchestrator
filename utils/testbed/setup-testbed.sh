@@ -21,7 +21,10 @@ PROVIDER_NODE_PORT=30001
 
 COMMAND=$(_get_command)
 
-
+# Mitigate issues related to resource usage on Kind, see https://github.com/fluidos-project/node/blob/main/docs/installation/installation.md
+sudo swapoff -a
+sudo sysctl fs.inotify.max_user_instances=8192
+sudo sysctl fs.inotify.max_user_watches=524288
 
 # setup provider DE
 kind create cluster --name provider-germany --config $PWD/provider-cluster-config.yaml --kubeconfig $PWD/provider-DE-config.yaml
@@ -40,7 +43,11 @@ helm upgrade --install --devel -n fluidos --create-namespace node fluidos/node \
   --wait \
   --kubeconfig $PWD/provider-DE-config.yaml
 
-
+# Wait until at least one flavor resource is present
+until kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/provider-DE-config.yaml | grep -q .; do
+  echo "Waiting for flavor resource to be created in provider-DE..."
+  sleep 2
+done
 
 kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/provider-DE-config.yaml | cut -f1 -d\  | xargs -I% kubectl patch flavor/%  --patch-file ./flavors-location-germany.yaml --type merge -n fluidos --kubeconfig $PWD/provider-DE-config.yaml
 
@@ -84,6 +91,11 @@ kubectl apply -f $PWD/example-mbmo-config-map.yaml --kubeconfig $PWD/consumer-co
 # add CRDs required
 kubectl apply --kubeconfig $PWD/consumer-config.yaml -f $PWD/../../deployment/fluidos-meta-orchestrator/crds
 
+# Wait until at least one flavor resource is present
+until kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/provider-IT-config.yaml | grep -q .; do
+  echo "Waiting for flavor resource to be created in provider-DE..."
+  sleep 2
+done
 
 # pretend the consumer cluster is in Dublin, Ireland
 kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/consumer-config.yaml | cut -f1 -d\  | xargs -I% kubectl patch flavor/%  --patch-file $PWD/flavors-location-ireland.yaml --type merge -n fluidos --kubeconfig $PWD/consumer-config.yaml
