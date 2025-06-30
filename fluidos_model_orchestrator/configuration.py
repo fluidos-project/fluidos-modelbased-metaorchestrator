@@ -31,6 +31,8 @@ class Configuration:
     MSPL_ENDPOINT: str = ""
     local_prometheus: str = "localhost:9090"  # TODO: should be loaded from configuration
 
+    monitor_contracts: bool = False
+
     def check_identity(self, identity: dict[str, str]) -> bool:
         return all(
             self.identity[key] == identity.get(key, "")
@@ -54,6 +56,7 @@ def enrich_configuration(config: Configuration,
     config.MSPL_ENDPOINT = _retrieve_mspl_endpoint(config, logger)
     config.UPDATE_FLAVORS, config.FLAVOR_UPDATE_SLEEP_TIME = _retrieve_update_flavor(config, logger)
     config.api_keys = _retrieve_api_key(config, logger)
+    config.monitor_contracts = _retrieve_monitoring_contracts(config, logger)
 
 
 def _retrieve_update_flavor(config: Configuration, logger: logging.Logger) -> tuple[bool, float]:
@@ -224,6 +227,34 @@ def _retrieve_node_identity(config: Configuration, logger: logging.Logger) -> di
 
     logger.error("Something went wrong while retrieving node identity. Check that meta-orchestrator connected to a FLUIDOS Node.")
     raise ValueError("Something went wrong while retrieving node identity. Check that the meta-orchestrator connected to a FLUIDOS Node.")
+
+
+def _retrieve_monitoring_contracts(config: Configuration, logger: logging.Logger) -> bool:
+    logger.info("Checking if user wants contract monitoring")
+    api_endpoint = CoreV1Api(config.k8s_client)
+
+    try:
+        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(config.namespace)
+        if len(config_maps.items):
+            for item in config_maps.items:
+                if item.metadata is None:
+                    continue
+
+                if item.metadata.name == "fluidos-mbmo-configmap":
+                    logger.info("ConfigMap identified")
+                    if item.data is None:
+                        logger.error("Unable to retrieve architecture. ConfigMap data missing.")
+                        raise ValueError("Unable to retrieve architecture. ConfigMap data missing.")
+
+                    data: dict[str, str] = item.data
+
+                    return data.get("MONITOR_CONTRACTS", "False").casefold() == "true"
+    except ApiException as e:
+        logger.error(f"Unable to retrieve configmap {e=}")
+        raise e
+
+    logger.error("Something went wrong while retrieving MIMO config map.")
+    return False
 
 
 CONFIGURATION = Configuration()
