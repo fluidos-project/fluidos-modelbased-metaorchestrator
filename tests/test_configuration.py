@@ -65,5 +65,6 @@ def test_configuration_enrichment_with_k8s(k8s: AClusterManager) -> None:
     assert config.identity["ip"] == "9.2.3.4:30000"
     assert config.identity["nodeID"] == "my_amazing_node_ID"
     assert config.api_keys["ELECTRICITY_MAP_API_KEY"] == "TEST_KEY_123!"
+    assert config.monitor_contracts is False
 
     k8s.delete()
