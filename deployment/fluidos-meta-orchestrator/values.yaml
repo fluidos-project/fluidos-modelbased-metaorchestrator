@@ -91,3 +91,6 @@ configuration:
 
 mspl:
   endpoint: "<REPLACE WITH MY LOVELY MSPL ENDPOINT>"
+
+
+monitor_contracts: "False"
