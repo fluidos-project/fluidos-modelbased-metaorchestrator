@@ -32,6 +32,7 @@ class Configuration:
     local_prometheus: str = "localhost:9090"  # TODO: should be loaded from configuration
 
     monitor_contracts: bool = False
+    default_vm_type: str = "default-vm-type"
 
     def check_identity(self, identity: dict[str, str]) -> bool:
         return all(
@@ -57,6 +58,7 @@ def enrich_configuration(config: Configuration,
     config.UPDATE_FLAVORS, config.FLAVOR_UPDATE_SLEEP_TIME = _retrieve_update_flavor(config, logger)
     config.api_keys = _retrieve_api_key(config, logger)
     config.monitor_contracts = _retrieve_monitoring_contracts(config, logger)
+    config.default_vm_type = _retrieve_default_vm_type(config, logger)
 
 
 def _retrieve_update_flavor(config: Configuration, logger: logging.Logger) -> tuple[bool, float]:
@@ -243,8 +245,8 @@ def _retrieve_monitoring_contracts(config: Configuration, logger: logging.Logger
                 if item.metadata.name == "fluidos-mbmo-configmap":
                     logger.info("ConfigMap identified")
                     if item.data is None:
-                        logger.error("Unable to retrieve architecture. ConfigMap data missing.")
-                        raise ValueError("Unable to retrieve architecture. ConfigMap data missing.")
+                        logger.error("Unable to retrieve flag to enable contract monitoring. ConfigMap data missing.")
+                        raise ValueError("Unable to retrieve flag to enable contract monitoring. ConfigMap data missing.")
 
                     data: dict[str, str] = item.data
 
@@ -255,6 +257,34 @@ def _retrieve_monitoring_contracts(config: Configuration, logger: logging.Logger
 
     logger.error("Something went wrong while retrieving MIMO config map.")
     return False
+
+
+def _retrieve_default_vm_type(config: Configuration, logger: logging.Logger) -> str:
+    logger.info("Checking if user wants contract monitoring")
+    api_endpoint = CoreV1Api(config.k8s_client)
+
+    try:
+        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(config.namespace)
+        if len(config_maps.items):
+            for item in config_maps.items:
+                if item.metadata is None:
+                    continue
+
+                if item.metadata.name == "fluidos-mbmo-configmap":
+                    logger.info("ConfigMap identified")
+                    if item.data is None:
+                        logger.error("Unable to retrieve default vm type. ConfigMap data missing.")
+                        raise ValueError("Unable to retrieve default vm type. ConfigMap data missing.")
+
+                    data: dict[str, str] = item.data
+
+                    return data.get("DEFAULT_VM_TYPE", "")
+    except ApiException as e:
+        logger.error(f"Unable to retrieve configmap {e=}")
+        raise e
+
+    logger.error("Something went wrong while retrieving MIMO config map.")
+    return ""
 
 
 CONFIGURATION = Configuration()
