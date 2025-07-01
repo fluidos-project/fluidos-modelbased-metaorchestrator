@@ -117,6 +117,14 @@ def _validate_vm_type(provider: ResourceProvider, value: str) -> bool:
     return False
 
 
+def _validate_cyber_deception(provider: ResourceProvider, value: str) -> bool:
+    if provider.flavor.spec.flavor_type.type_identifier is FlavorType.K8SLICE:
+        properties = cast(FlavorK8SliceData, provider.flavor.spec.flavor_type.type_data).properties
+        security_featues = properties.get("additionalProperties", {}).get("security_features", {})
+        if "cyber_deception" in security_featues:
+            return True
+    return False
+
 @unique
 class KnownIntent(Enum):
     # k8s resources
@@ -149,6 +157,9 @@ class KnownIntent(Enum):
 
     #mspl
     mspl = "mspl", False, _always_true
+
+    # security
+    cyber_deception = "cyber-deception", False, _validate_cyber_deception
 
     def __new__(cls, *args: str, **kwds: str) -> KnownIntent:
         obj = object.__new__(cls)
