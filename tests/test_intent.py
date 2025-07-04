@@ -50,6 +50,7 @@ def test_iternal_or_external():
         "fluidos-intent-bandwidth-against",
         "fluidos-intent-tee-readiness",
         "fluidos-intent-mspl",
+        "fluidos-intent-vm-type",
         "fluidos-intent-cyber-deception",
     }
 
