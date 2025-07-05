@@ -1,4 +1,4 @@
-import pkg_resources
+import pkg_resources  # type: ignore
 import pytest  # type: ignore
 from yaml import load
 from yaml import Loader

@@ -125,6 +125,7 @@ def _validate_cyber_deception(provider: ResourceProvider, value: str) -> bool:
             return True
     return False
 
+
 @unique
 class KnownIntent(Enum):
     # k8s resources

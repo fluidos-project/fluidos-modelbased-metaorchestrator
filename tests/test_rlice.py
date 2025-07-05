@@ -1,4 +1,4 @@
-import pkg_resources
+import pkg_resources  # type: ignore
 import yaml
 
 from fluidos_model_orchestrator.common import ModelPredictResponse
