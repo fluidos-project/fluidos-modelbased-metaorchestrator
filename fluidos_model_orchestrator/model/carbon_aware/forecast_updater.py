@@ -20,7 +20,7 @@ def _get_live_carbon_intensity(lat: str, lon: str) -> int:
     response = requests.get(url, headers=HEADERS, params=params)
 
     logging.debug(f"Response status code: {response.status_code}")
-    logging.debug(f"Response content: {response.content}")
+    logging.debug(f"Response content: {response.content!r}")
 
     if response.status_code == 200:
         return response.json()["carbonIntensity"]

@@ -1,4 +1,4 @@
-import pkg_resources
+import pkg_resources  # type: ignore
 import yaml
 from kubernetes import client  # type: ignore
 from kubernetes import config

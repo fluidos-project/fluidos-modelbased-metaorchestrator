@@ -1,9 +1,9 @@
 from uuid import uuid4
 
-from ..common import ModelPredictRequest
-from ..common import ModelPredictResponse
-from ..common import OrchestratorInterface
-from ..common import Resource
+from fluidos_model_orchestrator.common.model import ModelPredictRequest
+from fluidos_model_orchestrator.common.model import ModelPredictResponse
+from fluidos_model_orchestrator.common.model import OrchestratorInterface
+from fluidos_model_orchestrator.common.resource import Resource
 
 
 class DummyOrchestrator(OrchestratorInterface):
