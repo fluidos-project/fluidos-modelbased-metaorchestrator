@@ -91,7 +91,7 @@ def enrich(spec: dict[str, Any], provider: ResourceProvider) -> bool:
 
 
 def _get_node_selector(spec: dict[str, Any]) -> dict[str, str]:
-    if spec["kind"] == "Deployment":
+    if spec["kind"] == "Deployment" or spec["kind"] == "Job":
         logger.debug("Workload manifest of type Deployment")
         spec = spec.get("spec", {}).get("template", {})
     elif spec["kind"] == "Pod":
