@@ -1,10 +1,10 @@
+import importlib.resources  # type
 import json
 import logging
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
-import pkg_resources  # type: ignore
 import torch  # type: ignore
 import torch.nn as nn  # type: ignore
 import torch.nn.functional as F  # type: ignore
@@ -323,8 +323,8 @@ class Orchestrator(OrchestratorInterface):
         self.orchestrator.eval()
         self.sentence_transformer = SentenceTransformer(self.embedding_model_name)
         self.device = device
-        with pkg_resources.resource_stream(__name__, metadata_filename) as metadata_stream:
-            self.metadata: dict[str, Any] = json.load(metadata_stream)
+        with importlib.resources.open_text(__name__, metadata_filename) as metadata:
+            self.metadata: dict[str, Any] = json.load(metadata)
 
         self.feedback_db_path = feedback_db_path
 
