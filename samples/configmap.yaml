@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluidos-mbmo-configmap
+data:
+  UPDATE_FLAVORS: "false"
+  UPDATE_FLAVORS_INTERVAL: "360"
+  ELECTRICITY_API_KEY: SOMETHING_NOT_IMPORTANT
+  architecture: arm64
+  MSPL_ENDPOINT: http://localhost:12345/mspl
