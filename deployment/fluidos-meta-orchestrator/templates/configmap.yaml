@@ -8,3 +8,6 @@ data:
   ELECTRICITY_API_KEY: {{ .Values.electricity_map.key }}
   architecture: {{ .Values.configuration.architecture | quote }}
   MSPL_ENDPOINT: {{ .Values.mspl.endpoint | quote }}
+  monitor_enabled: {{ .Values.monitoring.enable | quote }}
+  monitor_interval: {{ .Values.monitoring.interval | quote }}
+  prometeus_endpoint: {{ .Values.monitoring.endpoint | quote }}
