@@ -15,6 +15,7 @@ from fluidos_model_orchestrator.common.model import ModelPredictResponse
 from fluidos_model_orchestrator.common.model import OrchestratorInterface
 from fluidos_model_orchestrator.common.resource import ResourceProvider
 from fluidos_model_orchestrator.configuration import CONFIGURATION
+from fluidos_model_orchestrator.deployment import redeploy
 from fluidos_model_orchestrator.metaorchestrator import validate_with_intents
 from fluidos_model_orchestrator.model import convert_to_model_request
 from fluidos_model_orchestrator.model import get_model_object
@@ -34,7 +35,7 @@ async def daemons_for_fluidos_deployment(
         spec: dict[str, Any],  # bodies.Spec
         status: bodies.Status,
         uid: str | None,
-        name: str | None,
+        name: str,
         namespace: str,
         patch: patches.Patch,
         logger: Logger,
@@ -138,7 +139,7 @@ async def daemons_for_fluidos_deployment(
             # }
 
         # find other resources types based on the intents
-        if not await redeploy(spec, best_match, namespace):
+        if not await redeploy(name, namespace, str(spec["kind"]), best_match):
             logger.info("Unable to deploy")
 
             return
@@ -148,7 +149,3 @@ async def daemons_for_fluidos_deployment(
             # }
 
         logger.info("{}/{} Done, sleeping", namespace, name)
-
-
-async def redeploy(spec: dict[str, Any], best_match: ResourceProvider, namespace: str) -> bool:
-    return False
