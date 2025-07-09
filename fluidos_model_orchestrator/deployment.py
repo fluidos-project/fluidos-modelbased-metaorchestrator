@@ -5,14 +5,15 @@ import time
 from typing import Any
 
 import kopf  # type: ignore
+from kubernetes import client  # type: ignore
 from kubernetes.utils import create_from_dict  # type: ignore
 from kubernetes.utils import FailToCreateError  # type: ignore
 
-from .common import ExternalResourceProvider
-from .common import Intent
-from .common import ModelPredictResponse
-from .common import ResourceProvider
-from .configuration import CONFIGURATION
+from fluidos_model_orchestrator.common import ExternalResourceProvider
+from fluidos_model_orchestrator.common import Intent
+from fluidos_model_orchestrator.common import ModelPredictResponse
+from fluidos_model_orchestrator.common import ResourceProvider
+from fluidos_model_orchestrator.configuration import CONFIGURATION
 
 
 logger = logging.getLogger()
@@ -35,6 +36,45 @@ def apply_external_resource(spec: dict[str, Any], resource_and_intent: tuple[Ext
             raise ValueError(f"Unsupported type: {spec['kind']}")
 
     return False
+
+
+async def redeploy(name: str, namespace: str, kind: str, provider: ResourceProvider) -> bool:
+    new_label = provider.get_label()
+
+    match kind:
+        case "Pod":
+            v1_client = client.CoreV1Api(api_client=CONFIGURATION.k8s_client)
+            v1_client.patch_namespaced_pod(name=name, namespace=namespace, body={
+                "spec": {
+                    "nodeSelector": new_label
+                }
+            })
+        case "Deployment":
+            apps_v1_client = client.AppsV1Api(api_client=CONFIGURATION.k8s_client)
+            apps_v1_client.patch_namespaced_deployment(name=name, namespace=namespace, body={
+                "spec": {
+                    "template": {
+                        "spec": {
+                            "nodeselector": new_label
+                        }
+                    }
+                }
+            })
+        case "Job":
+            apps_v1_client = client.BatchV1Api(api_client=CONFIGURATION.k8s_client)
+            apps_v1_client.patch_namespaced_job(name=name, namespace=namespace, body={
+                "spec": {
+                    "template": {
+                        "spec": {
+                            "nodeselector": new_label
+                        }
+                    }
+                }
+            })
+        case _:
+            raise ValueError(f"Unsupported type: {kind}")
+
+    return True
 
 
 async def deploy(
@@ -93,7 +133,12 @@ def enrich(spec: dict[str, Any], provider: ResourceProvider) -> bool:
 def _get_node_selector(spec: dict[str, Any]) -> dict[str, str]:
     if spec["kind"] == "Deployment" or spec["kind"] == "Job":
         logger.debug("Workload manifest of type Deployment")
-        spec = spec.get("spec", {}).get("template", {})
+        if "spec" not in spec:
+            raise ValueError("Wrongly formatted spec, missing 'spec'")
+        if "template" not in spec["spec"]:
+            raise ValueError("Wrongly formatted spec, missing 'template'")
+
+        spec = spec["spec"]["template"]
     elif spec["kind"] == "Pod":
         logger.debug("Workload manifest of type Pod")
     else:
