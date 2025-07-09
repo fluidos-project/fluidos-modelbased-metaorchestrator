@@ -93,6 +93,11 @@ async def metaorchestration(spec: dict[str, Any], name: str, namespace: str, log
         }
 
     logger.info("Checking if monitoring is required")
+    if CONFIGURATION.monitor_enabled:
+        intents_to_monitor = [intent for intent in request.intents if intent.needs_monitoring()]
+        if len(intents_to_monitor):
+            # inform bastion
+            pass
 
     return {
         "status": "Success",

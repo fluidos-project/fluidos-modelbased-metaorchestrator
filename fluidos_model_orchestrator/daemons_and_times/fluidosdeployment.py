@@ -42,6 +42,9 @@ async def daemons_for_fluidos_deployment(
         memo: Any,
         param: Any,
         **kwargs: dict[str, Any]) -> None:
+    if not CONFIGURATION.monitor_enabled:
+        return
+
     # check if the spec require monitoring (based on the intents)
     intents_to_monitor: list[Intent] = requires_monitoring(spec, namespace)
 

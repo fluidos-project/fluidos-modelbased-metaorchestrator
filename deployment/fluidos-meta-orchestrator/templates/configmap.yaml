@@ -6,6 +6,9 @@ data:
   UPDATE_FLAVORS: {{ .Values.update_flavors | quote }}
   UPDATE_FLAVORS_INTERVAL: {{ .Values.update_flavors_interval | quote }}
   ELECTRICITY_API_KEY: {{ .Values.electricity_map.key }}
-  architecture: {{ .Values.configuration.architecture }}
-  MSPL_ENDPOINT: {{ .Values.mspl.endpoint }}
-  MONITOR_CONTRACTS: {{ .Values.monitor_contracts }}
+  architecture: {{ .Values.configuration.architecture | quote }}
+  MSPL_ENDPOINT: {{ .Values.mspl.endpoint | quote }}
+  monitor_enabled: {{ .Values.monitoring.enable | quote }}
+  monitor_interval: {{ .Values.monitoring.interval | quote }}
+  prometeus_endpoint: {{ .Values.monitoring.endpoint | quote }}
+  MONITOR_CONTRACTS: {{ .Values.monitor_contracts | quote}}
