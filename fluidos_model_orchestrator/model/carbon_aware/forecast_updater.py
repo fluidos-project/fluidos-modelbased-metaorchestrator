@@ -49,9 +49,8 @@ def _get_forecasted_carbon_intensity(lat: str, lon: str) -> list[int] | None:
 
 
 def update_local_flavor_forecasted_data(flavor: Flavor, namespace: str) -> Flavor | None:
-    flavor_type = flavor.spec.flavor_type
-
-    if flavor_type is not FlavorType.K8SLICE:
+    flavor_type_enum = flavor.spec.flavor_type.type_identifier
+    if flavor_type_enum is not FlavorType.K8SLICE:
         logging.error("Flavor type is not K8S")
         return None
 
@@ -82,13 +81,14 @@ def update_local_flavor_forecasted_data(flavor: Flavor, namespace: str) -> Flavo
     for i in range(len(new_forecast) - 1):
         average = (new_forecast[i] + new_forecast[i + 1]) / 2
         new_forecast_timeslots.append(average)
+        new_forecast_timeslots_int = [int(x) for x in new_forecast_timeslots]
 
-    logging.debug("new_forecast from external API: ", new_forecast)
-    logging.debug("new_forecast_timeslots: ", new_forecast_timeslots)
+    logging.debug("new_forecast from external API: %s", new_forecast)
+    logging.debug("new_forecast_timeslots: %s", new_forecast_timeslots_int)
 
     flavor.spec.flavor_type.type_data.properties["carbon-footprint"] = {
         "embodied": flavor.spec.flavor_type.type_data.properties["carbon-footprint"].get("embodied", 0),
-        "operational": new_forecast_timeslots
+        "operational": new_forecast_timeslots_int
     }
 
     return flavor
