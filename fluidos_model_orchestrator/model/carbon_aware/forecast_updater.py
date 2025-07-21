@@ -88,8 +88,10 @@ def update_local_flavor_forecasted_data(flavor: Flavor, namespace: str) -> Flavo
     logging.debug("new_forecast from external API: %s", new_forecast)
     logging.debug("new_forecast_timeslots: %s", new_forecast_timeslots_int)
 
-    cast(FlavorK8SliceData, flavor.spec.flavor_type.type_data).properties["carbon-footprint"] = {
-        "embodied": cast(FlavorK8SliceData, flavor.spec.flavor_type.type_data).properties["carbon-footprint"].get("embodied", 0),
+    k8sSlice_data: FlavorK8SliceData = cast(FlavorK8SliceData, flavor.spec.flavor_type.type_data)
+
+    k8sSlice_data.properties["carbon-footprint"] = {
+        "embodied": k8sSlice_data.properties["carbon-footprint"].get("embodied", 0),
         "operational": new_forecast_timeslots_int
     }
 
