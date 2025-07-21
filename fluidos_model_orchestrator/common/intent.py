@@ -217,6 +217,9 @@ class KnownIntent(Enum):
     def validates(self, provider: ResourceProvider, value: str) -> bool:
         return self._validator(provider, value)
 
+    def needs_monitoring(self) -> bool:
+        return self._needs_monitoring
+
     @staticmethod
     def is_supported(intent_name: str) -> bool:
         if intent_name.startswith("fluidos-intent-"):
@@ -249,7 +252,7 @@ class Intent:
         return self.name.validates(provider, self.value)
 
     def needs_monitoring(self) -> bool:
-        return self.name._needs_monitoring
+        return self.name.needs_monitoring()
 
 
 def requires_validation(intent: Intent) -> bool:
