@@ -3,6 +3,8 @@ from logging import Logger
 from typing import Any
 from typing import cast
 
+import asyncio
+
 import kopf  # type: ignore
 from kopf._cogs.structs import bodies  # type: ignore
 from kopf._cogs.structs import patches  # type: ignore
@@ -42,28 +44,33 @@ async def daemons_for_flavors_observation(
         return
 
     finder: ResourceFinder | None = None
+    if namespace is None:
+        namespace = "default"
 
-    while not stopped:
-        stopped.wait(CONFIGURATION.FLAVOR_UPDATE_SLEEP_TIME)
+    while not stopped.is_set():
         logger.info(f"Repeating observation for {uid}")
         logger.info(f"Spec: {spec}")
-        if stopped:
-            logger.info("Stopped by external")
-            return
+
+
         flavor = build_flavor({
             "metadata": meta,
             "spec": spec
         })
 
-        if namespace is None:
-            namespace = "default"
-
         update_flavor = update_local_flavor_forecasted_data(flavor, namespace)
         if update_flavor is None:
             logger.info("Flavor not updated")
             continue
-
         if finder is None:
             finder = get_resource_finder()
 
-        finder.update_local_flavor(flavor, cast(FlavorK8SliceData, update_flavor.spec.flavor_type.type_data).properties, namespace)
+        finder.update_local_flavor(flavor,cast(FlavorK8SliceData, update_flavor.spec.flavor_type.type_data).properties, namespace)
+        logger.debug(f"Sleeping for {CONFIGURATION.FLAVOR_UPDATE_SLEEP_TIME} seconds...")
+
+        try:
+            await asyncio.wait_for(stopped.wait(), timeout=CONFIGURATION.FLAVOR_UPDATE_SLEEP_TIME)
+        except asyncio.TimeoutError:
+            continue
+        else:
+            logger.info("Stopped by external signal")
+            return
