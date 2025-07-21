@@ -3,4 +3,12 @@ kind: ConfigMap
 metadata:
   name: fluidos-mbmo-configmap
 data:
-  ELECTRICITY_MAP_API_KEY: TEST_KEY_123!
+  UPDATE_FLAVORS: "False"
+  UPDATE_FLAVORS_INTERVAL: "360"
+  ELECTRICITY_API_KEY: TEST_KEY_123!
+  architecture: "arm64"
+  MSPL_ENDPOINT: "http://localhost:8080"
+  monitor_enabled: "false"
+  monitor_interval: "5"
+  prometeus_endpoint: "localhost:9090"
+  MONITOR_CONTRACTS: "False"
