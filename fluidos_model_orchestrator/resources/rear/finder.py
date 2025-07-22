@@ -32,7 +32,7 @@ class REARResourceFinder(ResourceFinder):
         self.configuration = configuration
         self.api_client: client.CustomObjectsApi = client.CustomObjectsApi(api_client=self.configuration.k8s_client)
 
-    def find_best_match(self, resource: Resource, namespace: str) -> list[ResourceProvider]:
+    def find_best_match(self, resource: Resource, namespace: str, solver_name: str | None = None) -> list[ResourceProvider]:
         logger.info("Retrieving resource best match with REAR")
 
         local: list[ResourceProvider] = self._find_local(resource, CONFIGURATION.namespace)
@@ -243,7 +243,7 @@ class REARResourceFinder(ResourceFinder):
     def _find_remote(self, resource: Resource, namespace: str) -> list[ResourceProvider]:
         logger.info(f"Retrieving remote flavours in {namespace=}")
 
-        body, _ = self._resource_to_solver_request(resource, resource.id)
+        body = self._resource_to_solver_request(resource, resource.id)
 
         solver_name = self._initiate_search(body, namespace)
 
@@ -329,7 +329,7 @@ class REARResourceFinder(ResourceFinder):
             seller=candidate["spec"]["flavor"]["spec"]["owner"]
         )
 
-    def _resource_to_solver_request(self, resource: Resource, intent_id: str | None = None) -> tuple[dict[str, Any], str]:
+    def _resource_to_solver_request(self, resource: Resource, intent_id: str | None = None) -> dict[str, Any]:
         if intent_id is None:
             intent_id = str(uuid.uuid4())
 
@@ -348,7 +348,7 @@ class REARResourceFinder(ResourceFinder):
             }
         }
 
-        return (solver_request, intent_id)
+        return solver_request
 
     def _build_flavour_selector(self, resource: Resource) -> dict[str, Any]:
         selector: dict[str, Any] = {

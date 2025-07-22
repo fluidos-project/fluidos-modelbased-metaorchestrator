@@ -1,6 +1,7 @@
 import datetime
 from logging import Logger
 from typing import Any
+from uuid import uuid4
 
 import kopf  # type: ignore
 from kopf._cogs.structs import bodies  # type: ignore
@@ -85,10 +86,6 @@ async def daemons_for_fluidos_deployment(
         if request is None:
             logger.error("Request is not valid, discarding")
             return
-            # return {
-            #     "status": "Failure",
-            #     "msg": "Invalid request"
-            # }
 
         predictor: OrchestratorInterface = get_model_object(request)
 
@@ -97,12 +94,10 @@ async def daemons_for_fluidos_deployment(
         if prediction is None:
             logger.error("Model unable to provide valid prediction")
             return
-            # return {
-            #     "status": "Failure",
-            #     "msg": "Model unable to provide valid prediction"
-            # }
         else:
             logger.debug(f"Predicted resources for {spec['metadata']['name']}: {prediction}")
+
+        prediction.id = f"{prediction.id}-{uuid4().hex}"
 
         finder: ResourceFinder = get_resource_finder(request, prediction)
 
@@ -121,10 +116,6 @@ async def daemons_for_fluidos_deployment(
             logger.info("Unable to find resource matching requirement")
 
             return
-            # return {
-            #     "status": "Failure",
-            #     "msg": "Unable to find resource matching requirement"
-            # }
         else:
             logger.info(f"Retrieved {len(best_matches)} valid resource providers")
 
