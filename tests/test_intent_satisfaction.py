@@ -558,7 +558,7 @@ def test_validate_additional_hardware() -> None:
         )
     ))
 
-    intent = Intent(KnownIntent.harward, "coffee machine")
+    intent = Intent(KnownIntent.hardware, "coffee machine")
 
     assert intent.validates(provider_good)
     assert not intent.validates(provider_bad_wrong_value)
