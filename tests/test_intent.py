@@ -21,6 +21,8 @@ def test_intent_values():
         "fluidos-intent-tee-readiness",
         "fluidos-intent-mspl",
         "fluidos-intent-vm-type",
+        "fluidos-intent-sensor",
+        "fluidos-intent-hardware",
         "fluidos-intent-cyber-deception",
     }
 
@@ -51,6 +53,8 @@ def test_iternal_or_external():
         "fluidos-intent-tee-readiness",
         "fluidos-intent-mspl",
         "fluidos-intent-vm-type",
+        "fluidos-intent-sensor",
+        "fluidos-intent-hardware",
         "fluidos-intent-cyber-deception",
     }
 

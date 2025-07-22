@@ -1,0 +1,8 @@
+spec:
+  flavorType:
+    typeData:
+      properties:
+        additionalProperties:
+          hardware:
+            - "coffee machine"
+            - "a more proper actuator"
