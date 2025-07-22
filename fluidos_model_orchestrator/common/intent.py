@@ -117,6 +117,28 @@ def _validate_vm_type(provider: ResourceProvider, value: str) -> bool:
     return False
 
 
+def _validate_sensor(provider: ResourceProvider, value: str) -> bool:
+    if provider.flavor.spec.flavor_type.type_identifier is FlavorType.K8SLICE:
+        properties = cast(FlavorK8SliceData, provider.flavor.spec.flavor_type.type_data).properties
+        available_sensors: list[str] = properties.get("additionalProperties", {}).get("sensors", [])
+        value = value.casefold()
+        return any(
+            value == v.casefold() for v in available_sensors
+        )
+    return False
+
+
+def _validate_hardware(provider: ResourceProvider, value: str) -> bool:
+    if provider.flavor.spec.flavor_type.type_identifier is FlavorType.K8SLICE:
+        properties = cast(FlavorK8SliceData, provider.flavor.spec.flavor_type.type_data).properties
+        additional_hardware: list[str] = properties.get("additionalProperties", {}).get("additional-hardware", [])
+        value = value.casefold()
+        return any(
+            value == v.casefold() for v in additional_hardware
+        )
+    return False
+
+
 def _validate_cyber_deception(provider: ResourceProvider, value: str) -> bool:
     if provider.flavor.spec.flavor_type.type_identifier is FlavorType.K8SLICE:
         properties = cast(FlavorK8SliceData, provider.flavor.spec.flavor_type.type_data).properties
@@ -156,8 +178,12 @@ class KnownIntent(Enum):
     # service
     service = "service", True, _always_true
 
-    #mspl
+    # mspl
     mspl = "mspl", False, _always_true
+
+    # sensors and hardware
+    sensor = "sensor", False, _validate_sensor
+    harward = "hardware", False, _validate_hardware
 
     # security
     cyber_deception = "cyber-deception", False, _validate_cyber_deception
