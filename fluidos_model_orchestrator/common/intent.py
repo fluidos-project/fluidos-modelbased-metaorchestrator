@@ -183,7 +183,7 @@ class KnownIntent(Enum):
 
     # sensors and hardware
     sensor = "sensor", False, _validate_sensor
-    harward = "hardware", False, _validate_hardware
+    hardware = "hardware", False, _validate_hardware
 
     # security
     cyber_deception = "cyber-deception", False, _validate_cyber_deception
