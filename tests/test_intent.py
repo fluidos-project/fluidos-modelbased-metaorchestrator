@@ -108,6 +108,8 @@ def test_intents_requiring_monitoring():
         "fluidos-intent-mspl",
         "fluidos-intent-vm-type",
         "fluidos-intent-cyber-deception",
+        "fluidos-intent-sensor",
+        "fluidos-intent-hardware",
     }
 
     for intent in KnownIntent:
