@@ -67,18 +67,20 @@ async def daemons_for_fluidos_deployment(
             continue  # go to sleep
 
         if metaorchestration_status == "Failure":
-            logger.info("{}/{} failed in allocating the system, kill the monitoring process too", namespace, name)
+            logger.info("%s/%s failed in allocating the system, kill the monitoring process too", namespace, name)
             return
 
         if metaorchestration_status == "Success":
-            logger.info("{}/{} is correctly deployed, check if still valid", namespace, name)
+            logger.info("%s/%s is correctly deployed, check if still valid", namespace, name)
             for intent in intents_to_monitor:
                 if has_intent_validation_failed(intent, CONFIGURATION.local_prometheus):
-                    logger.info("{}/{} failed when validating {}", namespace, name, intent.name)
+                    logger.info("%s/%s failed when validating %s", namespace, name, intent.name)
                     break
             else:
-                logger.info("{}/{} all intents are still valid", namespace, name)
+                logger.info("%s/%s all intents are still valid", namespace, name)
                 continue
+        else:
+            logger.info("%s/%s still being deployed", namespace, name)
 
         logger.info("Proceding to reallocate the workload")
         request: ModelPredictRequest | None = convert_to_model_request(spec, namespace)
@@ -127,19 +129,11 @@ async def daemons_for_fluidos_deployment(
             logger.info(f"Unable to acquire {best_match}")
 
             return
-            # return {
-            #     "status": "Failure",
-            #     "msg": "Unable to find resource matching requirement"
-            # }
 
         # find other resources types based on the intents
         if not await redeploy(name, namespace, str(spec["kind"]), best_match):
             logger.info("Unable to deploy")
 
             return
-            # return {
-            #     "status": "Failure",
-            #     "msg": "Unable to find resource matching requirement"
-            # }
 
-        logger.info("{}/{} Done, sleeping", namespace, name)
+        logger.info("%s/%s Done, sleeping", namespace, name)
