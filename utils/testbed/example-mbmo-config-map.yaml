@@ -10,5 +10,5 @@ data:
   MSPL_ENDPOINT: "http://localhost:8080"
   monitor_enabled: "false"
   monitor_interval: "5"
-  prometeus_endpoint: "localhost:9090"
+  prometeus_endpoint: "http://localhost:9090"
   MONITOR_CONTRACTS: "False"
