@@ -24,6 +24,7 @@ def test_intent_values():
         "fluidos-intent-sensor",
         "fluidos-intent-hardware",
         "fluidos-intent-cyber-deception",
+        "fluidos-intent-magi",
     }
 
     for intent in KnownIntent:
@@ -56,6 +57,7 @@ def test_iternal_or_external():
         "fluidos-intent-sensor",
         "fluidos-intent-hardware",
         "fluidos-intent-cyber-deception",
+        "fluidos-intent-magi",
     }
 
     for intent in KnownIntent:
