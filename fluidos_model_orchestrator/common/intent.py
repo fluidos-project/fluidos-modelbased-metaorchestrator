@@ -148,6 +148,14 @@ def _validate_cyber_deception(provider: ResourceProvider, value: str) -> bool:
     return False
 
 
+def _validate_magi(provider: ResourceProvider, value: str) -> bool:
+    if provider.flavor.spec.flavor_type.type_identifier is FlavorType.K8SLICE:
+        properties = cast(FlavorK8SliceData, provider.flavor.spec.flavor_type.type_data).properties
+        security_featues = properties.get("additionalProperties", {}).get("security_features", {})
+        if "magi" in security_featues:
+            return True
+    return False
+
 @unique
 class KnownIntent(Enum):
     # k8s resources
@@ -187,6 +195,7 @@ class KnownIntent(Enum):
 
     # security
     cyber_deception = "cyber-deception", False, _validate_cyber_deception
+    magi = "magi", False, _validate_magi
 
     def __new__(cls, *args: str, **kwds: str) -> KnownIntent:
         obj = object.__new__(cls)
