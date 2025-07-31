@@ -434,8 +434,8 @@ class Orchestrator(OrchestratorInterface):
         return torch.tensor(embeddings).unsqueeze(0)
 
     def predict(self, data: ModelPredictRequest, architecture: str = "arm64") -> ModelPredictResponse:
-
         logger.info("pod embedding generation")
+
         modified_pod_manifest = data.pod_request[FLUIDOS_COL_NAMES.POD_MANIFEST]
         if "requests" in modified_pod_manifest['spec']['containers'][0]["resources"]:
             cpu_m = convert_cpu_to_m(modified_pod_manifest['spec']['containers'][0]['resources']['requests']['cpu'], FLUIDOS_COL_NAMES.POD_CPU)

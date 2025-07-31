@@ -74,7 +74,7 @@ def _retrieve_monitor_information(config: Configuration, logger: logging.Logger)
                     continue
 
                 if item.metadata.name == "fluidos-mbmo-configmap":
-                    logger.info("ConfigMap identified")
+                    logger.debug("ConfigMap identified")
                     if item.data is None:
                         raise ValueError("ConfigMap data missing.")
 
@@ -103,7 +103,7 @@ def _retrieve_update_flavor(config: Configuration, logger: logging.Logger) -> tu
                     continue
 
                 if item.metadata.name == "fluidos-mbmo-configmap":
-                    logger.info("ConfigMap identified")
+                    logger.debug("ConfigMap identified")
                     if item.data is None:
                         raise ValueError("ConfigMap data missing.")
 
@@ -158,7 +158,7 @@ def _retrieve_api_key(config: Configuration, logger: logging.Logger) -> dict[str
                     continue
 
                 if config_map.metadata.name == "fluidos-mbmo-configmap":
-                    logger.info("ConfigMap identified")
+                    logger.debug("ConfigMap identified")
                     if config_map.data is None:
                         logger.error("Unable to retrieve API Keys. ConfigMap data missing.")
                         raise ValueError("Unable to retrieve API Keys. ConfigMap data missing.")
@@ -191,7 +191,7 @@ def _retrieve_mspl_endpoint(config: Configuration, logger: logging.Logger) -> st
                     continue
 
                 if item.metadata.name == "fluidos-mbmo-configmap":
-                    logger.info("ConfigMap identified")
+                    logger.debug("ConfigMap identified")
                     if item.data is None:
                         logger.error("Unable to retrieve MSPL endpoint. ConfigMap data missing.")
                         raise ValueError("Unable to retrieve MSPL endpoint. ConfigMap data missing.")
@@ -218,7 +218,7 @@ def _retrieve_architecture(config: Configuration, logger: logging.Logger) -> str
                     continue
 
                 if item.metadata.name == "fluidos-mbmo-configmap":
-                    logger.info("ConfigMap identified")
+                    logger.debug("ConfigMap identified")
                     if item.data is None:
                         logger.error("Unable to retrieve architecture. ConfigMap data missing.")
                         raise ValueError("Unable to retrieve architecture. ConfigMap data missing.")
@@ -245,7 +245,7 @@ def _retrieve_node_identity(config: Configuration, logger: logging.Logger) -> di
                     continue
 
                 if item.metadata.name == "fluidos-node-identity":
-                    logger.info("ConfigMap identified")
+                    logger.debug("ConfigMap identified")
 
                     if item.data is None:
                         raise ValueError("ConfigMap data missing.")
@@ -273,7 +273,7 @@ def _retrieve_monitoring_contracts(config: Configuration, logger: logging.Logger
                     continue
 
                 if item.metadata.name == "fluidos-mbmo-configmap":
-                    logger.info("ConfigMap identified")
+                    logger.debug("ConfigMap identified")
                     if item.data is None:
                         logger.error("Unable to retrieve flag to enable contract monitoring. ConfigMap data missing.")
                         raise ValueError("Unable to retrieve flag to enable contract monitoring. ConfigMap data missing.")
@@ -301,7 +301,7 @@ def _retrieve_default_vm_type(config: Configuration, logger: logging.Logger) -> 
                     continue
 
                 if item.metadata.name == "fluidos-mbmo-configmap":
-                    logger.info("ConfigMap identified")
+                    logger.debug("ConfigMap identified")
                     if item.data is None:
                         logger.error("Unable to retrieve default vm type. ConfigMap data missing.")
                         raise ValueError("Unable to retrieve default vm type. ConfigMap data missing.")
