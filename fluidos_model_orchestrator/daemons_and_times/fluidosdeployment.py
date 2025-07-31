@@ -10,10 +10,10 @@ from kopf._cogs.structs import patches  # type: ignore
 from fluidos_model_orchestrator.common import Intent
 from fluidos_model_orchestrator.common import requires_monitoring
 from fluidos_model_orchestrator.common import ResourceFinder
-from fluidos_model_orchestrator.common.intent import has_intent_validation_failed
 from fluidos_model_orchestrator.common.model import ModelPredictRequest
 from fluidos_model_orchestrator.common.model import ModelPredictResponse
 from fluidos_model_orchestrator.common.model import OrchestratorInterface
+from fluidos_model_orchestrator.common.prometheus import has_intent_validation_failed
 from fluidos_model_orchestrator.common.resource import ResourceProvider
 from fluidos_model_orchestrator.configuration import CONFIGURATION
 from fluidos_model_orchestrator.deployment import redeploy
@@ -73,7 +73,7 @@ async def daemons_for_fluidos_deployment(
         if metaorchestration_status == "Success":
             logger.info("%s/%s is correctly deployed, check if still valid", namespace, name)
             for intent in intents_to_monitor:
-                if has_intent_validation_failed(intent, CONFIGURATION.local_prometheus):
+                if has_intent_validation_failed(intent, CONFIGURATION.local_prometheus, ):
                     logger.info("%s/%s failed when validating %s", namespace, name, intent.name)
                     break
             else:

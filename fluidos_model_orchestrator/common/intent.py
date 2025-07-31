@@ -5,6 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from enum import unique
+from typing import Any
 from typing import cast
 
 from fluidos_model_orchestrator.common.flavor import FlavorK8SliceData
@@ -19,6 +20,22 @@ logger = logging.getLogger(__name__)
 
 
 _always_true: Callable[[ResourceProvider, str], bool] = lambda provider, value: True
+
+
+def _validate_latency(value: str, data: dict[str, Any]) -> bool:
+    return False
+
+
+def _validate_throughput(value: str, data: dict[str, Any]) -> bool:
+    return False
+
+
+def _validate_battery_level(value: str, data: dict[str, Any]) -> bool:
+    return False
+
+
+def _validate_bandwidth_against(value: str, data: dict[str, Any]) -> bool:
+    return False
 
 
 def _validate_bandwidth_against_point(provider: ResourceProvider, value: str) -> bool:
@@ -156,6 +173,7 @@ def _validate_magi(provider: ResourceProvider, value: str) -> bool:
             return True
     return False
 
+
 @unique
 class KnownIntent(Enum):
     # k8s resources
@@ -168,19 +186,21 @@ class KnownIntent(Enum):
     vm_type = "vm-type", False, _validate_vm_type
 
     # high order requests
-    latency = "latency", False, _always_true, True
+    latency = "latency", False, _always_true, "fluidos-latency", _validate_latency
     location = "location", False, validate_location
-    throughput = "throughput", False, _always_true, True
+    throughput = "throughput", False, _always_true, True, "fluidos-throughput", _validate_throughput
     compliance = "compliance", False, _validate_regulations
     energy = "energy", False, _always_true, True
-    battery = "battery", False, _always_true, True
+
+    # ROB
+    battery = "battery", False, _always_true, True, "fluidos-battery", _validate_battery_level
 
     # carbon aware requests
     max_delay = "max-delay", False, _always_true
     carbon_aware = "carbon-aware", False, _always_true
 
     # TER
-    bandwidth_against = "bandwidth-against", False, _validate_bandwidth_against_point, True
+    bandwidth_against = "bandwidth-against", False, _validate_bandwidth_against_point, "bandwidth-to", _validate_bandwidth_against
     tee_readiness = "tee-readiness", False, _validate_tee_available
 
     # service
@@ -202,11 +222,15 @@ class KnownIntent(Enum):
         obj._value_ = args[0]
         return obj
 
-    def __init__(self, label: str, external: bool, validator: Callable[[ResourceProvider, str], bool], needs_monitoring: bool = False):
+    def __init__(self, label: str, external: bool,
+                 validator: Callable[[ResourceProvider, str], bool],
+                 metric_name: str | None = None,
+                 metric_validator: Callable[[str, Any], bool] | None = None):
         self.label = label
         self._external = external
         self._validator = validator
-        self._needs_monitoring = needs_monitoring
+        self._metric_name = metric_name
+        self._metric_validator = metric_validator
 
     def to_intent_key(self) -> str:
         return f"fluidos-intent-{self.label}"
@@ -218,7 +242,15 @@ class KnownIntent(Enum):
         return self._validator(provider, value)
 
     def needs_monitoring(self) -> bool:
-        return self._needs_monitoring
+        return self._metric_name is not None
+
+    def validate_monitoring(self, value: str, data: Any) -> bool:
+        if self._metric_validator is None:
+            raise ValueError("Trying to validate an intent not requiring monitoring")
+        return self._metric_validator(value, data)
+
+    def metric_name(self) -> str | None:
+        return self._metric_name
 
     @staticmethod
     def is_supported(intent_name: str) -> bool:
@@ -257,7 +289,3 @@ class Intent:
 
 def requires_validation(intent: Intent) -> bool:
     return intent.needs_monitoring()
-
-
-def has_intent_validation_failed(intent: Intent, prometheus_ref: str) -> bool:
-    return False
