@@ -20,7 +20,7 @@ from fluidos_model_orchestrator.resources.mspl.mspl_resource_provider import MSP
 
 
 @kopf.on.create("fluidosdeployments", )  # type: ignore
-async def metaorchestration(spec: dict[str, Any], name: str, namespace: str, logger: Logger, errors: kopf.ErrorsMode = kopf.ErrorsMode.PERMANENT, **kwargs: str) -> dict[str, dict[str, ResourceProvider | list[str] | None | str] | str]:
+async def metaorchestration(spec: dict[str, Any], name: str, namespace: str, logger: Logger, errors: kopf.ErrorsMode = kopf.ErrorsMode.PERMANENT, **kwargs: str) -> dict[str, dict[str, list[str] | dict[str, Any] | None | str] | str]:
     logger.info("Processing incoming request")
     logger.debug(f"Received request: {spec}")
 
@@ -102,7 +102,7 @@ async def metaorchestration(spec: dict[str, Any], name: str, namespace: str, log
     return {
         "status": "Success",
         "deployed": {
-            "resource_provider": str(best_match),
+            "resource_provider": best_match.to_json(),
             "expandind_resources": [res[1].name.name for res in expanding_resources],
         }
     }
