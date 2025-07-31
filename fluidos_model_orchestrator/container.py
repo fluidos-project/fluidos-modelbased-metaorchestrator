@@ -15,7 +15,6 @@ def extract_image_embedding(image: str) -> ContainerImageEmbedding:
     return ContainerImageEmbedding(
         image=image,
     )
-    docker.errors.DockerException
     image_data: ImageData = _retrieve_image(image)
     if image_data.is_valid():
         return ContainerImageEmbedding(
