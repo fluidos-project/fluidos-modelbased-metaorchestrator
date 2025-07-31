@@ -34,7 +34,7 @@ def _validate_battery_level(value: str, data: dict[str, Any]) -> bool:
     return False
 
 
-def _validate_bandwidth_against(value: str, data: dict[str, Any]) -> bool:
+def _monitor_bandwidth_against_point(value: str, data: dict[str, Any]) -> bool:
     return False
 
 
@@ -188,26 +188,26 @@ class KnownIntent(Enum):
     # high order requests
     latency = "latency", False, _always_true, "fluidos-latency", _validate_latency
     location = "location", False, validate_location
-    throughput = "throughput", False, _always_true, True, "fluidos-throughput", _validate_throughput
+    throughput = "throughput", False, _always_true, "fluidos-throughput", _validate_throughput
     compliance = "compliance", False, _validate_regulations
     energy = "energy", False, _always_true, True
 
     # ROB
-    battery = "battery", False, _always_true, True, "fluidos-battery", _validate_battery_level
+    battery = "battery", False, _always_true, "fluidos-battery", _validate_battery_level
 
     # carbon aware requests
-    max_delay = "max-delay", False, _always_true
-    carbon_aware = "carbon-aware", False, _always_true
+    max_delay = "max-delay", False
+    carbon_aware = "carbon-aware", False
 
     # TER
-    bandwidth_against = "bandwidth-against", False, _validate_bandwidth_against_point, "bandwidth-to", _validate_bandwidth_against
+    bandwidth_against = "bandwidth-against", False, _validate_bandwidth_against_point, "fluidos-bandwidth-against", _monitor_bandwidth_against_point
     tee_readiness = "tee-readiness", False, _validate_tee_available
 
     # service
-    service = "service", True, _always_true
+    service = "service", True
 
     # mspl
-    mspl = "mspl", False, _always_true
+    mspl = "mspl", False
 
     # sensors and hardware
     sensor = "sensor", False, _validate_sensor
@@ -223,7 +223,7 @@ class KnownIntent(Enum):
         return obj
 
     def __init__(self, label: str, external: bool,
-                 validator: Callable[[ResourceProvider, str], bool],
+                 validator: Callable[[ResourceProvider, str], bool] = _always_true,
                  metric_name: str | None = None,
                  metric_validator: Callable[[str, Any], bool] | None = None):
         self.label = label

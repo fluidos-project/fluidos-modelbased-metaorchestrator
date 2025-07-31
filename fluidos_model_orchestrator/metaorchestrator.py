@@ -19,7 +19,7 @@ from fluidos_model_orchestrator.resources import get_resource_finder
 from fluidos_model_orchestrator.resources.mspl.mspl_resource_provider import MSPLIntentWrapper
 
 
-@kopf.on.create("fluidosdeployments")  # type: ignore
+@kopf.on.create("fluidosdeployments", )  # type: ignore
 async def metaorchestration(spec: dict[str, Any], name: str, namespace: str, logger: Logger, errors: kopf.ErrorsMode = kopf.ErrorsMode.PERMANENT, **kwargs: str) -> dict[str, dict[str, ResourceProvider | list[str] | None | str] | str]:
     logger.info("Processing incoming request")
     logger.debug(f"Received request: {spec}")
