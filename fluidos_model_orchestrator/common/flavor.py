@@ -21,6 +21,13 @@ class GPUData:
     def can_run_on(self, other: GPUData) -> bool:
         return int(other.cores) >= int(self.cores) and int(other.memory) >= int(self.memory)
 
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "cores": self.cores,
+            "memory": self.memory,
+            "model": self.model,
+        }
+
 
 @dataclass(kw_only=True)
 class FlavorCharacteristics:
@@ -31,12 +38,29 @@ class FlavorCharacteristics:
     pods: str | None = None
     storage: str | None = None
 
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "architecture": self.architecture,
+            "cpu": self.cpu,
+            "gpu": self.gpu.to_json() if type(self.gpu) is GPUData else self.gpu,
+            "memory": self.memory,
+            "pods": self.pods,
+            "storage": self.storage,
+        }
+
 
 @dataclass(kw_only=True)
 class FlavorK8SliceData:
     characteristics: FlavorCharacteristics
     policies: dict[str, Any] = field(default_factory=dict)
     properties: dict[str, Any] = field(default_factory=dict)
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "characteristics": self.characteristics.to_json(),
+            "policies": self.policies,
+            "properties": self.properties,
+        }
 
 
 @dataclass(kw_only=True)
@@ -47,6 +71,16 @@ class FlavorServiceData:
     hostingPolicies: list[str]
     name: str
     tags: list[str]
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "category": self.category,
+            "configurationTemplate": self.configurationTemplate,
+            "description": self.description,
+            "hostingPolicies": self.hostingPolicies,
+            "name": self.name,
+            "tags": self.tags,
+        }
 
 
 @unique
@@ -65,11 +99,25 @@ class FlavorType(Enum):
 
         raise ValueError(f"Not supported {type_name=}")
 
+    def to_json(self) -> str:
+        if self is FlavorType.K8SLICE:
+            return "K8Slice"
+        if self is FlavorType.SERVICE:
+            return "Service"
+
+        raise ValueError("Not sure what to do")
+
 
 @dataclass(kw_only=True)
 class FlavorTypeData:
     type_identifier: FlavorType
     type_data: FlavorK8SliceData | FlavorServiceData
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "typeIdentifier": self.type_identifier,
+            "typeData": self.type_data.to_json(),
+        }
 
 
 @dataclass(kw_only=True)
@@ -82,17 +130,42 @@ class FlavorSpec:
     price: dict[str, Any] = field(default_factory=dict)
     location: dict[str, Any] = field(default_factory=dict)
 
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "availability": self.availability,
+            "flavorType": self.flavor_type.to_json(),
+            "networkPropertyType": self.network_property_type,
+            "owner": self.owner,
+            "providerID": self.providerID,
+            "price": self.price,
+            "location": self.location,
+        }
+
 
 @dataclass(kw_only=True)
 class FlavorMetadata:
     name: str
     owner_references: dict[str, Any]
 
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "ownerReferences": self.owner_references
+        }
+
 
 @dataclass(kw_only=True)
 class Flavor:
     metadata: FlavorMetadata
     spec: FlavorSpec
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "apiVersion": "nodecore.fluidos.eu/v1alpha1",
+            "kind": "Flavor",
+            "metadata": self.metadata.to_json(),
+            "spec": self.spec.to_json(),
+        }
 
 
 def build_flavor(flavor: dict[str, Any]) -> Flavor:

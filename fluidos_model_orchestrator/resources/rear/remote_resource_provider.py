@@ -214,3 +214,11 @@ class RemoteResourceProvider(ResourceProvider):
                 }
             }
         }
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "type": "REMOTE",
+            "id": self.id,
+            "flavor": self.flavor.to_json(),
+            "labels": self.get_label()
+        }
