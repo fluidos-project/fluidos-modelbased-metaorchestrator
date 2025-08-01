@@ -22,6 +22,7 @@ class RemoteResourceProvider(ResourceProvider):
         self.api_client = api_client
         self.seller = seller
         self.contract: str | None = None
+        self.remote_cluster_id: str | None = None
 
     def acquire(self, namespace: str) -> bool:
         logger.info("Creating connection to remote node")
@@ -32,12 +33,15 @@ class RemoteResourceProvider(ResourceProvider):
         return self._establish_peering(contract, namespace)
 
     def get_label(self) -> dict[str, str]:
-        if self.contract is None:
-            logger.error("Remote resource not bougth, cannot return valid label")
-            raise RuntimeError("RemoteResourceProvider not connected to active resource")
+        if self.remote_cluster_id is None:
+            if self.contract is None:
+                logger.error("Remote resource not bougth, cannot return valid label")
+                raise RuntimeError("RemoteResourceProvider not connected to active resource")
+            else:
+                self.remove_cluster_id = self._get_remote_cluster_id()
 
         return {
-            CONFIGURATION.remote_node_key: self._get_remote_cluster_id()
+            CONFIGURATION.remote_node_key: str(self.remote_cluster_id)
         }
 
     def _get_remote_cluster_id(self) -> str:

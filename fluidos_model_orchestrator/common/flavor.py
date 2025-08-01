@@ -115,7 +115,7 @@ class FlavorTypeData:
 
     def to_json(self) -> dict[str, Any]:
         return {
-            "typeIdentifier": self.type_identifier,
+            "typeIdentifier": self.type_identifier.to_json(),
             "typeData": self.type_data.to_json(),
         }
 
