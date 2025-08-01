@@ -47,8 +47,12 @@ async def daemons_for_flavors_observation(
         namespace = "default"
 
     while not stopped.is_set():
-        logger.info(f"Repeating observation for {uid}")
-        logger.info(f"Spec: {spec}")
+        logger.info("Sleeping for %s seconds...", CONFIGURATION.FLAVOR_UPDATE_SLEEP_TIME)
+
+        await asyncio.sleep(CONFIGURATION.FLAVOR_UPDATE_SLEEP_TIME)
+
+        logger.info("Repeating observation for %s", uid)
+        logger.debug("Spec: %s", spec)
 
         flavor = build_flavor({
             "metadata": meta,
@@ -58,17 +62,8 @@ async def daemons_for_flavors_observation(
         update_flavor = update_local_flavor_forecasted_data(flavor, namespace)
         if update_flavor is None:
             logger.info("Flavor not updated")
-            continue
+            return
         if finder is None:
             finder = get_resource_finder()
 
         finder.update_local_flavor(flavor, cast(FlavorK8SliceData, update_flavor.spec.flavor_type.type_data).properties, namespace)
-        logger.debug(f"Sleeping for {CONFIGURATION.FLAVOR_UPDATE_SLEEP_TIME} seconds...")
-
-        try:
-            await asyncio.wait_for(stopped.wait(), timeout=CONFIGURATION.FLAVOR_UPDATE_SLEEP_TIME)
-        except asyncio.TimeoutError:
-            continue
-        else:
-            logger.info("Stopped by external signal")
-            return
