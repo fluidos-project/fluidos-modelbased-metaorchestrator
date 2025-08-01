@@ -37,8 +37,7 @@ class RemoteResourceProvider(ResourceProvider):
             if self.contract is None:
                 logger.error("Remote resource not bougth, cannot return valid label")
                 raise RuntimeError("RemoteResourceProvider not connected to active resource")
-            else:
-                self.remove_cluster_id = self._get_remote_cluster_id()
+            self.remove_cluster_id = self._get_remote_cluster_id()
 
         return {
             CONFIGURATION.remote_node_key: str(self.remote_cluster_id)
