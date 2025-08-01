@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 from logging import Logger
 from typing import Any
@@ -57,11 +58,16 @@ async def daemons_for_fluidos_deployment(
         for intent in intents_to_monitor:
             logger.debug(f"{namespace}/{name} requires monitoring for {str(intent)} intents")
 
-    while not stopped:
-        stopped.wait(CONFIGURATION.MONITOR_SLEEP_TIME)
+    while not stopped.is_set():
+        logger.info("Sleeping for %s seconds...", CONFIGURATION.MONITOR_SLEEP_TIME)
 
+        await asyncio.sleep(CONFIGURATION.MONITOR_SLEEP_TIME)
+
+        logger.info("Repeating observation for %s", uid)
         # check if status is set to "completed"
         metaorchestration_status: str = status.get("metaorchestration", {}).get("status", "")
+
+        logger.info(metaorchestration_status)
 
         if metaorchestration_status == "":
             continue  # go to sleep
