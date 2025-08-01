@@ -12,6 +12,9 @@ from kubernetes.client.configuration import Configuration as K8SConfig  # type: 
 from kubernetes.client.exceptions import ApiException  # type: ignore
 
 
+logger = logging.getLogger(__name__)
+
+
 @dataclass
 class Configuration:
     local_node_key: str = "node-role.fluidos.eu/resources"
@@ -36,10 +39,11 @@ class Configuration:
     default_vm_type: str = "default-vm-type"
 
     def check_identity(self, identity: dict[str, str]) -> bool:
-        return all(
-            self.identity[key] == identity.get(key, "")
-            for key in self.identity.keys()
-        )
+        return all([
+            identity["domain"] == self.identity["domain"],
+            identity["ip"] == self.identity["ip"] or identity["ip"] == f"{self.identity['ip']}:{self.identity['port']}",
+            identity["nodeID"] == self.identity["nodeID"]
+        ])
 
 
 def enrich_configuration(config: Configuration,

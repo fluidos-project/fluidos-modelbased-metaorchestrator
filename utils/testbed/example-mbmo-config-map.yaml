@@ -5,7 +5,7 @@ metadata:
 data:
   UPDATE_FLAVORS: "False"
   UPDATE_FLAVORS_INTERVAL: "360"
-  ELECTRICITY_API_KEY: TEST_KEY_123!
+  ELECTRICITY_API_KEY: "TEST_KEY_123!"
   architecture: "arm64"
   MSPL_ENDPOINT: "http://localhost:8080"
   monitor_enabled: "true"
