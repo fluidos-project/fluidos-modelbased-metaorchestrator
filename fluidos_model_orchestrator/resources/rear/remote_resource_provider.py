@@ -93,7 +93,7 @@ class RemoteResourceProvider(ResourceProvider):
             else:
                 logger.info("Contract name not available")
 
-            time.sleep(0.2)
+            time.sleep(1)
             try:
                 response = self.api_client.get_namespaced_custom_object(
                     group="reservation.fluidos.eu",
@@ -147,7 +147,6 @@ class RemoteResourceProvider(ResourceProvider):
 
             if allocation is not None:
                 logger.info("Allocation created")
-                # logger.info(f"{json.dumps(allocation)}")
 
                 return self._create_namespace_offload_resource(namespace)
         except ApiException as e:
@@ -161,11 +160,11 @@ class RemoteResourceProvider(ResourceProvider):
             for _ in range(CONFIGURATION.n_try):
                 res = self.api_client.create_namespaced_custom_object(
                     group="offloading.liqo.io",
-                    version="v1alpha1",
+                    version="v1beta1",
                     namespace=namespace,
                     plural="namespaceoffloadings",
                     body={
-                        "apiVersion": "offloading.liqo.io/v1alpha1",
+                        "apiVersion": "offloading.liqo.io/v1beta1",
                         "kind": "NamespaceOffloading",
                         "metadata": {
                             "name": "offloading"
