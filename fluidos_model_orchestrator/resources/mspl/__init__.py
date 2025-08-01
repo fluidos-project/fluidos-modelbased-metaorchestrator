@@ -5,6 +5,8 @@ from typing import Any
 
 import requests
 
+from fluidos_model_orchestrator.common.intent import Intent
+from fluidos_model_orchestrator.common.resource import ResourceProvider
 from fluidos_model_orchestrator.configuration import CONFIGURATION
 
 
@@ -98,3 +100,8 @@ def create_mspl(provider: str, consumer: str, exporterEndpoint: str, properties:
                     </ITResource>
             </ITResourceOrchestration>"""
     return xml
+
+
+def request_telemetry_for(intents: list[Intent], provider: ResourceProvider) -> bool:
+    logger.warning("Not implemented: fix!!!")
+    return True
