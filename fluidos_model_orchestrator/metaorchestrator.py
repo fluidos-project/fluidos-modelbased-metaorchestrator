@@ -16,11 +16,12 @@ from fluidos_model_orchestrator.deployment import deploy
 from fluidos_model_orchestrator.model import convert_to_model_request
 from fluidos_model_orchestrator.model import get_model_object
 from fluidos_model_orchestrator.resources import get_resource_finder
+from fluidos_model_orchestrator.resources.mspl import request_telemetry_for
 from fluidos_model_orchestrator.resources.mspl.mspl_resource_provider import MSPLIntentWrapper
 
 
-@kopf.on.create("fluidosdeployments")  # type: ignore
-async def metaorchestration(spec: dict[str, Any], name: str, namespace: str, logger: Logger, errors: kopf.ErrorsMode = kopf.ErrorsMode.PERMANENT, **kwargs: str) -> dict[str, dict[str, ResourceProvider | list[str] | None | str] | str]:
+@kopf.on.create("fluidosdeployments", )  # type: ignore
+async def metaorchestration(spec: dict[str, Any], name: str, namespace: str, logger: Logger, errors: kopf.ErrorsMode = kopf.ErrorsMode.PERMANENT, **kwargs: str) -> dict[str, dict[str, list[str] | dict[str, Any] | None | str] | str]:
     logger.info("Processing incoming request")
     logger.debug(f"Received request: {spec}")
 
@@ -92,12 +93,18 @@ async def metaorchestration(spec: dict[str, Any], name: str, namespace: str, log
             "msg": "Unable to find resource matching requirement"
         }
 
-    logger.info("Checking if monitoring is required")
+    if CONFIGURATION.monitor_enabled:
+        logger.info("Monitor enabled, validating if intents need monitoring")
+        intents_to_monitor = [intent for intent in request.intents if intent.needs_monitoring()]
+        if len(intents_to_monitor):
+            logger.info("Contacting bastion with [%s]", ",".join(intent.name.to_intent_key() for intent in intents_to_monitor))
+            # inform bastion
+            request_telemetry_for(intents_to_monitor, best_match)
 
     return {
         "status": "Success",
         "deployed": {
-            "resource_provider": str(best_match),
+            "resource_provider": best_match.to_json(),
             "expandind_resources": [res[1].name.name for res in expanding_resources],
         }
     }

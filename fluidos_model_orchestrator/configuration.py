@@ -12,6 +12,9 @@ from kubernetes.client.configuration import Configuration as K8SConfig  # type: 
 from kubernetes.client.exceptions import ApiException  # type: ignore
 
 
+logger = logging.getLogger(__name__)
+
+
 @dataclass
 class Configuration:
     local_node_key: str = "node-role.fluidos.eu/resources"
@@ -21,7 +24,6 @@ class Configuration:
     identity: dict[str, str] = field(default_factory=dict)
     api_keys: dict[str, str] = field(default_factory=dict)
     DAEMON_SLEEP_TIME: float = 60. * 60.  # 1h in seconds
-    MONITOR_SLEEP_TIME: float = 5.  # 5 seconds
     UPDATE_FLAVORS: bool = True
     FLAVOR_UPDATE_SLEEP_TIME: float = 60. * 60.  # 1h in seconds
     architecture: str = "amd64"
@@ -29,16 +31,19 @@ class Configuration:
     API_SLEEP_TIME: float = 0.1  # 100 ms
     SOLVER_SLEEPING_TIME: float = .5  # 500ms
     MSPL_ENDPOINT: str = ""
+    monitor_enabled: bool = False
     local_prometheus: str = "localhost:9090"  # TODO: should be loaded from configuration
+    MONITOR_SLEEP_TIME: float = 5.  # 5 seconds
 
     monitor_contracts: bool = False
     default_vm_type: str = "default-vm-type"
 
     def check_identity(self, identity: dict[str, str]) -> bool:
-        return all(
-            self.identity[key] == identity.get(key, "")
-            for key in self.identity.keys()
-        )
+        return all([
+            identity["domain"] == self.identity["domain"],
+            identity["ip"] == self.identity["ip"] or identity["ip"] == f"{self.identity['ip']}:{self.identity.get('port', 3000)}",
+            identity["nodeID"] == self.identity["nodeID"]
+        ])
 
 
 def enrich_configuration(config: Configuration,
@@ -52,13 +57,42 @@ def enrich_configuration(config: Configuration,
 
     config.k8s_client = _build_k8s_client(my_config)
     config.identity = _retrieve_node_identity(config, logger)
-    # config.architecture = _retrieve_architecture(config, logger)
-    config.architecture = "arm64"
+    config.architecture = _retrieve_architecture(config, logger)
     config.MSPL_ENDPOINT = _retrieve_mspl_endpoint(config, logger)
     config.UPDATE_FLAVORS, config.FLAVOR_UPDATE_SLEEP_TIME = _retrieve_update_flavor(config, logger)
     config.api_keys = _retrieve_api_key(config, logger)
     config.monitor_contracts = _retrieve_monitoring_contracts(config, logger)
     config.default_vm_type = _retrieve_default_vm_type(config, logger)
+    config.monitor_enabled, config.MONITOR_SLEEP_TIME, config.local_prometheus = _retrieve_monitor_information(config, logger)
+
+
+def _retrieve_monitor_information(config: Configuration, logger: logging.Logger) -> tuple[bool, float, str]:
+    logger.info("Retrieve monitor fluidosdeployments from config map")
+    api_endpoint = CoreV1Api(config.k8s_client)
+
+    try:
+        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(config.namespace)
+        if len(config_maps.items):
+            for item in config_maps.items:
+                if item.metadata is None:
+                    continue
+
+                if item.metadata.name == "fluidos-mbmo-configmap":
+                    logger.debug("ConfigMap identified")
+                    if item.data is None:
+                        raise ValueError("ConfigMap data missing.")
+
+                    data: dict[str, str] = item.data
+                    return (
+                        data.get("monitor_enabled", "False").casefold() == "True".casefold(),  # disable by default
+                        float(data.get("monitor_interval", 5.)),  # 5 seconds
+                        str(data.get("prometheus_endpoint", "localhost:9090"))
+                    )
+    except ApiException as e:
+        logger.error(f"Unable to retrieve config map {e=}")
+
+    logger.error("Something went wrong while retrieving config map")
+    raise ValueError("Unable to retrieve config map")
 
 
 def _retrieve_update_flavor(config: Configuration, logger: logging.Logger) -> tuple[bool, float]:
@@ -73,7 +107,7 @@ def _retrieve_update_flavor(config: Configuration, logger: logging.Logger) -> tu
                     continue
 
                 if item.metadata.name == "fluidos-mbmo-configmap":
-                    logger.info("ConfigMap identified")
+                    logger.debug("ConfigMap identified")
                     if item.data is None:
                         raise ValueError("ConfigMap data missing.")
 
@@ -128,7 +162,7 @@ def _retrieve_api_key(config: Configuration, logger: logging.Logger) -> dict[str
                     continue
 
                 if config_map.metadata.name == "fluidos-mbmo-configmap":
-                    logger.info("ConfigMap identified")
+                    logger.debug("ConfigMap identified")
                     if config_map.data is None:
                         logger.error("Unable to retrieve API Keys. ConfigMap data missing.")
                         raise ValueError("Unable to retrieve API Keys. ConfigMap data missing.")
@@ -161,7 +195,7 @@ def _retrieve_mspl_endpoint(config: Configuration, logger: logging.Logger) -> st
                     continue
 
                 if item.metadata.name == "fluidos-mbmo-configmap":
-                    logger.info("ConfigMap identified")
+                    logger.debug("ConfigMap identified")
                     if item.data is None:
                         logger.error("Unable to retrieve MSPL endpoint. ConfigMap data missing.")
                         raise ValueError("Unable to retrieve MSPL endpoint. ConfigMap data missing.")
@@ -188,7 +222,7 @@ def _retrieve_architecture(config: Configuration, logger: logging.Logger) -> str
                     continue
 
                 if item.metadata.name == "fluidos-mbmo-configmap":
-                    logger.info("ConfigMap identified")
+                    logger.debug("ConfigMap identified")
                     if item.data is None:
                         logger.error("Unable to retrieve architecture. ConfigMap data missing.")
                         raise ValueError("Unable to retrieve architecture. ConfigMap data missing.")
@@ -215,7 +249,7 @@ def _retrieve_node_identity(config: Configuration, logger: logging.Logger) -> di
                     continue
 
                 if item.metadata.name == "fluidos-node-identity":
-                    logger.info("ConfigMap identified")
+                    logger.debug("ConfigMap identified")
 
                     if item.data is None:
                         raise ValueError("ConfigMap data missing.")
@@ -243,7 +277,7 @@ def _retrieve_monitoring_contracts(config: Configuration, logger: logging.Logger
                     continue
 
                 if item.metadata.name == "fluidos-mbmo-configmap":
-                    logger.info("ConfigMap identified")
+                    logger.debug("ConfigMap identified")
                     if item.data is None:
                         logger.error("Unable to retrieve flag to enable contract monitoring. ConfigMap data missing.")
                         raise ValueError("Unable to retrieve flag to enable contract monitoring. ConfigMap data missing.")
@@ -271,7 +305,7 @@ def _retrieve_default_vm_type(config: Configuration, logger: logging.Logger) -> 
                     continue
 
                 if item.metadata.name == "fluidos-mbmo-configmap":
-                    logger.info("ConfigMap identified")
+                    logger.debug("ConfigMap identified")
                     if item.data is None:
                         logger.error("Unable to retrieve default vm type. ConfigMap data missing.")
                         raise ValueError("Unable to retrieve default vm type. ConfigMap data missing.")

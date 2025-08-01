@@ -82,3 +82,42 @@ def test_intent_validated():
 
     for invalid in invalid_intents:
         assert not KnownIntent.is_supported(invalid)
+
+
+def test_intents_requiring_monitoring():
+    requires_monitoring = {
+        "fluidos-intent-bandwidth-against",
+        "fluidos-intent-battery",
+        "fluidos-intent-energy",
+        "fluidos-intent-latency",
+        "fluidos-intent-throughput",
+    }
+
+    not_requires_monitoring = {
+        "fluidos-intent-architecture",
+        "fluidos-intent-carbon-aware",
+        "fluidos-intent-compliance",
+        "fluidos-intent-cpu",
+        "fluidos-intent-cyber-deception",
+        "fluidos-intent-gpu",
+        "fluidos-intent-hardware",
+        "fluidos-intent-location",
+        "fluidos-intent-magi",
+        "fluidos-intent-max-delay",
+        "fluidos-intent-memory",
+        "fluidos-intent-mspl",
+        "fluidos-intent-resource",
+        "fluidos-intent-sensor",
+        "fluidos-intent-service",
+        "fluidos-intent-tee-readiness",
+        "fluidos-intent-vm-type",
+    }
+
+    for intent in KnownIntent:
+        key = intent.to_intent_key()
+        assert not (
+            key in requires_monitoring and key in not_requires_monitoring
+        ), f"{key} is in both"
+        assert key in requires_monitoring or key in not_requires_monitoring, f"{key} is in neither"
+
+        assert intent.needs_monitoring() or key in not_requires_monitoring, f"{key} not requiring monitoring but listed in requires monitoring"

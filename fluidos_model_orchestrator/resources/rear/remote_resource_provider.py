@@ -22,6 +22,7 @@ class RemoteResourceProvider(ResourceProvider):
         self.api_client = api_client
         self.seller = seller
         self.contract: str | None = None
+        self.remote_cluster_id: str | None = None
 
     def acquire(self, namespace: str) -> bool:
         logger.info("Creating connection to remote node")
@@ -32,12 +33,14 @@ class RemoteResourceProvider(ResourceProvider):
         return self._establish_peering(contract, namespace)
 
     def get_label(self) -> dict[str, str]:
-        if self.contract is None:
-            logger.error("Remote resource not bougth, cannot return valid label")
-            raise RuntimeError("RemoteResourceProvider not connected to active resource")
+        if self.remote_cluster_id is None:
+            if self.contract is None:
+                logger.error("Remote resource not bougth, cannot return valid label")
+                raise RuntimeError("RemoteResourceProvider not connected to active resource")
+            self.remove_cluster_id = self._get_remote_cluster_id()
 
         return {
-            CONFIGURATION.remote_node_key: self._get_remote_cluster_id()
+            CONFIGURATION.remote_node_key: str(self.remote_cluster_id)
         }
 
     def _get_remote_cluster_id(self) -> str:
@@ -90,7 +93,7 @@ class RemoteResourceProvider(ResourceProvider):
             else:
                 logger.info("Contract name not available")
 
-            time.sleep(0.2)
+            time.sleep(1)
             try:
                 response = self.api_client.get_namespaced_custom_object(
                     group="reservation.fluidos.eu",
@@ -144,7 +147,6 @@ class RemoteResourceProvider(ResourceProvider):
 
             if allocation is not None:
                 logger.info("Allocation created")
-                # logger.info(f"{json.dumps(allocation)}")
 
                 return self._create_namespace_offload_resource(namespace)
         except ApiException as e:
@@ -158,11 +160,11 @@ class RemoteResourceProvider(ResourceProvider):
             for _ in range(CONFIGURATION.n_try):
                 res = self.api_client.create_namespaced_custom_object(
                     group="offloading.liqo.io",
-                    version="v1alpha1",
+                    version="v1beta1",
                     namespace=namespace,
                     plural="namespaceoffloadings",
                     body={
-                        "apiVersion": "offloading.liqo.io/v1alpha1",
+                        "apiVersion": "offloading.liqo.io/v1beta1",
                         "kind": "NamespaceOffloading",
                         "metadata": {
                             "name": "offloading"
@@ -213,4 +215,12 @@ class RemoteResourceProvider(ResourceProvider):
                     "namespace": namespace
                 }
             }
+        }
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "type": "REMOTE",
+            "id": self.id,
+            "flavor": self.flavor.to_json(),
+            "labels": self.get_label()
         }

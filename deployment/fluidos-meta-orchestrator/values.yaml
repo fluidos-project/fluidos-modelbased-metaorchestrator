@@ -83,7 +83,7 @@ affinity: {}
 electricity_map:
   key:  "<MY KEY TO BE REPLACED WITH SOMETHING MEANINGFULL>"  # ElectricityMap API KEY <COMPLETE>
 
-update_flavors: "False"  # true or false
+update_flavors: "false"  # true or false
 update_flavors_interval: 360  # in seconds, default is 1 hour
 
 configuration:
@@ -94,3 +94,8 @@ mspl:
 
 
 monitor_contracts: "False"
+
+monitoring:
+  enabled: "false"
+  interval: "5"
+  endpoint: "localhost:9090"

@@ -13,7 +13,7 @@ from fluidos_model_orchestrator.model import convert_to_model_request
 
 
 class ResourceFinder(ABC):
-    def find_best_match(self, resource: Resource, namespace: str) -> list[ResourceProvider]:
+    def find_best_match(self, resource: Resource, namespace: str, solver_name: str | None = None) -> list[ResourceProvider]:
         raise NotImplementedError()
 
     def find_service(self, id: str, service: Intent, namespace: str) -> list[ExternalResourceProvider]:

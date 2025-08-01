@@ -6,6 +6,7 @@ flake8
 kubernetes-stubs
 mypy
 pytest==8.4.0
+pytest-cov
 pytest-kubernetes==0.6.0
 requests-mock==1.12.1
 tqdm

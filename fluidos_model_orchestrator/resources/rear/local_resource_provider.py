@@ -1,3 +1,5 @@
+from typing import Any
+
 from fluidos_model_orchestrator.common import Flavor
 from fluidos_model_orchestrator.common import ResourceProvider
 from fluidos_model_orchestrator.configuration import CONFIGURATION
@@ -14,3 +16,10 @@ class LocalResourceProvider(ResourceProvider):
 
     def acquire(self, namespace: str) -> bool:
         return True
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "type": "LOCAL",
+            "id": self.id,
+            "flavor": self.flavor.to_json()
+        }
