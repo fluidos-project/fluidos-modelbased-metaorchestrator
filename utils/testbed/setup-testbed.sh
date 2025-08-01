@@ -12,7 +12,6 @@ function _get_command {
 }
 
 
-
 # basic setup
 helm repo add fluidos https://fluidos-project.github.io/node/ --force-update
 
