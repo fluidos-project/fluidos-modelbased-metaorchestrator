@@ -86,30 +86,31 @@ def test_intent_validated():
 
 def test_intents_requiring_monitoring():
     requires_monitoring = {
+        "fluidos-intent-bandwidth-against",
         "fluidos-intent-battery",
         "fluidos-intent-energy",
-        "fluidos-intent-throughput",
         "fluidos-intent-latency",
-        "fluidos-intent-bandwidth-against",
+        "fluidos-intent-throughput",
     }
 
     not_requires_monitoring = {
-        "fluidos-intent-service",
         "fluidos-intent-architecture",
+        "fluidos-intent-carbon-aware",
         "fluidos-intent-compliance",
         "fluidos-intent-cpu",
-        "fluidos-intent-max-delay",
-        "fluidos-intent-carbon-aware",
-        "fluidos-intent-gpu",
-        "fluidos-intent-location",
-        "fluidos-intent-memory",
-        "fluidos-intent-resource",
-        "fluidos-intent-tee-readiness",
-        "fluidos-intent-mspl",
-        "fluidos-intent-vm-type",
         "fluidos-intent-cyber-deception",
-        "fluidos-intent-sensor",
+        "fluidos-intent-gpu",
         "fluidos-intent-hardware",
+        "fluidos-intent-location",
+        "fluidos-intent-magi",
+        "fluidos-intent-max-delay",
+        "fluidos-intent-memory",
+        "fluidos-intent-mspl",
+        "fluidos-intent-resource",
+        "fluidos-intent-sensor",
+        "fluidos-intent-service",
+        "fluidos-intent-tee-readiness",
+        "fluidos-intent-vm-type",
     }
 
     for intent in KnownIntent:
