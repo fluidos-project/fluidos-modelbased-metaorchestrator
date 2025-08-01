@@ -41,7 +41,7 @@ class Configuration:
     def check_identity(self, identity: dict[str, str]) -> bool:
         return all([
             identity["domain"] == self.identity["domain"],
-            identity["ip"] == self.identity["ip"] or identity["ip"] == f"{self.identity['ip']}:{self.identity['port']}",
+            identity["ip"] == self.identity["ip"] or identity["ip"] == f"{self.identity['ip']}:{self.identity.get('port', 3000)}",
             identity["nodeID"] == self.identity["nodeID"]
         ])
 
