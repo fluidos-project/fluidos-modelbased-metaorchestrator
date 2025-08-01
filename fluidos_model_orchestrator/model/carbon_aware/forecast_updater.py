@@ -47,7 +47,7 @@ def _get_forecasted_carbon_intensity(lat: str, lon: str) -> list[int] | None:
     else:
         logging.exception(f"Error fetching forecasted data: {response.status_code}")
         logging.exception(f"Error: {response.reason}")
-        return None
+    return None
 
 
 def update_local_flavor_forecasted_data(flavor: Flavor, namespace: str) -> Flavor | None:
