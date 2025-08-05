@@ -59,7 +59,7 @@ class RemoteResourceProvider(ResourceProvider):
             if resource is None:
                 raise RuntimeError(f"Unable to retrieve {self.contract=}")
 
-            return resource["spec"]["peeringTargetCredentials"]["clusterID"]
+            return resource["spec"]["peeringTargetCredentials"]["liqoID"]
         except ApiException as e:
             logger.error(f"Unable to reserve and buy {self.peering_candidate}")
             logger.debug(f"Reason: {e=}")
