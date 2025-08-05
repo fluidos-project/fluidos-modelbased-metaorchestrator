@@ -98,4 +98,4 @@ monitor_contracts: "False"
 monitoring:
   enabled: "false"
   interval: "5"
-  endpoint: "localhost:9090"
+  endpoint: "http://localhost:9090"

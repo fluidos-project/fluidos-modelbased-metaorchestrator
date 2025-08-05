@@ -59,7 +59,11 @@ class RemoteResourceProvider(ResourceProvider):
             if resource is None:
                 raise RuntimeError(f"Unable to retrieve {self.contract=}")
 
-            return resource["spec"]["peeringTargetCredentials"]["liqoID"]
+            # .spec.peeringTargetCredentials.liqoID
+            liqoID = resource["spec"]["peeringTargetCredentials"]["liqoID"]
+
+            logger.info("Returning id: %s", liqoID)
+            return liqoID
         except ApiException as e:
             logger.error(f"Unable to reserve and buy {self.peering_candidate}")
             logger.debug(f"Reason: {e=}")
@@ -88,12 +92,12 @@ class RemoteResourceProvider(ResourceProvider):
 
         for _ in range(CONFIGURATION.n_try):
             if "name" in response.get("status", {}).get("contract", {}):
-                logger.info("Contract available")
+                logger.info("Contract available %s", response["status"]["name"])
                 break
             else:
-                logger.info("Contract name not available")
+                logger.debug("Contract name not available")
 
-            time.sleep(1)
+            time.sleep(1.5)
             try:
                 response = self.api_client.get_namespaced_custom_object(
                     group="reservation.fluidos.eu",

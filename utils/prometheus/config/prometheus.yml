@@ -4,7 +4,7 @@ global:
   # Attach these labels to any time series or alerts when communicating with
   # external systems (federation, remote storage, Alertmanager).
   external_labels:
-    monitor: 'codelab-monitor'
+    monitor: 'external_label'
 
 # A scrape configuration containing exactly one endpoint to scrape:
 # Here it's Prometheus itself.
@@ -12,5 +12,4 @@ scrape_configs:
   - job_name: 'fluidos'
     scrape_interval: 2s
     static_configs:
-      #- targets: ['434904b10c27.ngrok-fre']
-      - targets: ['ff01b0ca1acf.ngrok-free.app']
+      - targets: ['28f39ef0db22.ngrok-free.app']

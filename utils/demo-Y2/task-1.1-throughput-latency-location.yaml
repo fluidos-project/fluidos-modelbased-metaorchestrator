@@ -1,0 +1,25 @@
+apiVersion: fluidos.eu/v1
+kind: FLUIDOSDeployment
+metadata:
+  name: y2demo-task-1.1
+spec:
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: y2demo-task-1.1
+    annotations:
+      fluidos-intent-throughput: "100"
+      fluidos-intent-latency: "100"
+      fluidos-intent-location: "Turin"
+  spec:
+    containers:
+    - image: nginx:latest
+      imagePullPolicy: IfNotPresent
+      name: producer
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "250m"
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
