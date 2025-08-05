@@ -44,7 +44,8 @@ def retrieve_metric(metric: str, host: str) -> dict[str, Any] | None:
             logger.error("Service Unavailable.")
 
     except Exception as e:
-        logger.error("Something went very wrong", exc_info=e)
+        logger.error("Something went very wrong")
+        logger.debug("Something went very wrong", exc_info=e)
 
     return None
 
