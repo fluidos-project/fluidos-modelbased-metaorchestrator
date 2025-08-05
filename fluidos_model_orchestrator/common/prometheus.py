@@ -29,12 +29,14 @@ def retrieve_metric(metric: str, host: str) -> dict[str, Any] | None:
 
         response = requests.get(f"{host}/api/v1/query_range", params=query_params, headers=headers)  # type: ignore[arg-type]
 
+        print(response.content)
+
         if response.status_code // 100 == 2:
             data = response.json()
             if data["status"] != "success":
                 logger.error("Failed for not clear reason")
                 return None
-            return data["results"]
+            return data["data"]["result"]
 
         elif response.status_code == 400:
             logger.error("Bad Request when parameters are missing or incorrect.")
