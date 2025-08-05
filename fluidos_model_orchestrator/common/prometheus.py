@@ -23,18 +23,18 @@ def retrieve_metric(metric: str, host: str) -> dict[str, Any] | None:
             "end": f"{now.isoformat()}Z",
             "step": "2m",
             "limit": 100,
+            "query": metric,
         }
         headers = {"Content-Type": "application/json"}
-        query = f"query={metric}"
 
-        response = requests.get(host + "/api/v1/query_range", params=query_params, headers=headers, data=query)  # type: ignore[arg-type]
+        response = requests.get(f"{host}/api/v1/query_range", params=query_params, headers=headers)  # type: ignore[arg-type]
 
         if response.status_code // 100 == 2:
             data = response.json()
             if data["status"] != "success":
                 logger.error("Failed for not clear reason")
                 return None
-            return {}
+            return data["results"]
 
         elif response.status_code == 400:
             logger.error("Bad Request when parameters are missing or incorrect.")
@@ -43,9 +43,9 @@ def retrieve_metric(metric: str, host: str) -> dict[str, Any] | None:
         elif response.status_code == 503:
             logger.error("Service Unavailable.")
 
-    except Exception as e:
-        logger.error("Something went very wrong")
-        logger.debug("Something went very wrong", exc_info=e)
+    except requests.exceptions.RequestException as e:
+        # logger.error("Something went very wrong")
+        logger.error("Something went very wrong", exc_info=e)
 
     return None
 
