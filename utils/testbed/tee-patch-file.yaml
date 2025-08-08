@@ -1,0 +1,6 @@
+spec:
+  flavorType:
+    typeData:
+      properties:
+        additionalProperties:
+          TEE: true

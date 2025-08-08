@@ -1,12 +1,12 @@
 apiVersion: fluidos.eu/v1
 kind: FLUIDOSDeployment
 metadata:
-  name: y2demo-task-1.1
+  name: y2demo-task-1.2
 spec:
   apiVersion: v1
   kind: Pod
   metadata:
-    name: y2demo-task-1.1
+    name: y2demo-task-1.2
     annotations:
       fluidos-intent-latency: "100"
       fluidos-intent-sensor: "humidity"
