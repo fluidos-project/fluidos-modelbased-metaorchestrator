@@ -1,0 +1,8 @@
+spec:
+  flavorType:
+    typeData:
+      properties:
+        additionalProperties:
+          sensors:
+            - "humidity"
+            - "CO2"

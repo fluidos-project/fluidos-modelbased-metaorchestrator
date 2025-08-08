@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sensors
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: sensors
+  name: temp-sensor
+  labels:
+    app: temp-sensor
+    nodecore.fluidos.eu/flavor-service-endpoint: "true"   # expose to FLUIDOS
+spec:
+  type: NodePort
+  selector:
+    app: temp-sensor
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      nodePort: 30081
+---
+apiVersion: fluidos.eu/v1
+kind: FLUIDOSDeployment
+metadata:
+  name: temp-sensor
+spec:
+  apiVersion: apps/v1
+  kind: Pod
+  metadata:
+    namespace: sensors
+    name: temp-sensor
+    labels:
+      app: temp-sensor
+    annotations:
+      fluidos-intent-sensor: "humidity"
+      fluidos-intent-latency: "100"
+  spec:
+      containers:
+        - name: sensor
+          image: python:3.11-slim
+          command: ["/bin/sh","-c"]
+          args:
+            - |
+              pip install --quiet flask && \
+              python - <<'PY'
+              from flask import Flask, jsonify
+              import random, time
+              app = Flask(__name__)
+              @app.route('/sensor')
+              def sensor():
+                  data = {
+                      'timestamp': int(time.time()),
+                      'temperature': round(20 + 10*random.random(), 2),
+                      'humidity':    round(30 + 20*random.random(), 2)
+                  }
+                  return jsonify(data)
+              app.run(host='0.0.0.0', port=8080)
+              PY
+          ports:
+            - containerPort: 8080
