@@ -1,0 +1,7 @@
+spec:
+  flavorType:
+    typeData:
+      properties:
+        additionalProperties:
+          bandwidth:
+            AZURE: 100ms

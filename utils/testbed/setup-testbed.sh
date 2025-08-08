@@ -124,3 +124,23 @@ spec:
   # Set ip:port with the provider cluster control plane
   address: ${IT_PROVIDER_CONTROLPLANE_IP}:${PROVIDER_NODE_PORT}
 EOF
+
+
+if [ -n ${DEMO:-""} ]; then
+  echo "Setting up demo environment"
+
+  # configure IT to be AZURE
+  kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/provider-IT-config.yaml | cut -f1 -d\  | xargs -I% kubectl patch flavor/%  --patch-file $PWD/bandwidth-patch-file.yaml --type merge -n fluidos --kubeconfig $PWD/provider-IT-config.yaml
+
+  # configure TEE available in DE provider
+  # kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/provider-IT-config.yaml | cut -f1 -d\  | xargs -I% kubectl patch flavor/%  --patch-file ../../tests/examples/tee-patch-file.yaml --type merge -n fluidos --kubeconfig $PWD/provider-IT-config.yaml
+  kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/provider-DE-config.yaml | cut -f1 -d\  | xargs -I% kubectl patch flavor/%  --patch-file $PWD/tee-patch-file.yaml --type merge -n fluidos --kubeconfig $PWD/provider-DE-config.yaml
+
+  # configure carbon emission in IT (bad)
+  kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/provider-IT-config.yaml | cut -f1 -d\  | xargs -I% kubectl patch flavor/%  --patch-file $PWD/carbon-good-patch-file.yaml --type merge -n fluidos --kubeconfig $PWD/provider-IT-config.yaml
+
+  # configure carbon emission in DE (good)
+  kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/provider-DE-config.yaml | cut -f1 -d\  | xargs -I% kubectl patch flavor/%  --patch-file $PWD/carbon-bad-patch-file.yaml --type merge -n fluidos --kubeconfig $PWD/provider-DE-config.yaml
+
+  # create service flavor in the IT provider
+  kubectl apply -f $PWD/rabbitmq-service.yaml --kubeconfig $PWD/provider-IT-config.yaml
