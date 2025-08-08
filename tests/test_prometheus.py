@@ -3,6 +3,9 @@ from typing import cast
 import pytest  # type: ignore
 import requests_mock  # type: ignore
 
+from fluidos_model_orchestrator.common.intent import Intent
+from fluidos_model_orchestrator.common.intent import KnownIntent
+from fluidos_model_orchestrator.common.prometheus import has_intent_validation_failed
 from fluidos_model_orchestrator.common.prometheus import retrieve_metric
 
 
@@ -44,3 +47,22 @@ def test_not_empty_response() -> None:
         )
 
         assert metrics is not None
+
+
+def test_intent_validation_no_data() -> None:
+    with requests_mock.Mocker() as m:
+        mocker = cast(requests_mock.Mocker, m)  # TMMYH
+
+        mocker.register_uri(method="GET", url="http://dummy-hostname.org:9090/api/v1/query_range", json={
+            "status": "success", "data": {"resultType": "matrix", "result": []}
+        })
+
+        response = has_intent_validation_failed(
+            intent=Intent(name=KnownIntent.latency, value="200"),  # 200ms latency
+            prometheus_ref="http://dummy-hostname.org:9090",
+            status={},
+            namespace="my namespace",
+            name="myname"
+        )
+
+        assert not response

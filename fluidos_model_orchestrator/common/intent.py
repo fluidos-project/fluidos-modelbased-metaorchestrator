@@ -23,6 +23,10 @@ _always_true: Callable[[ResourceProvider, str], bool] = lambda provider, value: 
 
 
 def _validate_latency(value: str, data: dict[str, Any]) -> bool:
+    # assuming that it is falsified if the last X reading > required value
+    if len(data) != 0:
+        required_max_latency = float(value)  # noqa: ignore[F841]
+
     return False
 
 
@@ -174,6 +178,11 @@ def _validate_magi(provider: ResourceProvider, value: str) -> bool:
     return False
 
 
+def _validate_robot_status(provider: ResourceProvider, value: str) -> bool:
+    # TO BE COMPLETED
+    return False
+
+
 @unique
 class KnownIntent(Enum):
     # k8s resources
@@ -186,21 +195,22 @@ class KnownIntent(Enum):
     vm_type = "vm-type", False, _validate_vm_type
 
     # high order requests
-    latency = "latency", False, _always_true, "fluidos-latency", _validate_latency
+    latency = "latency", False, _always_true, lambda args: f'fluidos_latency{{cluster="{args[0]}"}}', _validate_latency
     location = "location", False, validate_location
-    throughput = "throughput", False, _always_true, "fluidos-throughput", _validate_throughput
+    throughput = "throughput", False, _always_true, lambda args: f'fluidos_throughput{{pod="{args[1]}/{args[2]}"}}', _validate_throughput
     compliance = "compliance", False, _validate_regulations
     energy = "energy", False, _always_true, True
 
     # ROB
-    battery = "battery", False, _always_true, "fluidos-battery", _validate_battery_level
+    battery = "battery", False, _always_true, "fluidos_battery", _validate_battery_level
+    robot_status = "robot-status", False, _validate_robot_status, lambda args: f'robot_status{{cluster="{args[0]}"}}', _always_true
 
     # carbon aware requests
     max_delay = "max-delay", False
     carbon_aware = "carbon-aware", False
 
     # TER
-    bandwidth_against = "bandwidth-against", False, _validate_bandwidth_against_point, "fluidos-bandwidth-against", _monitor_bandwidth_against_point
+    bandwidth_against = "bandwidth-against", False, _validate_bandwidth_against_point, lambda args: f'fluidos_bandwidth_against{{cluster="{args[0]}"}}', _monitor_bandwidth_against_point
     tee_readiness = "tee-readiness", False, _validate_tee_available
 
     # service
@@ -224,7 +234,7 @@ class KnownIntent(Enum):
 
     def __init__(self, label: str, external: bool,
                  validator: Callable[[ResourceProvider, str], bool] = _always_true,
-                 metric_name: str | None = None,
+                 metric_name: Callable[[list[str]], str] | None = None,  # function getting remote_cluster_id, namespace, workload name
                  metric_validator: Callable[[str, Any], bool] | None = None):
         self.label = label
         self._external = external
@@ -249,7 +259,7 @@ class KnownIntent(Enum):
             raise ValueError("Trying to validate an intent not requiring monitoring")
         return self._metric_validator(value, data)
 
-    def metric_name(self) -> str | None:
+    def metric_name(self) -> Callable[[list[str]], str] | None:
         return self._metric_name
 
     @staticmethod
