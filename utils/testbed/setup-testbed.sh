@@ -142,5 +142,8 @@ if [ -n ${DEMO:-""} ]; then
   # configure carbon emission in DE (good)
   kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/provider-DE-config.yaml | cut -f1 -d\  | xargs -I% kubectl patch flavor/%  --patch-file $PWD/carbon-bad-patch-file.yaml --type merge -n fluidos --kubeconfig $PWD/provider-DE-config.yaml
 
+  # configure DE as having sensors
+  kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/provider-DE-config.yaml | cut -f1 -d\  | xargs -I% kubectl patch flavor/%  --patch-file $PWD/flavor-patch-sensor.yaml --type merge -n fluidos --kubeconfig $PWD/provider-DE-config.yaml
+
   # create service flavor in the IT provider
   kubectl apply -f $PWD/rabbitmq-service.yaml --kubeconfig $PWD/provider-IT-config.yaml
