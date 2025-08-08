@@ -65,12 +65,9 @@ async def daemons_for_fluidos_deployment(
 
         logger.info("Repeating observation for %s", uid)
         # check if status is set to "completed"
-        metaorchestration_status: str = status.get("metaorchestration", {}).get("status", "")
+        metaorchestration_status_data: dict[str, Any] = status.get("metaorchestration", {})
 
-        logger.info(metaorchestration_status)
-
-        if metaorchestration_status == "":
-            continue  # go to sleep
+        metaorchestration_status = metaorchestration_status_data.get("status", "")
 
         if metaorchestration_status == "Failure":
             logger.info("%s/%s failed in allocating the system, kill the monitoring process too", namespace, name)
@@ -78,15 +75,18 @@ async def daemons_for_fluidos_deployment(
 
         if metaorchestration_status == "Success":
             logger.info("%s/%s is correctly deployed, check if still valid", namespace, name)
+
             for intent in intents_to_monitor:
-                if has_intent_validation_failed(intent, CONFIGURATION.local_prometheus, ):
+                if has_intent_validation_failed(intent, CONFIGURATION.local_prometheus, metaorchestration_status_data, namespace, name):
                     logger.info("%s/%s failed when validating %s", namespace, name, intent.name)
                     break
             else:
                 logger.info("%s/%s all intents are still valid", namespace, name)
                 continue
         else:
+            # anything other than "Failure" or "Success"
             logger.info("%s/%s still being deployed", namespace, name)
+            continue
 
         logger.info("Proceding to reallocate the workload")
         request: ModelPredictRequest | None = convert_to_model_request(spec, namespace)

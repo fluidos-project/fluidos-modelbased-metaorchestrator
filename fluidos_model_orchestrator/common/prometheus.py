@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Callable
 from datetime import datetime
 from datetime import timedelta
 from typing import Any
@@ -29,6 +30,9 @@ def retrieve_metric(metric: str, host: str) -> dict[str, Any] | None:
 
         response = requests.get(f"{host}/api/v1/query_range", params=query_params, headers=headers)  # type: ignore[arg-type]
 
+        print(response.url)
+        print(response.request.url)
+
         print(response.content)
 
         if response.status_code // 100 == 2:
@@ -52,11 +56,18 @@ def retrieve_metric(metric: str, host: str) -> dict[str, Any] | None:
     return None
 
 
-def has_intent_validation_failed(intent: Intent, prometheus_ref: str) -> bool:
-    if intent.name.needs_monitoring():
-        data = retrieve_metric(
-            str(intent.name._metric_name),  # noop to make mypy happy
-            prometheus_ref)
+def has_intent_validation_failed(intent: Intent, prometheus_ref: str, status: dict[str, Any], namespace: str, name: str) -> bool:
+    if not intent.name.needs_monitoring():
+        logger.info("Not to be monitored, assuming still valid")
+        return False
+    metric: Callable[[list[str]], str] | None = intent.name.metric_name()
+    if metric is None:
+        logger.info("Not to be monitored, assuming still valid")
+        return False
 
-        return intent.name.validate_monitoring(intent.value, data)
-    return False
+    metric_to_query = metric(["cluster_name", namespace, name])
+    data = retrieve_metric(
+        metric_to_query,  # noop to make mypy happy
+        prometheus_ref)
+
+    return intent.name.validate_monitoring(intent.value, data)
