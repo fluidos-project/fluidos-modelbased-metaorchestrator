@@ -8,7 +8,7 @@ data:
   ELECTRICITY_MAP_API_KEY: "TEST_KEY_123!"
   architecture: "arm64"
   MSPL_ENDPOINT: "http://localhost:8080"
-  monitor_enabled: "False"
+  monitor_enabled: "True"
   monitor_interval: "2"
   prometeus_endpoint: "http://localhost:9090"
   MONITOR_CONTRACTS: "False"
