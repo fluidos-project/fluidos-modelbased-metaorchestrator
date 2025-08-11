@@ -97,6 +97,12 @@ until kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/provider-IT-c
   echo "Waiting for flavor resource to be created in provider-IT..."
   sleep 2
 done
+#
+# Wait until at least one flavor resource is present
+until kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/consumer-config.yaml | grep -q .; do
+  echo "Waiting for flavor resource to be created in consumer..."
+  sleep 2
+done
 
 # pretend the consumer cluster is in Dublin, Ireland
 kubectl get flavor -n fluidos --no-headers --kubeconfig $PWD/consumer-config.yaml | cut -f1 -d\  | xargs -I% kubectl patch flavor/%  --patch-file $PWD/flavors-location-ireland.yaml --type merge -n fluidos --kubeconfig $PWD/consumer-config.yaml
@@ -147,3 +153,4 @@ if [ -n ${DEMO:-""} ]; then
 
   # create service flavor in the IT provider
   kubectl apply -f $PWD/rabbitmq-service.yaml --kubeconfig $PWD/provider-IT-config.yaml
+fi
