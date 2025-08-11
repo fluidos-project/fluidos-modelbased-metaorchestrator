@@ -25,6 +25,10 @@ class RemoteResourceProvider(ResourceProvider):
         self.remote_cluster_id: str | None = None
 
     def acquire(self, namespace: str) -> bool:
+        if CONFIGURATION.skip_peering:
+            logger.info("Not really acquiring, peering already exists")
+            return True
+
         logger.info("Creating connection to remote node")
         contract = self._buy()
         if contract is None:
@@ -33,6 +37,11 @@ class RemoteResourceProvider(ResourceProvider):
         return self._establish_peering(contract, namespace)
 
     def get_label(self) -> dict[str, str]:
+        if CONFIGURATION.skip_peering:
+            return {
+                CONFIGURATION.remote_node_key: CONFIGURATION.host_mapping[self.flavor.spec.owner[""]]
+            }
+
         if self.remote_cluster_id is None:
             if self.contract is None:
                 logger.error("Remote resource not bougth, cannot return valid label")
