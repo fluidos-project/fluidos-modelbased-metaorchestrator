@@ -35,6 +35,9 @@ class Configuration:
     local_prometheus: str = "localhost:9090"  # TODO: should be loaded from configuration
     MONITOR_SLEEP_TIME: float = 5.  # 5 seconds
 
+    skip_peering: bool = False
+    host_mapping: dict[str, str] = {}
+
     monitor_contracts: bool = False
     default_vm_type: str = "default-vm-type"
 
@@ -64,6 +67,68 @@ def enrich_configuration(config: Configuration,
     config.monitor_contracts = _retrieve_monitoring_contracts(config, logger)
     config.default_vm_type = _retrieve_default_vm_type(config, logger)
     config.monitor_enabled, config.MONITOR_SLEEP_TIME, config.local_prometheus = _retrieve_monitor_information(config, logger)
+    config.skip_peering = _retrieve_skip_peering(config, logger)
+    config.host_mapping = _retrieve_host_mapping(config, logger)
+
+
+def _retrieve_host_mapping(config: Configuration, logger: logging.Logger) -> dict[str, str]:
+    logger.info("Retrieve FLUIDOS node/cluster node mapping from config map")
+    api_endpoint = CoreV1Api(config.k8s_client)
+
+    try:
+        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(config.namespace)
+        if len(config_maps.items):
+            for item in config_maps.items:
+                if item.metadata is None:
+                    continue
+
+                if item.metadata.name == "fluidos-mbmo-configmap":
+                    logger.debug("ConfigMap identified")
+                    if item.data is None:
+                        raise ValueError("ConfigMap data missing.")
+
+                    data: dict[str, str] = item.data
+                    host_mapping = data.get("host_mapping", "")
+
+                    if len(host_mapping):
+                        return {
+                            k: v
+                            for [k, v] in map(lambda x: x.split(":"), [pair for pair in host_mapping.split(";")])
+                        }
+                    else:
+                        return {}
+
+    except ApiException as e:
+        logger.error(f"Unable to retrieve config map {e=}")
+
+    logger.error("Something went wrong while retrieving config map")
+    raise ValueError("Unable to retrieve config map")
+
+
+def _retrieve_skip_peering(config: Configuration, logger: logging.Logger) -> bool:
+    logger.info("Retrieve information if peering should be performed from config map")
+    api_endpoint = CoreV1Api(config.k8s_client)
+
+    try:
+        config_maps: V1ConfigMapList = api_endpoint.list_namespaced_config_map(config.namespace)
+        if len(config_maps.items):
+            for item in config_maps.items:
+                if item.metadata is None:
+                    continue
+
+                if item.metadata.name == "fluidos-mbmo-configmap":
+                    logger.debug("ConfigMap identified")
+                    if item.data is None:
+                        raise ValueError("ConfigMap data missing.")
+
+                    data: dict[str, str] = item.data
+                    return data.get("skip_peering", "False").casefold() == "True".casefold()
+
+    except ApiException as e:
+        logger.error(f"Unable to retrieve config map {e=}")
+
+    logger.error("Something went wrong while retrieving config map")
+    raise ValueError("Unable to retrieve config map")
 
 
 def _retrieve_monitor_information(config: Configuration, logger: logging.Logger) -> tuple[bool, float, str]:
