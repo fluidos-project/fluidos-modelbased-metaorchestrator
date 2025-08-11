@@ -22,12 +22,17 @@ logger = logging.getLogger(__name__)
 _always_true: Callable[[ResourceProvider, str], bool] = lambda provider, value: True
 
 
-def _validate_latency(value: str, data: dict[str, Any]) -> bool:
-    # assuming that it is falsified if the last X reading > required value
-    if len(data) != 0:
-        required_max_latency = float(value)  # noqa: ignore[F841]
+def _validate_latency(value: str, data: list[Any]) -> bool:
+    # assuming that it is falsified if the avg(last) X readings > required value
+    if len(data) == 0:
+        return True
 
-    return False
+    required_max_latency = float(value)
+    values = data[0]["values"]
+
+    avg_data = sum(int(value[1]) for value in values) / len(values)
+
+    return avg_data <= required_max_latency
 
 
 def _validate_throughput(value: str, data: dict[str, Any]) -> bool:
@@ -195,9 +200,9 @@ class KnownIntent(Enum):
     vm_type = "vm-type", False, _validate_vm_type
 
     # high order requests
-    latency = "latency", False, _always_true, lambda args: f'fluidos_latency{{cluster="{args[0]}"}}', _validate_latency
+    latency = "latency", False, _always_true, lambda args: f'fluidos_latency{{cluster="{args[0]}"}}[2m]', _validate_latency
     location = "location", False, validate_location
-    throughput = "throughput", False, _always_true, lambda args: f'fluidos_throughput{{pod="{args[1]}/{args[2]}"}}', _validate_throughput
+    throughput = "throughput", False, _always_true, lambda args: f'fluidos_throughput{{pod="{args[1]}/{args[2]}"}}[2m]', _validate_throughput
     compliance = "compliance", False, _validate_regulations
     energy = "energy", False, _always_true, True
 
