@@ -1,12 +1,12 @@
 import logging
 from collections.abc import Callable
-from datetime import datetime
-from datetime import timedelta
 from typing import Any
 
 import requests
 
 from fluidos_model_orchestrator.common.intent import Intent
+# from datetime import datetime
+# from datetime import timedelta
 
 
 logger = logging.getLogger(__name__)
@@ -14,33 +14,28 @@ logger = logging.getLogger(__name__)
 
 def retrieve_metric(metric: str, host: str) -> dict[str, Any] | None:
     try:
-        now = datetime.now().replace(microsecond=0)
-        before = timedelta(minutes=15)
+        # now = datetime.now().replace(microsecond=0)
+        # before = timedelta(minutes=15)
 
-        start = now - before
+        # start = now - before
 
         query_params = {
-            "start": f"{start.isoformat()}Z",
-            "end": f"{now.isoformat()}Z",
-            "step": "2m",
-            "limit": 100,
+            # "start": f"{start.isoformat()}Z",
+            # "end": f"{now.isoformat()}Z",
+            # "step": "2m",
+            # "limit": 100,
             "query": metric,
         }
         headers = {"Content-Type": "application/json"}
 
-        response = requests.get(f"{host}/api/v1/query_range", params=query_params, headers=headers)  # type: ignore[arg-type]
-
-        print(response.url)
-        print(response.request.url)
-
-        print(response.content)
+        response = requests.get(f"{host}/api/v1/query", params=query_params, headers=headers)  # type: ignore[arg-type]
 
         if response.status_code // 100 == 2:
             data = response.json()
             if data["status"] != "success":
                 logger.error("Failed for not clear reason")
                 return None
-            return data["data"]["result"]
+            return data.get("data", {}).get("result", [])
 
         elif response.status_code == 400:
             logger.error("Bad Request when parameters are missing or incorrect.")
@@ -70,4 +65,4 @@ def has_intent_validation_failed(intent: Intent, prometheus_ref: str, status: di
         metric_to_query,  # noop to make mypy happy
         prometheus_ref)
 
-    return intent.name.validate_monitoring(intent.value, data)
+    return not intent.name.validate_monitoring(intent.value, data)

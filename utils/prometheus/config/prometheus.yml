@@ -9,7 +9,12 @@ global:
 # A scrape configuration containing exactly one endpoint to scrape:
 # Here it's Prometheus itself.
 scrape_configs:
-  - job_name: 'fluidos'
+  - job_name: 'testing'
     scrape_interval: 2s
     static_configs:
-      - targets: ['28f39ef0db22.ngrok-free.app']
+      - targets: ['45654a7fd718.ngrok-free.app']
+  #   - targets: ['192.168.1.10:8000']
+  # - job_name: 'robot-2-AC'
+  #   scrape_interval: 2s
+  #   static_configs:
+  #     - targets: ['192.168.1.20:8000']
