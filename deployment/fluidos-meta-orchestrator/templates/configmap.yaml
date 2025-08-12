@@ -11,4 +11,6 @@ data:
   monitor_enabled: {{ .Values.monitoring.enable | quote }}
   monitor_interval: {{ .Values.monitoring.interval | quote }}
   prometeus_endpoint: {{ .Values.monitoring.endpoint | quote }}
-  MONITOR_CONTRACTS: {{ .Values.monitor_contracts | quote}}
+  MONITOR_CONTRACTS: {{ .Values.monitor_contracts | quote }}
+  SKIP_PEERING: {{ .Values.skip_peering | quote }}
+  HOST_MAPPING: {{ .Values.host_mapping | quote }}

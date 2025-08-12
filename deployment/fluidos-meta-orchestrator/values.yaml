@@ -99,3 +99,7 @@ monitoring:
   enabled: "false"
   interval: "5"
   endpoint: "http://localhost:9090"
+
+
+  skip_peering: false
+  host_mapping:

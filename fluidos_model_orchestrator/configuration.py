@@ -122,7 +122,7 @@ def _retrieve_skip_peering(config: Configuration, logger: logging.Logger) -> boo
                         raise ValueError("ConfigMap data missing.")
 
                     data: dict[str, str] = item.data
-                    return data.get("skip_peering", "False").casefold() == "True".casefold()
+                    return data.get("SKIP_PEERING", "False").casefold() == "True".casefold()
 
     except ApiException as e:
         logger.error(f"Unable to retrieve config map {e=}")
