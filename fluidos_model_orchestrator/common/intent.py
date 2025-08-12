@@ -36,7 +36,7 @@ def _validate_latency(value: str, data: list[Any]) -> bool:
 
 
 def _validate_throughput(value: str, data: dict[str, Any]) -> bool:
-    return False
+    return True
 
 
 def _validate_battery_level(value: str, data: dict[str, Any]) -> bool:

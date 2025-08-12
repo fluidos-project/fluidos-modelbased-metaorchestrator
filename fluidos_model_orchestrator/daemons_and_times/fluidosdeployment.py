@@ -109,9 +109,15 @@ async def daemons_for_fluidos_deployment(
 
         finder: ResourceFinder = get_resource_finder(request, prediction)
 
-        resources = finder.find_best_match(prediction.to_resource(), namespace)
+        resources: list[ResourceProvider] = finder.find_best_match(prediction.to_resource(), namespace)
 
         logger.debug(f"{resources=}")
+
+        # remove current provider
+        resources = [
+            resource for resource in resources
+            if resource.flavor.spec.owner["domain"] != metaorchestration_status_data["deployed"]["resource_provider"]["flavor"]["spec"]["owner"]["domain"]
+        ]
 
         best_matches: list[ResourceProvider] = validate_with_intents(
             predictor.rank_resources(

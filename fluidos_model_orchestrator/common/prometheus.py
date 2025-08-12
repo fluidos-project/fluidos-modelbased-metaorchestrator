@@ -64,7 +64,7 @@ def has_intent_validation_failed(intent: Intent, prometheus_ref: str, status: di
         logger.info("Not to be monitored, assuming still valid")
         return False
 
-    metric_to_query = metric(["cluster_name", namespace, name])
+    metric_to_query = metric([status["deployed"]["resource_provider"]["flavor"]["spec"]["owner"]["domain"], namespace, name])
     data = retrieve_metric(
         metric_to_query,  # noop to make mypy happy
         prometheus_ref)
