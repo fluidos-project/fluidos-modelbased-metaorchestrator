@@ -12,3 +12,5 @@ data:
   monitor_interval: "2"
   prometeus_endpoint: "http://localhost:9090"
   MONITOR_CONTRACTS: "False"
+  SKIP_PEERING: "True"
+  HOST_MAPPING: "de.provider.fluidos.eu:germany;it.provider.fluidos.eu:italy"

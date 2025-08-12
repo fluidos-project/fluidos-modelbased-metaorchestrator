@@ -36,7 +36,7 @@ class Configuration:
     MONITOR_SLEEP_TIME: float = 5.  # 5 seconds
 
     skip_peering: bool = False
-    host_mapping: dict[str, str] = {}
+    host_mapping: dict[str, str] = field(default_factory=dict)
 
     monitor_contracts: bool = False
     default_vm_type: str = "default-vm-type"
@@ -88,7 +88,7 @@ def _retrieve_host_mapping(config: Configuration, logger: logging.Logger) -> dic
                         raise ValueError("ConfigMap data missing.")
 
                     data: dict[str, str] = item.data
-                    host_mapping = data.get("host_mapping", "")
+                    host_mapping = data.get("HOST_MAPPING", "")
 
                     if len(host_mapping):
                         return {
@@ -151,7 +151,7 @@ def _retrieve_monitor_information(config: Configuration, logger: logging.Logger)
                     return (
                         data.get("monitor_enabled", "False").casefold() == "True".casefold(),  # disable by default
                         float(data.get("monitor_interval", 5.)),  # 5 seconds
-                        str(data.get("prometheus_endpoint", "localhost:9090"))
+                        str(data.get("prometheus_endpoint", "http://localhost:9090"))
                     )
     except ApiException as e:
         logger.error(f"Unable to retrieve config map {e=}")
