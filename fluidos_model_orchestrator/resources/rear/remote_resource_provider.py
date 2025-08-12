@@ -39,7 +39,7 @@ class RemoteResourceProvider(ResourceProvider):
     def get_label(self) -> dict[str, str]:
         if CONFIGURATION.skip_peering:
             return {
-                CONFIGURATION.remote_node_key: CONFIGURATION.host_mapping[self.flavor.spec.owner[""]]
+                CONFIGURATION.remote_node_key: CONFIGURATION.host_mapping[self.flavor.spec.owner["domain"]]
             }
 
         if self.remote_cluster_id is None:

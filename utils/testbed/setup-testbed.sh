@@ -32,7 +32,7 @@ kind create cluster --name provider-germany --config $PWD/provider-cluster-confi
 
 DE_PROVIDER_CONTROLPLANE_IP=$($COMMAND inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' provider-germany-control-plane)
 
-liqoctl install kind --kubeconfig $PWD/provider-DE-config.yaml
+liqoctl install kind --kubeconfig $PWD/provider-DE-config.yaml --cluster-id germany
 
 helm upgrade --install --devel -n fluidos --create-namespace node fluidos/node \
   --set "provider=kind" \
@@ -57,7 +57,7 @@ kind create cluster --name provider-italy --config $PWD/provider-cluster-config.
 
 IT_PROVIDER_CONTROLPLANE_IP=$($COMMAND inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' provider-italy-control-plane)
 
-liqoctl install kind --kubeconfig $PWD/provider-IT-config.yaml
+liqoctl install kind --kubeconfig $PWD/provider-IT-config.yaml --cluster-id italy
 
 helm upgrade --install --devel -n fluidos --create-namespace node fluidos/node \
   --set "provider=kind" \
@@ -74,7 +74,7 @@ kind create cluster --name consumer --config $PWD/consumer-cluster-config.yaml -
 
 CONSUMER_CONTROLPLANE_IP=$($COMMAND inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' consumer-control-plane)
 
-liqoctl install kind --kubeconfig $PWD/consumer-config.yaml
+liqoctl install kind --kubeconfig $PWD/consumer-config.yaml --cluster-id ireland
 
 helm upgrade --install --devel -n fluidos --create-namespace node fluidos/node \
   --set "provider=kind" \
@@ -130,6 +130,18 @@ spec:
   # Set ip:port with the provider cluster control plane
   address: ${IT_PROVIDER_CONTROLPLANE_IP}:${PROVIDER_NODE_PORT}
 EOF
+
+
+if [ -n ${NO_PEERING:-""} ]; then
+  kubectl --kubeconfig $PWD/consumer-config.yaml create namespace ns-demo
+  echo "Peering with IT"
+  liqoctl --kubeconfig $PWD/consumer-config.yaml peer --remote-kubeconfig $PWD/provider-IT-config.yaml --gw-server-service-type NodePort
+  liqoctl --kubeconfig $PWD/consumer-config.yaml offload --remote-kubeconfig $PWD/provider-IT-config.yaml
+
+  echo "Peering with DE"
+  liqoctl --kubeconfig $PWD/consumer-config.yaml --remote-kubeconfig $PWD/provider-DE-config.yaml --gw-server-service-type NodePort
+  liqoctl --kubeconfig $PWD/consumer-config.yaml offload --remote-kubeconfig $PWD/provider-IT-config.yaml
+fi
 
 
 if [ -n ${DEMO:-""} ]; then
