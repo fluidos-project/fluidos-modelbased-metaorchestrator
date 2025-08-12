@@ -28,7 +28,11 @@ def retrieve_metric(metric: str, host: str) -> dict[str, Any] | None:
         }
         headers = {"Content-Type": "application/json"}
 
-        response = requests.get(f"{host}/api/v1/query", params=query_params, headers=headers)  # type: ignore[arg-type]
+        url = f"{host}/api/v1/query"
+
+        print(">>>>>", url)
+
+        response = requests.get(url, params=query_params, headers=headers)  # type: ignore[arg-type]
 
         if response.status_code // 100 == 2:
             data = response.json()

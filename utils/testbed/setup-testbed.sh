@@ -133,14 +133,15 @@ EOF
 
 
 if [ -n ${NO_PEERING:-""} ]; then
-  kubectl --kubeconfig $PWD/consumer-config.yaml create namespace ns-demo
   echo "Peering with IT"
   liqoctl --kubeconfig $PWD/consumer-config.yaml peer --remote-kubeconfig $PWD/provider-IT-config.yaml --gw-server-service-type NodePort
-  liqoctl --kubeconfig $PWD/consumer-config.yaml offload --remote-kubeconfig $PWD/provider-IT-config.yaml
 
   echo "Peering with DE"
   liqoctl --kubeconfig $PWD/consumer-config.yaml --remote-kubeconfig $PWD/provider-DE-config.yaml --gw-server-service-type NodePort
-  liqoctl --kubeconfig $PWD/consumer-config.yaml offload --remote-kubeconfig $PWD/provider-IT-config.yaml
+
+  echo "Offload namespace foobar"
+  kubectl --kubeconfig $PWD/consumer-config.yaml create namespace foobar
+  liqoctl --kubeconfig $PWD/consumer-config.yaml offload foobar
 fi
 
 
