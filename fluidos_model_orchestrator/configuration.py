@@ -150,8 +150,8 @@ def _retrieve_monitor_information(config: Configuration, logger: logging.Logger)
                     data: dict[str, str] = item.data
                     return (
                         data.get("monitor_enabled", "False").casefold() == "True".casefold(),  # disable by default
-                        float(data.get("monitor_interval", 5.)),  # 5 seconds
-                        str(data.get("prometheus_endpoint", "http://localhost:9090"))
+                        float(data.get("monitor_interval", 5.)),  # 5 seconds by default
+                        str(data.get("prometeus_endpoint", "http://localhost:9090"))  # assume localhost as default
                     )
     except ApiException as e:
         logger.error(f"Unable to retrieve config map {e=}")
