@@ -137,11 +137,11 @@ if [ -n ${NO_PEERING:-""} ]; then
   liqoctl --kubeconfig $PWD/consumer-config.yaml peer --remote-kubeconfig $PWD/provider-IT-config.yaml --gw-server-service-type NodePort
 
   echo "Peering with DE"
-  liqoctl --kubeconfig $PWD/consumer-config.yaml --remote-kubeconfig $PWD/provider-DE-config.yaml --gw-server-service-type NodePort
+  liqoctl --kubeconfig $PWD/consumer-config.yaml peer --remote-kubeconfig $PWD/provider-DE-config.yaml --gw-server-service-type NodePort
 
   echo "Offload namespace foobar"
   kubectl --kubeconfig $PWD/consumer-config.yaml create namespace foobar
-  liqoctl --kubeconfig $PWD/consumer-config.yaml offload foobar
+  liqoctl --kubeconfig $PWD/consumer-config.yaml offload namespace foobar
 fi
 
 
