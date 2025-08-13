@@ -55,7 +55,7 @@ def retrieve_metric(metric: str, host: str) -> dict[str, Any] | None:
     return None
 
 
-def has_intent_validation_failed(intent: Intent, prometheus_ref: str, status: dict[str, Any], namespace: str, name: str) -> bool:
+def has_intent_validation_failed(intent: Intent, prometheus_ref: str, domain: str, namespace: str, name: str) -> bool:
     if not intent.name.needs_monitoring():
         logger.info("Not to be monitored, assuming still valid")
         return False
@@ -64,7 +64,7 @@ def has_intent_validation_failed(intent: Intent, prometheus_ref: str, status: di
         logger.info("Not to be monitored, assuming still valid")
         return False
 
-    metric_to_query = metric([status["deployed"]["resource_provider"]["flavor"]["spec"]["owner"]["domain"], namespace, name])
+    metric_to_query = metric([domain, namespace, name])
     data = retrieve_metric(
         metric_to_query,  # noop to make mypy happy
         prometheus_ref)

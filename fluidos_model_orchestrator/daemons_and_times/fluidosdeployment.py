@@ -58,6 +58,11 @@ async def daemons_for_fluidos_deployment(
         for intent in intents_to_monitor:
             logger.debug(f"{namespace}/{name} requires monitoring for {str(intent)} intents")
 
+    # cache objects
+    provider_domain: str | None = None
+    predictor: OrchestratorInterface | None = None
+    finder: ResourceFinder | None = None
+
     while not stopped.is_set():
         logger.info("Sleeping for %s seconds...", CONFIGURATION.MONITOR_SLEEP_TIME)
 
@@ -76,8 +81,10 @@ async def daemons_for_fluidos_deployment(
         if metaorchestration_status == "Success":
             logger.info("%s/%s is correctly deployed, check if still valid", namespace, name)
 
+            provider_domain = metaorchestration_status_data["deployed"]["resource_provider"]["flavor"]["spec"]["owner"]["domain"]
+
             for intent in intents_to_monitor:
-                if has_intent_validation_failed(intent, CONFIGURATION.local_prometheus, metaorchestration_status_data, namespace, name):
+                if has_intent_validation_failed(intent, CONFIGURATION.local_prometheus, provider_domain, namespace, name):
                     logger.info("%s/%s failed when validating %s", namespace, name, intent.name)
                     break
             else:
@@ -95,7 +102,9 @@ async def daemons_for_fluidos_deployment(
             logger.error("Request is not valid, discarding")
             return
 
-        predictor: OrchestratorInterface = get_model_object(request)
+        if predictor is None:
+            logger.info("Initializing predictor")
+            predictor = get_model_object(request)
 
         prediction: ModelPredictResponse | None = predictor.predict(request, CONFIGURATION.architecture)  # this should use a system defined default, thus from the configuration
 
@@ -107,7 +116,9 @@ async def daemons_for_fluidos_deployment(
 
         prediction.id = f"{prediction.id}-{uuid4().hex}"
 
-        finder: ResourceFinder = get_resource_finder(request, prediction)
+        if finder is None:
+            logger.info("Initializing resource finder")
+            finder = get_resource_finder(request, prediction)
 
         resources: list[ResourceProvider] = finder.find_best_match(prediction.to_resource(), namespace)
 
@@ -116,7 +127,7 @@ async def daemons_for_fluidos_deployment(
         # remove current provider
         resources = [
             resource for resource in resources
-            if resource.flavor.spec.owner["domain"] != metaorchestration_status_data["deployed"]["resource_provider"]["flavor"]["spec"]["owner"]["domain"]
+            if resource.flavor.spec.owner["domain"] != provider_domain
         ]
 
         best_matches: list[ResourceProvider] = validate_with_intents(
@@ -135,6 +146,8 @@ async def daemons_for_fluidos_deployment(
 
         best_match = best_matches[0]
 
+        next_provider_domain = best_match.flavor.spec.owner["domain"]
+
         logger.info(f"Selected {best_match.id} of type {type(best_match)}")
 
         if not best_match.acquire(namespace):
@@ -147,5 +160,7 @@ async def daemons_for_fluidos_deployment(
             logger.info("Unable to deploy")
 
             return
+
+        provider_domain = next_provider_domain
 
         logger.info("%s/%s Done, sleeping", namespace, name)
