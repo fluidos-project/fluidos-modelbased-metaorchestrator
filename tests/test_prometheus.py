@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import cast
 
 import pytest  # type: ignore
@@ -5,6 +6,7 @@ import requests_mock  # type: ignore
 
 from fluidos_model_orchestrator.common.intent import Intent
 from fluidos_model_orchestrator.common.intent import KnownIntent
+from fluidos_model_orchestrator.common.prometheus import _remove_old_metrics
 from fluidos_model_orchestrator.common.prometheus import has_intent_validation_failed
 from fluidos_model_orchestrator.common.prometheus import retrieve_metric
 
@@ -93,8 +95,44 @@ def test_intent_validation_no_data() -> None:
             prometheus_ref="http://dummy-hostname.org:9090",
             domain="provider.fluidos.eu",
             namespace="my namespace",
-            name="myname"
+            name="myname",
+            last_reorchestration=None
         )
+
+
+def test_filter_expired() -> None:
+    data = [
+        {
+            "metric": {
+                "__name__": "fluidos_latency",
+                            "cluster": "cluster",
+                            "exported_job": "cluster1",
+                            "instance": "45654a7fd718.ngrok-free.app",
+                            "job": "testing"
+            },
+            "values": [
+                [
+                    1754907768.270,
+                    "100"
+                ],
+                [
+                    1754907770.270,
+                    "100"
+                ],
+                [
+                    1754907772.270,
+                    "100"
+                ]
+            ]
+        }
+    ]
+
+    after = _remove_old_metrics(data, datetime.fromtimestamp(1754907770.270))
+
+    assert after
+    assert len(after) == 1
+    assert len(after[0]["values"]) == 1
+    assert after[0]["values"][0][0] == 1754907772.270
 
 
 def test_intent_validation_good_data() -> None:
@@ -137,7 +175,8 @@ def test_intent_validation_good_data() -> None:
             prometheus_ref="http://dummy-hostname.org:9090",
             domain="",
             namespace="my namespace",
-            name="myname"
+            name="myname",
+            last_reorchestration=None
         )
 
 
@@ -181,7 +220,8 @@ def test_intent_validation_bad_data() -> None:
             prometheus_ref="http://dummy-hostname.org:9090",
             domain="provider.fluidos.eu",
             namespace="my namespace",
-            name="myname"
+            name="myname",
+            last_reorchestration=None
         )
 
 
@@ -198,7 +238,8 @@ def test_intent_robot_status() -> None:
             prometheus_ref="http://dummy-hostname.org:9090",
             domain="provider.fluidos.eu",
             namespace="my namespace",
-            name="myname"
+            name="myname",
+            last_reorchestration=None
         )
 
         assert not response

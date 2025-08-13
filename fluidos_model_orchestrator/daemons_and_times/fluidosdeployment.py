@@ -62,6 +62,7 @@ async def daemons_for_fluidos_deployment(
     provider_domain: str | None = None
     predictor: OrchestratorInterface | None = None
     finder: ResourceFinder | None = None
+    reorchestration_time: datetime.datetime | None = None
 
     while not stopped.is_set():
         logger.info("Sleeping for %s seconds...", CONFIGURATION.MONITOR_SLEEP_TIME)
@@ -84,7 +85,7 @@ async def daemons_for_fluidos_deployment(
             provider_domain = metaorchestration_status_data["deployed"]["resource_provider"]["flavor"]["spec"]["owner"]["domain"]
 
             for intent in intents_to_monitor:
-                if has_intent_validation_failed(intent, CONFIGURATION.local_prometheus, provider_domain, namespace, name):
+                if has_intent_validation_failed(intent, CONFIGURATION.local_prometheus, provider_domain, namespace, name, reorchestration_time):
                     logger.info("%s/%s failed when validating %s", namespace, name, intent.name)
                     break
             else:
@@ -162,5 +163,6 @@ async def daemons_for_fluidos_deployment(
             return
 
         provider_domain = next_provider_domain
+        reorchestration_time = datetime.datetime.now()
 
         logger.info("%s/%s Done, sleeping", namespace, name)
