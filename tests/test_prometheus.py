@@ -91,7 +91,7 @@ def test_intent_validation_no_data() -> None:
         assert not has_intent_validation_failed(
             intent=Intent(name=KnownIntent.latency, value="200"),  # 200ms latency
             prometheus_ref="http://dummy-hostname.org:9090",
-            status={},
+            domain="provider.fluidos.eu",
             namespace="my namespace",
             name="myname"
         )
@@ -135,7 +135,7 @@ def test_intent_validation_good_data() -> None:
         assert not has_intent_validation_failed(
             intent=Intent(name=KnownIntent.latency, value="200"),  # 200ms latency
             prometheus_ref="http://dummy-hostname.org:9090",
-            status={},
+            domain="",
             namespace="my namespace",
             name="myname"
         )
@@ -179,7 +179,7 @@ def test_intent_validation_bad_data() -> None:
         assert has_intent_validation_failed(
             intent=Intent(name=KnownIntent.latency, value="200"),  # 200ms latency
             prometheus_ref="http://dummy-hostname.org:9090",
-            status={},
+            domain="provider.fluidos.eu",
             namespace="my namespace",
             name="myname"
         )
@@ -196,7 +196,7 @@ def test_intent_robot_status() -> None:
         response = has_intent_validation_failed(
             intent=Intent(name=KnownIntent.latency, value="200"),  # 200ms latency
             prometheus_ref="http://dummy-hostname.org:9090",
-            status={},
+            domain="provider.fluidos.eu",
             namespace="my namespace",
             name="myname"
         )
