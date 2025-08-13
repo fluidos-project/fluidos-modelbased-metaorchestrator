@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Callable
+from datetime import datetime
 from typing import Any
 
 import requests
@@ -12,7 +13,7 @@ from fluidos_model_orchestrator.common.intent import Intent
 logger = logging.getLogger(__name__)
 
 
-def retrieve_metric(metric: str, host: str) -> dict[str, Any] | None:
+def retrieve_metric(metric: str, host: str) -> list[dict[str, Any]] | None:
     try:
         # now = datetime.now().replace(microsecond=0)
         # before = timedelta(minutes=15)
@@ -29,8 +30,6 @@ def retrieve_metric(metric: str, host: str) -> dict[str, Any] | None:
         headers = {"Content-Type": "application/json"}
 
         url = f"{host}/api/v1/query"
-
-        print(">>>>>", url)
 
         response = requests.get(url, params=query_params, headers=headers)  # type: ignore[arg-type]
 
@@ -55,7 +54,7 @@ def retrieve_metric(metric: str, host: str) -> dict[str, Any] | None:
     return None
 
 
-def has_intent_validation_failed(intent: Intent, prometheus_ref: str, domain: str, namespace: str, name: str) -> bool:
+def has_intent_validation_failed(intent: Intent, prometheus_ref: str, domain: str, namespace: str, name: str, last_reorchestration: datetime | None) -> bool:
     if not intent.name.needs_monitoring():
         logger.info("Not to be monitored, assuming still valid")
         return False
@@ -69,4 +68,23 @@ def has_intent_validation_failed(intent: Intent, prometheus_ref: str, domain: st
         metric_to_query,  # noop to make mypy happy
         prometheus_ref)
 
+    if last_reorchestration is not None:
+        data = _remove_old_metrics(data, last_reorchestration)
+
     return not intent.name.validate_monitoring(intent.value, data)
+
+
+def _remove_old_metrics(data: list[dict[str, Any]] | None, t: datetime) -> list[dict[str, Any]] | None:
+    if data is None:
+        return data
+    timestamp = t.timestamp()
+
+    for i in range(len(data)):
+        values = data[i]["values"]
+
+        data[i]["values"] = [
+            value for value in values
+            if value[i] > timestamp
+        ]
+
+    return data
