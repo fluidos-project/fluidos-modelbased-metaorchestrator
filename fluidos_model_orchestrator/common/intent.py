@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 _always_true: Callable[[ResourceProvider, str], bool] = lambda provider, value: True
 
 
-def _validate_latency(value: str, data: list[Any]) -> bool:
+def _validate_latency_monitoring(value: str, data: list[Any]) -> bool:
     # assuming that it is falsified if the avg(last) X readings > required value
     if len(data) == 0:
         return True
@@ -35,8 +35,30 @@ def _validate_latency(value: str, data: list[Any]) -> bool:
     return avg_data <= required_max_latency
 
 
-def _validate_throughput(value: str, data: dict[str, Any]) -> bool:
-    return True
+def _validate_throughput_monitoring(value: str, data: list[Any]) -> bool:
+    if len(data) == 0:
+        return True
+
+    min_required_throughput = float(value)
+    values = data[0]["values"]
+
+    avg_data = sum(int(value[1]) for value in values) / len(values)
+
+    return avg_data >= min_required_throughput
+
+
+def _validate_robot_status_monitoring(value: str, data: list[Any]) -> bool:
+    if len(data) == 0:
+        return True
+
+    state_mapping = {
+        0: "",
+        1: ""
+    }
+
+    return value == state_mapping[
+        data[0]["values"][-1][1]
+    ]
 
 
 def _validate_battery_level(value: str, data: dict[str, Any]) -> bool:
@@ -184,7 +206,11 @@ def _validate_magi(provider: ResourceProvider, value: str) -> bool:
 
 
 def _validate_robot_status(provider: ResourceProvider, value: str) -> bool:
-    # TO BE COMPLETED
+    if provider.flavor.spec.flavor_type.type_identifier is FlavorType.K8SLICE:
+        properties = cast(FlavorK8SliceData, provider.flavor.spec.flavor_type.type_data).properties
+        status = properties.get("additionalProperties", {}).get("robot_status", "")
+        return status == value
+
     return False
 
 
@@ -200,15 +226,15 @@ class KnownIntent(Enum):
     vm_type = "vm-type", False, _validate_vm_type
 
     # high order requests
-    latency = "latency", False, _always_true, lambda args: f'fluidos_latency{{cluster="{args[0]}"}}[2m]', _validate_latency
+    latency = "latency", False, _always_true, lambda args: f'fluidos_latency{{cluster="{args[0]}"}}[2m]', _validate_latency_monitoring
     location = "location", False, validate_location
-    throughput = "throughput", False, _always_true, lambda args: f'fluidos_throughput{{pod="{args[1]}/{args[2]}"}}[2m]', _validate_throughput
+    throughput = "throughput", False, _always_true, lambda args: f'fluidos_throughput{{pod="{args[1]}/{args[2]}"}}[2m]', _validate_throughput_monitoring
     compliance = "compliance", False, _validate_regulations
     energy = "energy", False, _always_true, True
 
     # ROB
     battery = "battery", False, _always_true, "fluidos_battery", _validate_battery_level
-    robot_status = "robot-status", False, _validate_robot_status, lambda args: f'robot_status{{cluster="{args[0]}"}}', _always_true
+    robot_status = "robot-status", False, _validate_robot_status, lambda args: f'robot_status{{cluster="{args[0]}"}}', _validate_robot_status_monitoring
 
     # carbon aware requests
     max_delay = "max-delay", False
