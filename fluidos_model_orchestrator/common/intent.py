@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 _always_true: Callable[[ResourceProvider, str], bool] = lambda provider, value: True
+_always_false: Callable[[ResourceProvider, str], bool] = lambda provider, value: False
 
 
 def _validate_latency_monitoring(value: str, data: list[Any]) -> bool:
@@ -233,7 +234,8 @@ class KnownIntent(Enum):
     energy = "energy", False, _always_true, True
 
     # ROB
-    battery = "battery", False, _always_true, "fluidos_battery", _validate_battery_level
+    robot_preferred = "robot-preferred", False, _always_true, lambda args: "up[5]", _always_false
+    battery = "battery", False, _always_true, lambda args: f'fluidos_battery{{job="{args[0]}"}}', _validate_battery_level
     robot_status = "robot-status", False, _validate_robot_status, lambda args: f'robot_status{{cluster="{args[0]}"}}', _validate_robot_status_monitoring
 
     # carbon aware requests
