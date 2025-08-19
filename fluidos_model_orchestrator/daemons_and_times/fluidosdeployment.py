@@ -16,6 +16,7 @@ from fluidos_model_orchestrator.common.model import ModelPredictRequest
 from fluidos_model_orchestrator.common.model import ModelPredictResponse
 from fluidos_model_orchestrator.common.model import OrchestratorInterface
 from fluidos_model_orchestrator.common.prometheus import has_intent_validation_failed
+from fluidos_model_orchestrator.common.prometheus import retrieve_metric
 from fluidos_model_orchestrator.common.resource import ResourceProvider
 from fluidos_model_orchestrator.configuration import CONFIGURATION
 from fluidos_model_orchestrator.deployment import redeploy
@@ -41,6 +42,44 @@ def _is_on_robot(spec: dict[str, Any]) -> bool:
     return any(
         intent.name is KnownIntent.robot_preferred for intent in intents
     )
+
+
+def _get_robots_status() -> tuple[str | None, str | None]:
+    metrics = retrieve_metric("robot_status", CONFIGURATION.local_prometheus)
+    STATUS: dict[int, str] = {
+        0: "idle",
+        1: "moving",
+        2: "ready",
+        3: "charging",
+    }
+
+    status_aa: str | None = None
+    status_ac: str | None = None
+
+    if metrics:
+        for metric in metrics:
+            # assume the following structure:
+            #
+            # robot_status{instance="192.168.75.10:8000", job="robot-1-AA"}
+            #
+            # with this mapping:
+            #
+            # scrape_configs:
+            # - job_name: 'robot-1-AA'
+            #     scrape_interval: 2s
+            #     static_configs:
+            #     - targets: ['192.168.75.10:8000']
+            # - job_name: 'robot-2-AC'
+            #     scrape_interval: 2s
+            #     static_configs:
+            #     - targets: ['192.168.75.20:8000']
+            if metric:
+                if metric["metric"]["job"] == "robot-1-AA":
+                    status_aa = STATUS[int(metric["value"][1])]
+                if metric["metric"]["job"] == "robot-2-AC":
+                    status_ac = STATUS[int(metric["value"][1])]
+
+    return (status_aa, status_ac)
 
 
 @kopf.daemon("fluidosdeployments", cancellation_timeout=5)  # type: ignore
@@ -97,7 +136,9 @@ async def daemons_for_fluidos_deployment(
             # - when robot is charging it can accept workload from other robot
             # - when robot is idle it can accept workload
             # - when robot is moving it cannot workload
-            pass
+            aa_status, ac_status = _get_robots_status()
+
+            continue
 
         # check if status is set to "completed"
         metaorchestration_status_data: dict[str, Any] = status.get("metaorchestration", {})
