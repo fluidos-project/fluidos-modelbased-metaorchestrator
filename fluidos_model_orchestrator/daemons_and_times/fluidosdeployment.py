@@ -11,6 +11,7 @@ from kopf._cogs.structs import patches  # type: ignore
 from fluidos_model_orchestrator.common import Intent
 from fluidos_model_orchestrator.common import requires_monitoring
 from fluidos_model_orchestrator.common import ResourceFinder
+from fluidos_model_orchestrator.common.intent import KnownIntent
 from fluidos_model_orchestrator.common.model import ModelPredictRequest
 from fluidos_model_orchestrator.common.model import ModelPredictResponse
 from fluidos_model_orchestrator.common.model import OrchestratorInterface
@@ -19,9 +20,27 @@ from fluidos_model_orchestrator.common.resource import ResourceProvider
 from fluidos_model_orchestrator.configuration import CONFIGURATION
 from fluidos_model_orchestrator.deployment import redeploy
 from fluidos_model_orchestrator.metaorchestrator import validate_with_intents
+from fluidos_model_orchestrator.model import _extract_intents
 from fluidos_model_orchestrator.model import convert_to_model_request
 from fluidos_model_orchestrator.model import get_model_object
 from fluidos_model_orchestrator.resources import get_resource_finder
+
+
+def _is_on_robot(spec: dict[str, Any]) -> bool:
+    intents: list[Intent] | None = None
+
+    if spec["kind"] == "Pod":
+        intents = _extract_intents(spec["metadata"].get("annotations", {}))
+
+    if spec["kind"] == "Deployment" or spec["kind"] == "Job":
+        intents = _extract_intents(spec["metadata"].get("annotations", {}))
+
+    if intents is None:
+        return False
+
+    return any(
+        intent.name is KnownIntent.robot_preferred for intent in intents
+    )
 
 
 @kopf.daemon("fluidosdeployments", cancellation_timeout=5)  # type: ignore
@@ -70,6 +89,16 @@ async def daemons_for_fluidos_deployment(
         await asyncio.sleep(CONFIGURATION.MONITOR_SLEEP_TIME)
 
         logger.info("Repeating observation for %s", uid)
+
+        if _is_on_robot(spec):
+            # current status chan
+            # - navigation pod running on both robots
+            # - on "charging" navigation is turned off
+            # - when robot is charging it can accept workload from other robot
+            # - when robot is idle it can accept workload
+            # - when robot is moving it cannot workload
+            pass
+
         # check if status is set to "completed"
         metaorchestration_status_data: dict[str, Any] = status.get("metaorchestration", {})
 
