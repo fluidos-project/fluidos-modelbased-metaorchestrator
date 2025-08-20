@@ -1,15 +1,15 @@
 import logging
 from typing import Any
 
-from ..container import extract_image_embedding
-from .candidate_generation.model import Orchestrator as CandidateGenerator
-from .carbon_aware.orchestrator import CarbonAwareOrchestrator
-from .ensemble import FluidosModelEnsemble
-from .rlice.model import RliceOrchestrator
 from fluidos_model_orchestrator.common.intent import Intent
 from fluidos_model_orchestrator.common.intent import KnownIntent
 from fluidos_model_orchestrator.common.model import ModelPredictRequest
 from fluidos_model_orchestrator.common.model import OrchestratorInterface
+from fluidos_model_orchestrator.container import extract_image_embedding
+from fluidos_model_orchestrator.model.candidate_generation.model import Orchestrator as CandidateGenerator
+from fluidos_model_orchestrator.model.carbon_aware.orchestrator import CarbonAwareOrchestrator
+from fluidos_model_orchestrator.model.ensemble import FluidosModelEnsemble
+from fluidos_model_orchestrator.model.rlice.model import RliceOrchestrator
 from fluidos_model_orchestrator.model.utils import FLUIDOS_COL_NAMES
 # from .model_basic_ranker.model import Orchestrator as BasicRanker
 

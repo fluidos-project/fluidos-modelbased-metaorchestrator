@@ -13,7 +13,7 @@ from fluidos_model_orchestrator.common.intent import Intent
 logger = logging.getLogger(__name__)
 
 
-def retrieve_metric(metric: str, host: str) -> list[dict[str, Any]] | None:
+def retrieve_metric(metric: str, host: str) -> list[dict[str, Any]]:
     try:
         # now = datetime.now().replace(microsecond=0)
         # before = timedelta(minutes=15)
@@ -37,7 +37,7 @@ def retrieve_metric(metric: str, host: str) -> list[dict[str, Any]] | None:
             data = response.json()
             if data["status"] != "success":
                 logger.error("Failed for not clear reason")
-                return None
+                return []
             return data.get("data", {}).get("result", [])
 
         elif response.status_code == 400:
@@ -51,7 +51,7 @@ def retrieve_metric(metric: str, host: str) -> list[dict[str, Any]] | None:
         # logger.error("Something went very wrong")
         logger.error("Something went very wrong", exc_info=e)
 
-    return None
+    return []
 
 
 def has_intent_validation_failed(intent: Intent, prometheus_ref: str, domain: str, namespace: str, name: str, last_reorchestration: datetime | None) -> bool:
@@ -74,9 +74,7 @@ def has_intent_validation_failed(intent: Intent, prometheus_ref: str, domain: st
     return not intent.name.validate_monitoring(intent.value, data)
 
 
-def _remove_old_metrics(data: list[dict[str, Any]] | None, t: datetime) -> list[dict[str, Any]] | None:
-    if data is None:
-        return data
+def _remove_old_metrics(data: list[dict[str, Any]], t: datetime) -> list[dict[str, Any]]:
     timestamp = t.timestamp()
 
     for i in range(len(data)):
