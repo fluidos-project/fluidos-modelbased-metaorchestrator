@@ -59,18 +59,14 @@ def _get_robots_status() -> tuple[str | None, str | None]:
     if metrics:
         for metric in metrics:
             # assume the following structure:
-            #
             # robot_status{instance="192.168.75.10:8000", job="robot-1-AA"}
             #
             # with this mapping:
-            #
             # scrape_configs:
             # - job_name: 'robot-1-AA'
-            #     scrape_interval: 2s
             #     static_configs:
             #     - targets: ['192.168.75.10:8000']
             # - job_name: 'robot-2-AC'
-            #     scrape_interval: 2s
             #     static_configs:
             #     - targets: ['192.168.75.20:8000']
             if metric:
