@@ -36,6 +36,13 @@ def _validate_latency_monitoring(value: str, data: list[Any]) -> bool:
     return avg_data <= required_max_latency
 
 
+def _validate_latency(provider: ResourceProvider, value: str) -> bool:
+    # assume if not data accept
+    if provider.flavor.spec.flavor_type.type_identifier is FlavorType.K8SLICE:
+        return float(value) >= float(cast(FlavorK8SliceData, provider.flavor.spec.flavor_type.type_data).properties.get("additionalProperties", {}).get("latency", value))
+    return False
+
+
 def _validate_throughput_monitoring(value: str, data: list[Any]) -> bool:
     if len(data) == 0:
         return True
@@ -227,7 +234,7 @@ class KnownIntent(Enum):
     vm_type = "vm-type", False, _validate_vm_type
 
     # high order requests
-    latency = "latency", False, _always_true, lambda args: f'fluidos_latency{{cluster="{args[0]}"}}[2m]', _validate_latency_monitoring
+    latency = "latency", False, _validate_latency, lambda args: f'fluidos_latency{{cluster="{args[0]}"}}[2m]', _validate_latency_monitoring
     location = "location", False, validate_location
     throughput = "throughput", False, _always_true, lambda args: f'fluidos_throughput{{pod="{args[1]}/{args[2]}"}}[2m]', _validate_throughput_monitoring
     compliance = "compliance", False, _validate_regulations

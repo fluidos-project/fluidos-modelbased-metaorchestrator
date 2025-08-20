@@ -40,7 +40,7 @@ def test_check_identity() -> None:
     assert not config.check_identity({
         "domain": "ibm.fluidos.eu",
         "ip": "9.2.3.4:30001",
-        "nodeID": "my_amazing_node_ID",
+        "nodeID": "another_amazing_node_ID",
     })
 
 
