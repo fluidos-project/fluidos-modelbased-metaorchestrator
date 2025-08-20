@@ -36,6 +36,10 @@ async def daemons_for_flavors_observation(
         memo: Any,
         param: Any,
         **kwargs: dict[str, Any]) -> None:
+    if not CONFIGURATION.UPDATE_FLAVORS:
+        logger.info("Not updating flavors")
+        return
+
     logger.info(f"Running timeseries generation for local flavors only (aka owned by {CONFIGURATION.identity})")
 
     if not CONFIGURATION.check_identity(spec["owner"]):
