@@ -47,8 +47,9 @@ def retrieve_metric(metric: str, host: str) -> list[dict[str, Any]]:
         elif response.status_code == 503:
             logger.error("Service Unavailable.")
 
+    except requests.exceptions.ConnectionError:
+        logger.error("Error connecting to %s", host)
     except requests.exceptions.RequestException as e:
-        # logger.error("Something went very wrong")
         logger.error("Something went very wrong", exc_info=e)
 
     return []
