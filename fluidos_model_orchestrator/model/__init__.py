@@ -55,8 +55,6 @@ def get_model_object(request: ModelPredictRequest) -> OrchestratorInterface:
         name for (model_signature, name) in _model_characteristics if _is_compatible(request_intent_signature, model_signature)
     ]
 
-    logger.info(f"{len(matching_models)}")
-
     if 1 == len(matching_models):
         logger.info(f"Returning model {matching_models[0]}")
         return _get_model(matching_models[0])
