@@ -65,7 +65,7 @@ kubectl apply -f utils/fluidos-deployment.yaml
 Note that the docker image must be available to the cluster. If the cluster has been created with kind, the image must be loaded using `kind load docker-image fluidos-mbmo:latest`. Also, note that if the environment is using podman instead of docker, then alternative steps are required. Namely, the docker image must be loaded into the cluster nodes via the following steps:
 `podman save fluidos-mbmo:latest -o /tmp/fluidos-mbmo-latest.tar && kind load image-archive /tmp/fluidos-mbmo-latest.tar`.
 
-## Testebed
+## Testbed
 
 Refer to the documentation in the [testbed folder](utils/testbed/) for examples of interaction in a demo scenario.
 
