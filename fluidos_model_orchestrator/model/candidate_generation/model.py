@@ -323,7 +323,8 @@ class Orchestrator(OrchestratorInterface):
         self.orchestrator.eval()
         self.sentence_transformer = SentenceTransformer(self.embedding_model_name)
         self.device = device
-        with importlib.resources.open_text(__name__, metadata_filename) as metadata:
+
+        with importlib.resources.open_text(__package__, metadata_filename) as metadata:
             self.metadata: dict[str, Any] = json.load(metadata)
 
         self.feedback_db_path = feedback_db_path
