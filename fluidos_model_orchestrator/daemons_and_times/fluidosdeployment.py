@@ -7,10 +7,13 @@ from uuid import uuid4
 import kopf  # type: ignore
 from kopf._cogs.structs import bodies  # type: ignore
 from kopf._cogs.structs import patches  # type: ignore
+from kubernetes.client import CustomObjectsApi  # type: ignore
+from kubernetes.client.exceptions import ApiException  # type: ignore
 
 from fluidos_model_orchestrator.common import Intent
 from fluidos_model_orchestrator.common import requires_monitoring
 from fluidos_model_orchestrator.common import ResourceFinder
+from fluidos_model_orchestrator.common.flavor import build_flavor
 from fluidos_model_orchestrator.common.intent import KnownIntent
 from fluidos_model_orchestrator.common.model import ModelPredictRequest
 from fluidos_model_orchestrator.common.model import ModelPredictResponse
@@ -25,6 +28,7 @@ from fluidos_model_orchestrator.model import _extract_intents
 from fluidos_model_orchestrator.model import convert_to_model_request
 from fluidos_model_orchestrator.model import get_model_object
 from fluidos_model_orchestrator.resources import get_resource_finder
+from fluidos_model_orchestrator.rob import DummyResourceProvider
 
 
 def _is_on_robot(spec: dict[str, Any]) -> bool:
@@ -44,7 +48,7 @@ def _is_on_robot(spec: dict[str, Any]) -> bool:
     )
 
 
-def _get_robots_status() -> tuple[str | None, str | None]:
+def _get_robots_status() -> dict[str, str | None]:
     metrics = retrieve_metric("robot_status", CONFIGURATION.local_prometheus)
     STATUS: dict[int, str] = {
         0: "idle",
@@ -53,29 +57,63 @@ def _get_robots_status() -> tuple[str | None, str | None]:
         3: "charging",
     }
 
-    status_aa: str | None = None
-    status_ac: str | None = None
+    # with this mapping:
+    # scrape_configs:
+    # - job_name: 'robot-1-AA'
+    #     static_configs:
+    #     - targets: ['192.168.75.10:8000']
+    # - job_name: 'robot-2-AC'
+    #     static_configs:
+    #     - targets: ['192.168.75.20:8000']
+    robots_status: dict[str, str | None] = {
+        "robot-1-AA": None,
+        "robot-2-AC": None,
+    }
 
     if metrics:
         for metric in metrics:
             # assume the following structure:
             # robot_status{instance="192.168.75.10:8000", job="robot-1-AA"}
-            #
-            # with this mapping:
-            # scrape_configs:
-            # - job_name: 'robot-1-AA'
-            #     static_configs:
-            #     - targets: ['192.168.75.10:8000']
-            # - job_name: 'robot-2-AC'
-            #     static_configs:
-            #     - targets: ['192.168.75.20:8000']
+            # robot_status{instance="192.168.75.10:8000", job="robot-2-AC"}
             if metric:
-                if metric["metric"]["job"] == "robot-1-AA":
-                    status_aa = STATUS[int(metric["value"][1])]
-                if metric["metric"]["job"] == "robot-2-AC":
-                    status_ac = STATUS[int(metric["value"][1])]
+                for robot_name in robots_status.keys():
+                    if metric["metric"]["job"] == robot_name:
+                        robots_status[robot_name] = STATUS[int(metric["value"][1])]
 
-    return (status_aa, status_ac)
+    return robots_status
+
+
+def _get_robot_id() -> tuple[str, str]:
+    node_id = CONFIGURATION.identity["nodeID"]
+
+    api_client: CustomObjectsApi = CustomObjectsApi(api_client=CONFIGURATION.k8s_client)
+
+    robot_mapping: dict[str, str] = {
+        "192.168.75.10:30000": "robot-1-AA",
+        "192.168.75.20:30000": "robot-2-AC",
+    }
+
+    try:
+        flavor_list = api_client.list_namespaced_custom_object(
+            group="nodecore.fluidos.eu",
+            version="v1alpha1",
+            plural="flavors",
+            namespace="fluidos")
+    except ApiException as e:
+        raise e
+
+    for flavor_desc in flavor_list.get("items", []):
+        flavor = build_flavor(flavor_desc)
+
+        if flavor.metadata.owner_references["nodeID"] == node_id:
+            ip = flavor.metadata.owner_references["ip"]
+
+            return (
+                robot_mapping[ip],
+                ip
+            )
+    else:
+        raise ValueError()
 
 
 @kopf.daemon("fluidosdeployments", cancellation_timeout=5)  # type: ignore
@@ -118,6 +156,13 @@ async def daemons_for_fluidos_deployment(
     finder: ResourceFinder | None = None
     reorchestration_time: datetime.datetime | None = None
 
+    (robot_id, IP) = _get_robot_id()
+
+    CONFIGURATION.host_mapping[IP]
+
+    current_target = None
+    best_match: ResourceProvider
+
     while not stopped.is_set():
         logger.info("Sleeping for %s seconds...", CONFIGURATION.MONITOR_SLEEP_TIME)
 
@@ -131,8 +176,46 @@ async def daemons_for_fluidos_deployment(
             # - on "charging" navigation is turned off
             # - when robot is charging it can accept workload from other robot
             # - when robot is idle it can accept workload
-            # - when robot is moving it cannot workload
-            aa_status, ac_status = _get_robots_status()
+            # - when robot is moving it cannot accept workload
+            robots_status: dict[str, str | None] = _get_robots_status()
+
+            #  0: "idle",
+            #  1: "moving",
+            #  2: "ready",
+            #  3: "charging",
+
+            # if should offload
+            if robots_status[robot_id] in ("moving",):
+                # try offloading if other robot can or send to edge
+                for id, status in robots_status.items():
+                    if id != robot_id and status in ("charging", "idle"):
+                        # offload to id
+                        offload_target = id
+                else:
+                    # No one was recepting, send to edge
+                    offload_target = "egde"
+            else:
+                offload_target = id
+
+            # HOST_MAPPING: "192.168.75.10:;192.168.75.20:shy-haze;192.168.75.30:damp-moon"
+            label_mapping = {
+                "robot-1-AA": "lively-shadow",
+                "robot-2-AC": "shy-haze",
+                "edge": "damp-moon",
+            }
+
+            if offload_target != current_target:
+                if label_mapping[offload_target] == label_mapping[robot_id]:
+                    s_label = CONFIGURATION.local_node_key
+                    s_key = "true"
+                else:
+                    s_label = CONFIGURATION.remote_node_key
+                    s_key = label_mapping[offload_target]
+
+                best_match = DummyResourceProvider(s_label, s_key)
+                if not await redeploy(name, namespace, str(spec["kind"]), best_match):
+                    print("Something went wrong")
+                current_target = offload_target
 
             continue
 
