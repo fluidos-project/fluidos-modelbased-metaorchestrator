@@ -38,8 +38,20 @@ class RemoteResourceProvider(ResourceProvider):
 
     def get_label(self) -> dict[str, str]:
         if CONFIGURATION.skip_peering:
+            other_domain = self.flavor.spec.owner["domain"]
+
+            if other_domain not in CONFIGURATION.host_mapping:
+                logger.info("The flavor domain is not known: %s", other_domain)
+                if CONFIGURATION.identity["domain"] == other_domain:
+                    logger.info("Same domain as current, reverting to local")
+                    return {
+                        CONFIGURATION.local_node_key: "true"
+                    }
+                else:
+                    logger.info("Not sure what to do, letting K8S decide")
+                    return {}
             return {
-                CONFIGURATION.remote_node_key: CONFIGURATION.host_mapping[self.flavor.spec.owner["domain"]]
+                CONFIGURATION.remote_node_key: CONFIGURATION.host_mapping[other_domain]
             }
 
         if self.remote_cluster_id is None:
