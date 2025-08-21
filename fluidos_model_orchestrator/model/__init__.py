@@ -10,6 +10,7 @@ from fluidos_model_orchestrator.model.candidate_generation.model import Orchestr
 from fluidos_model_orchestrator.model.carbon_aware.orchestrator import CarbonAwareOrchestrator
 from fluidos_model_orchestrator.model.ensemble import FluidosModelEnsemble
 from fluidos_model_orchestrator.model.rlice.model import RliceOrchestrator
+from fluidos_model_orchestrator.model.rob import Orchestrator as Rob
 from fluidos_model_orchestrator.model.utils import FLUIDOS_COL_NAMES
 # from .model_basic_ranker.model import Orchestrator as BasicRanker
 
@@ -30,8 +31,18 @@ _model_characteristics: list[tuple[set[KnownIntent], type[OrchestratorInterface]
         KnownIntent.throughput,
     }, CandidateGenerator),
     # ({KnownIntent.latency, KnownIntent.location, KnownIntent.memory, KnownIntent.cpu}, BasicRanker),
-    ({KnownIntent.carbon_aware, KnownIntent.max_delay}, CarbonAwareOrchestrator),
-    ({KnownIntent.cpu, KnownIntent.memory}, RliceOrchestrator)
+    ({
+        KnownIntent.carbon_aware,
+        KnownIntent.max_delay
+    }, CarbonAwareOrchestrator),
+    ({
+        KnownIntent.cpu,
+        KnownIntent.memory
+    }, RliceOrchestrator),
+    ({
+        KnownIntent.robot_preferred,
+        KnownIntent.robot_status
+    }, Rob)
 ]
 
 
