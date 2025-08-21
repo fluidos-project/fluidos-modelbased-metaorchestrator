@@ -15,6 +15,7 @@ from fluidos_model_orchestrator.common.intent import Intent
 from fluidos_model_orchestrator.common.resource import ExternalResourceProvider
 from fluidos_model_orchestrator.common.resource import Resource
 from fluidos_model_orchestrator.common.resource import ResourceProvider
+from fluidos_model_orchestrator.configuration import CONFIGURATION
 from fluidos_model_orchestrator.resources.rear.finder import REARResourceFinder
 
 
@@ -24,7 +25,10 @@ logger = logging.getLogger(__name__)
 class ROBResourceFinder(REARResourceFinder):
     def find_best_match(self, resource: Resource, namespace: str, solver_name: str | None = None) -> list[ResourceProvider]:
         logger.info("Returning only local at the beginning, peering already in place")
-        resources = self._find_local(resource=resource, namespace=namespace)
+        # resources = self._find_local(resource=resource, namespace=namespace)
+        resources: list[ResourceProvider] = [
+            DummyResourceProvider(selector_key=CONFIGURATION.local_node_key, selector_label="true")
+        ]
 
         logger.info("%d flavors found", len(resources))
         return resources
