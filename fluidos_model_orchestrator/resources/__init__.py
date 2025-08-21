@@ -6,7 +6,7 @@ from fluidos_model_orchestrator.common import ModelPredictRequest
 from fluidos_model_orchestrator.common import ModelPredictResponse
 from fluidos_model_orchestrator.common import ResourceFinder
 from fluidos_model_orchestrator.resources.rear import REARResourceFinder
-from fluidos_model_orchestrator.rob import ROBResourceFinder
+from fluidos_model_orchestrator.rob_finder import ROBResourceFinder
 
 
 logger = logging.getLogger(__name__)

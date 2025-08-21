@@ -11,7 +11,7 @@ from fluidos_model_orchestrator.model.carbon_aware.orchestrator import CarbonAwa
 from fluidos_model_orchestrator.model.ensemble import FluidosModelEnsemble
 from fluidos_model_orchestrator.model.rlice.model import RliceOrchestrator
 from fluidos_model_orchestrator.model.utils import FLUIDOS_COL_NAMES
-from fluidos_model_orchestrator.rob import Orchestrator as Rob
+from fluidos_model_orchestrator.rob_model import Orchestrator as Rob
 # from .model_basic_ranker.model import Orchestrator as BasicRanker
 
 logger = logging.getLogger(__name__)

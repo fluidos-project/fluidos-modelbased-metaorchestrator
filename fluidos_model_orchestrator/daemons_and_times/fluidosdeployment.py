@@ -28,7 +28,7 @@ from fluidos_model_orchestrator.model import _extract_intents
 from fluidos_model_orchestrator.model import convert_to_model_request
 from fluidos_model_orchestrator.model import get_model_object
 from fluidos_model_orchestrator.resources import get_resource_finder
-from fluidos_model_orchestrator.rob import DummyResourceProvider
+from fluidos_model_orchestrator.rob_finder import DummyResourceProvider
 
 
 def _is_on_robot(spec: dict[str, Any]) -> bool:
