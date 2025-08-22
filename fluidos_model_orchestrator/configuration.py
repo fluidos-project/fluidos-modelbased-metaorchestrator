@@ -42,11 +42,14 @@ class Configuration:
     default_vm_type: str = "default-vm-type"
 
     def check_identity(self, identity: dict[str, str]) -> bool:
-        return all([
-            identity["nodeID"] == self.identity["nodeID"],
-            identity["domain"] == self.identity["domain"],
-            # identity.get("ip", "") == self.identity.get("ip") or identity.i["ip"] == f"{self.identity['ip']}:{self.identity.get('port', 3000)}",
-        ])
+        try:
+            return all([
+                identity["nodeID"] == self.identity["nodeID"],
+                identity["domain"] == self.identity["domain"],
+                # identity.get("ip", "") == self.identity.get("ip") or identity.i["ip"] == f"{self.identity['ip']}:{self.identity.get('port', 3000)}",
+            ])
+        except KeyError:
+            return False
 
 
 def enrich_configuration(config: Configuration,

@@ -153,18 +153,6 @@ class REARResourceFinder(ResourceFinder):
             logger.info("No valid service found (no active allocation for contract)")
             return []
 
-    def retrieve_all_flavors(self, namespace: str) -> list[Flavor]:
-
-        logger.info("Retrieving all flavours")
-
-        locally_available_flavours = self._get_locally_available_flavors(namespace)
-        logger.debug(f"Retrieved {len(locally_available_flavours)} local flavors")
-
-        remotely_available_flavours = self._get_remotely_available_flavors(namespace)
-        logger.debug(f"Retrieved {len(remotely_available_flavours)} remote flavors")
-
-        return locally_available_flavours + remotely_available_flavours
-
     def update_local_flavor(self, flavor: Flavor, properties: Any, namespace: str) -> None:
         logger.info(f"Updating {flavor=} with {properties=}")
 
@@ -281,7 +269,10 @@ class REARResourceFinder(ResourceFinder):
 
         logger.debug(f"{peering_candidates=}")
 
-        matching_resources: list[ResourceProvider] = self._reserve_all(solver_name, peering_candidates, namespace)
+        matching_resources: list[ResourceProvider] = self._reserve_all(solver_name, [
+            peering_candidate for peering_candidate in peering_candidates
+            if not CONFIGURATION.check_identity(peering_candidate["spec"]["flavor"]["metadata"]["owener"])
+        ], namespace)
 
         logger.debug(f"{matching_resources=}")
 
@@ -447,7 +438,7 @@ class REARResourceFinder(ResourceFinder):
             logger.warning("Failed to retrieve local flavors, is node available?")
             flavor_list = {}
 
-        return [build_flavor(flavor) for flavor in flavor_list.get("items", [])]
-
-    def _get_remotely_available_flavors(self, namespace: str) -> list[Flavor]:
-        return []  # TODO: waiting for REAR 2
+        return [
+            flavor for flavor in [build_flavor(flavor) for flavor in flavor_list.get("items", [])]
+            if CONFIGURATION.check_identity(flavor.metadata.owner_references)
+        ]

@@ -19,9 +19,6 @@ class ResourceFinder(ABC):
     def find_service(self, id: str, service: Intent, namespace: str) -> list[ExternalResourceProvider]:
         raise NotImplementedError()
 
-    def retrieve_all_flavors(self, namespace: str) -> list[Flavor]:
-        raise NotImplementedError()
-
     def update_local_flavor(self, flavor: Flavor, data: Any, namespace: str) -> None:
         raise NotImplementedError()
 
