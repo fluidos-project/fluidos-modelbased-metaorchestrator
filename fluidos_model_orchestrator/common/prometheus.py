@@ -35,6 +35,9 @@ def retrieve_metric(metric: str, host: str) -> list[dict[str, Any]]:
 
         if response.status_code // 100 == 2:
             data = response.json()
+
+            logger.info("Data received from prometheus: %s", data)
+
             if data["status"] != "success":
                 logger.error("Failed for not clear reason")
                 return []
@@ -52,6 +55,7 @@ def retrieve_metric(metric: str, host: str) -> list[dict[str, Any]]:
     except requests.exceptions.RequestException as e:
         logger.error("Something went very wrong", exc_info=e)
 
+    logger.info("No data retrieved from prometheus, return empty response")
     return []
 
 

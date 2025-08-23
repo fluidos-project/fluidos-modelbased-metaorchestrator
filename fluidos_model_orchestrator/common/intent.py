@@ -25,11 +25,19 @@ _always_false: Callable[[ResourceProvider, str], bool] = lambda provider, value:
 
 def _validate_latency_monitoring(value: str, data: list[Any]) -> bool:
     # assuming that it is falsified if the avg(last) X readings > required value
-    if len(data) == 0:
+    if not len(data):
+        return True
+
+    if len(data) != 1:
+        logger.info("More than one metric object received: %s", data)
         return True
 
     required_max_latency = float(value)
     values = data[0]["values"]
+
+    if not len(values):
+        logger.info("Metric object has no values: %s", data[0])
+        return True
 
     avg_data = sum(int(value[1]) for value in values) / len(values)
 
