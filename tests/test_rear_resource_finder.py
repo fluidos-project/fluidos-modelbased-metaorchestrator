@@ -1,8 +1,8 @@
+import importlib.resources
 import logging
 
 import kopf  # type: ignore
 import kubernetes  # type: ignore
-import pkg_resources  # type: ignore
 import pytest  # type: ignore
 from pytest_kubernetes.providers import AClusterManager  # type: ignore
 
@@ -35,8 +35,8 @@ def test_find_local_no_nodes(k8s: AClusterManager) -> None:
 def test_find_local(k8s: AClusterManager) -> None:
     k8s.create()
 
-    k8s.apply(pkg_resources.resource_filename(__name__, "node/crds/nodecore.fluidos.eu_flavors.yaml"))
-    k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/example-flavor.yaml"))
+    k8s.apply(importlib.resources.files(__package__) / "node/crds/nodecore.fluidos.eu_flavors.yaml")
+    k8s.apply(importlib.resources.files(__package__) / "node/examples/example-flavor.yaml")
 
     myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
@@ -57,9 +57,9 @@ def test_find_local(k8s: AClusterManager) -> None:
 def test_solver_creation_and_check(k8s: AClusterManager) -> None:
     k8s.create()
 
-    k8s.apply(pkg_resources.resource_filename(__name__, "node/crds/nodecore.fluidos.eu_solvers.yaml"))
-    k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/fluidos-network-manager-identity-config-map.yaml"))
-    k8s.apply(pkg_resources.resource_filename(__name__, "data/example-mbmo-config-map.yaml"))
+    k8s.apply(importlib.resources.files(__package__) / "node/crds/nodecore.fluidos.eu_solvers.yaml")
+    k8s.apply(importlib.resources.files(__package__) / "node/examples/fluidos-network-manager-identity-config-map.yaml")
+    k8s.apply(importlib.resources.files(__package__) / "data/example-mbmo-config-map.yaml")
 
     myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
@@ -103,15 +103,15 @@ def test_solver_creation_and_check(k8s: AClusterManager) -> None:
 def test_retrieve_peering_candidate_list(k8s: AClusterManager) -> None:
     k8s.create()
 
-    k8s.apply(pkg_resources.resource_filename(__name__, "node/crds/advertisement.fluidos.eu_discoveries.yaml"))
-    k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/fluidos-network-manager-identity-config-map.yaml"))
-    k8s.apply(pkg_resources.resource_filename(__name__, "data/example-mbmo-config-map.yaml"))
+    k8s.apply(importlib.resources.files(__package__) / "node/crds/advertisement.fluidos.eu_discoveries.yaml")
+    k8s.apply(importlib.resources.files(__package__) / "node/examples/fluidos-network-manager-identity-config-map.yaml")
+    k8s.apply(importlib.resources.files(__package__) / "data/example-mbmo-config-map.yaml")
 
-    k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/nginx-w-intent-discovery.yaml"))
+    k8s.apply(importlib.resources.files(__package__) / "node/examples/nginx-w-intent-discovery.yaml")
 
     solver_id = "solver-sample"
     k8s.kubectl(["patch", "discovery", f"discovery-{solver_id}",
-                 "--patch-file", pkg_resources.resource_filename(__name__, "node/examples/nginx-w-intent-discovery-patch.yaml"),
+                 "--patch-file", importlib.resources.files(__package__) / "node/examples/nginx-w-intent-discovery-patch.yaml",
                  "--type", "merge", "--subresource", "status"])
 
     res = k8s.kubectl(["get", f"discovery/discovery-{solver_id}"])
@@ -142,10 +142,10 @@ def test_retrieve_peering_candidate_list(k8s: AClusterManager) -> None:
 def test_flavor_update(k8s: AClusterManager) -> None:
     k8s.create()
 
-    k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/fluidos-network-manager-identity-config-map.yaml"))
-    k8s.apply(pkg_resources.resource_filename(__name__, "data/example-mbmo-config-map.yaml"))
-    k8s.apply(pkg_resources.resource_filename(__name__, "node/crds/nodecore.fluidos.eu_flavors.yaml"))
-    k8s.apply(pkg_resources.resource_filename(__name__, "node/examples/example-flavor.yaml"))
+    k8s.apply(importlib.resources.files(__package__) / "node/examples/fluidos-network-manager-identity-config-map.yaml")
+    k8s.apply(importlib.resources.files(__package__) / "data/example-mbmo-config-map.yaml")
+    k8s.apply(importlib.resources.files(__package__) / "node/crds/nodecore.fluidos.eu_flavors.yaml")
+    k8s.apply(importlib.resources.files(__package__) / "node/examples/example-flavor.yaml")
 
     myconfig = kubernetes.client.Configuration()  # type: ignore
     kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))

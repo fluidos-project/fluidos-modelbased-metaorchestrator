@@ -271,7 +271,7 @@ class REARResourceFinder(ResourceFinder):
 
         matching_resources: list[ResourceProvider] = self._reserve_all(solver_name, [
             peering_candidate for peering_candidate in peering_candidates
-            if not CONFIGURATION.check_identity(peering_candidate["spec"]["flavor"]["metadata"]["ownerReferences"])
+            if not CONFIGURATION.check_identity(peering_candidate["spec"]["flavor"]["spec"]["owner"])
         ], namespace)
 
         logger.debug(f"{matching_resources=}")
@@ -408,6 +408,11 @@ class REARResourceFinder(ResourceFinder):
 
             logger.info(f"Processing flavor {name=}")
 
+            if not CONFIGURATION.check_identity(
+                flavor.spec.owner
+            ):
+                continue
+
             if flavor.spec.flavor_type.type_identifier is not FlavorType.K8SLICE:
                 logger.info(f"Skipping, wrong flavour type {flavor.spec.flavor_type}")
                 continue
@@ -438,7 +443,4 @@ class REARResourceFinder(ResourceFinder):
             logger.warning("Failed to retrieve local flavors, is node available?")
             flavor_list = {}
 
-        return [
-            flavor for flavor in [build_flavor(flavor) for flavor in flavor_list.get("items", [])]
-            if CONFIGURATION.check_identity(flavor.metadata.owner_references)
-        ]
+        return [build_flavor(flavor) for flavor in flavor_list.get("items", [])]
