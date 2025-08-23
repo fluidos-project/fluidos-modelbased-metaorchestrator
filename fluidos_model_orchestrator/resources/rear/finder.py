@@ -271,7 +271,7 @@ class REARResourceFinder(ResourceFinder):
 
         matching_resources: list[ResourceProvider] = self._reserve_all(solver_name, [
             peering_candidate for peering_candidate in peering_candidates
-            if not CONFIGURATION.check_identity(peering_candidate["spec"]["flavor"]["metadata"]["owener"])
+            if not CONFIGURATION.check_identity(peering_candidate["spec"]["flavor"]["metadata"]["ownerReferences"])
         ], namespace)
 
         logger.debug(f"{matching_resources=}")
