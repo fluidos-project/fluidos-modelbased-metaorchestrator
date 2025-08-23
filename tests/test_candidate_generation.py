@@ -1,4 +1,5 @@
-import pkg_resources  # type: ignore
+import importlib.resources
+
 import yaml
 
 from fluidos_model_orchestrator.model import convert_to_model_request
@@ -6,7 +7,8 @@ from fluidos_model_orchestrator.model import get_model_object
 
 
 def test_rse():
-    with pkg_resources.resource_stream(__name__, "k8s/rse-example.yaml") as stream:
+    f = importlib.resources.files(__package__) / "k8s/rse-example.yaml"
+    with f.open("r") as stream:
         spec = convert_to_model_request(
             yaml.safe_load(stream)["spec"],
             "fluidos"
