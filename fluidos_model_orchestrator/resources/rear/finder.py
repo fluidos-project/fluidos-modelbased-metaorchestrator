@@ -17,7 +17,6 @@ from fluidos_model_orchestrator.common.intent import Intent
 from fluidos_model_orchestrator.common.resource import ExternalResourceProvider
 from fluidos_model_orchestrator.common.resource import Resource
 from fluidos_model_orchestrator.common.resource import ResourceProvider
-from fluidos_model_orchestrator.configuration import CONFIGURATION
 from fluidos_model_orchestrator.configuration import Configuration
 from fluidos_model_orchestrator.resources.rear.local_resource_provider import LocalResourceProvider
 from fluidos_model_orchestrator.resources.rear.remote_resource_provider import RemoteResourceProvider
@@ -28,21 +27,21 @@ logger = logging.getLogger(__name__)
 
 
 class REARResourceFinder(ResourceFinder):
-    def __init__(self, configuration: Configuration = CONFIGURATION) -> None:
+    def __init__(self, configuration: Configuration) -> None:
         self.configuration = configuration
         self.api_client: client.CustomObjectsApi = client.CustomObjectsApi(api_client=self.configuration.k8s_client)
 
     def find_best_match(self, resource: Resource, namespace: str, solver_name: str | None = None) -> list[ResourceProvider]:
         logger.info("Retrieving resource best match with REAR")
 
-        local: list[ResourceProvider] = self._find_local(resource, CONFIGURATION.namespace)
+        local: list[ResourceProvider] = self._find_local(resource, self.configuration.namespace)
 
         if len(local):
             logger.info(f"Found local resource {local=}")
         else:
             logger.info("No local resource compatible")
 
-        remote = self._find_remote(resource, CONFIGURATION.namespace)
+        remote = self._find_remote(resource, self.configuration.namespace)
 
         logger.info(f"Found remote resource {remote=}")
 
@@ -84,21 +83,21 @@ class REARResourceFinder(ResourceFinder):
 
         body, _ = self._resource_to_service_sorver_request(service, id)
 
-        solver_name = self._initiate_search(body, CONFIGURATION.namespace)
+        solver_name = self._initiate_search(body, self.configuration.namespace)
 
         # NOTE: FOR SERVICE, SOLVER DOES NOT SOLVE
         # Check status of Allocation with .status.status == "Active" and
         # find right allocation using .spec.contract.name == "<contract name>"
         # contract name is retrieved from Reservation where .spec.solverID == "solver-name", there one finds .status.contract.name
 
-        for _ in range(CONFIGURATION.n_try):
-            time.sleep(CONFIGURATION.SOLVER_SLEEPING_TIME)
+        for _ in range(self.configuration.n_try):
+            time.sleep(self.configuration.SOLVER_SLEEPING_TIME)
 
             reservations: None | dict[str, Any] = self.api_client.list_namespaced_custom_object(
                 group="reservation.fluidos.eu",
                 version="v1alpha1",
                 plural="reservations",
-                namespace=CONFIGURATION.namespace,
+                namespace=self.configuration.namespace,
                 async_req=False  # type: ignore
             )
 
@@ -121,15 +120,15 @@ class REARResourceFinder(ResourceFinder):
 
         # Check status of Allocation with .status.status == "Active" and
         # find right allocation using .spec.contract.name == "<contract name>"
-        for _ in range(CONFIGURATION.n_try):
-            time.sleep(CONFIGURATION.SOLVER_SLEEPING_TIME * 1.5)
+        for _ in range(self.configuration.n_try):
+            time.sleep(self.configuration.SOLVER_SLEEPING_TIME * 1.5)
             logger.info(f"Searching valid allocation for {contract_name}")
 
             allocations: None | dict[str, Any] = self.api_client.list_namespaced_custom_object(
                 group="nodecore.fluidos.eu",
                 version="v1alpha1",
                 plural="allocations",
-                namespace=CONFIGURATION.namespace,
+                namespace=self.configuration.namespace,
                 async_req=False  # type: ignore
             )
 
@@ -235,8 +234,8 @@ class REARResourceFinder(ResourceFinder):
 
         solver_name = self._initiate_search(body, namespace)
 
-        for _ in range(CONFIGURATION.n_try):
-            time.sleep(CONFIGURATION.SOLVER_SLEEPING_TIME)
+        for _ in range(self.configuration.n_try):
+            time.sleep(self.configuration.SOLVER_SLEEPING_TIME)
             remote_flavour_status = self._check_solver_status(solver_name, namespace)
 
             if remote_flavour_status is None or "status" not in remote_flavour_status:
@@ -271,7 +270,7 @@ class REARResourceFinder(ResourceFinder):
 
         matching_resources: list[ResourceProvider] = self._reserve_all(solver_name, [
             peering_candidate for peering_candidate in peering_candidates
-            if not CONFIGURATION.check_identity(peering_candidate["spec"]["flavor"]["spec"]["owner"])
+            if not self.configuration.check_identity(peering_candidate["spec"]["flavor"]["spec"]["owner"])
         ], namespace)
 
         logger.debug(f"{matching_resources=}")
@@ -408,7 +407,7 @@ class REARResourceFinder(ResourceFinder):
 
             logger.info(f"Processing flavor {name=}")
 
-            if not CONFIGURATION.check_identity(
+            if not self.configuration.check_identity(
                 flavor.spec.owner
             ):
                 continue
