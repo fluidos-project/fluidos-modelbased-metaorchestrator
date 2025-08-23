@@ -1,4 +1,5 @@
-import pkg_resources  # type: ignore
+import importlib.resources
+
 import pytest  # type: ignore
 from yaml import load
 from yaml import Loader
@@ -7,7 +8,7 @@ from fluidos_model_orchestrator.model import convert_to_model_request
 
 
 def test_when_no_intents_specified_none_injected_pod():
-    with pkg_resources.resource_stream(__name__, "k8s/pod.yaml") as stream:
+    with (importlib.resources.files(__package__) / "k8s/pod.yaml").open("r") as stream:
         specs = load(stream, Loader=Loader)
     request = convert_to_model_request(specs, "fluidos")
 
@@ -16,7 +17,7 @@ def test_when_no_intents_specified_none_injected_pod():
 
 
 def test_when_no_intents_specified_none_injected_deployment():
-    with pkg_resources.resource_stream(__name__, "k8s/deployment.yaml") as stream:
+    with (importlib.resources.files(__package__) / "k8s/deployment.yaml").open("r") as stream:
         specs = load(stream, Loader=Loader)
     request = convert_to_model_request(specs, "fluidos")
 
@@ -26,7 +27,7 @@ def test_when_no_intents_specified_none_injected_deployment():
 
 @pytest.mark.skip("ReplicaSet not supported yet")
 def test_when_no_intents_specified_none_injected_replica_set():
-    with pkg_resources.resource_stream(__name__, "k8s/replica_set.yaml") as stream:
+    with (importlib.resources.files(__package__) / "k8s/replica_set.yaml").open("r") as stream:
         specs = load(stream, Loader=Loader)
     request = convert_to_model_request(specs, "fluidos")
 
@@ -35,7 +36,7 @@ def test_when_no_intents_specified_none_injected_replica_set():
 
 
 def test_intents_correctly_parsed():
-    with pkg_resources.resource_stream(__name__, "examples/test-pod-w-intent.yaml") as stream:
+    with (importlib.resources.files(__package__) / "examples/test-pod-w-intent.yaml").open("r") as stream:
         specs = load(stream, Loader=Loader)["spec"]
     request = convert_to_model_request(specs, "fluidos")
 
