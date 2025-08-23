@@ -43,7 +43,12 @@ def test_find_local(k8s: AClusterManager) -> None:
 
     configuration = Configuration(
         k8s_client=_build_k8s_client(myconfig),
-        namespace="default"
+        namespace="default",
+        identity={
+            "domain": "fluidos.eu",
+            "ip": "172.18.0.7:30000",
+            "nodeID": "ekvjnuvsel",
+        }
     )
 
     finder = REARResourceFinder(configuration)
@@ -52,6 +57,33 @@ def test_find_local(k8s: AClusterManager) -> None:
 
     assert local is not None
     assert len(local) == 1
+
+
+def test_find_local_only(k8s: AClusterManager) -> None:
+    k8s.create()
+
+    k8s.apply(importlib.resources.files(__package__) / "node/crds/nodecore.fluidos.eu_flavors.yaml")
+    k8s.apply(importlib.resources.files(__package__) / "node/examples/example-flavor.yaml")
+
+    myconfig = kubernetes.client.Configuration()  # type: ignore
+    kubernetes.config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
+
+    configuration = Configuration(
+        k8s_client=_build_k8s_client(myconfig),
+        namespace="default",
+        identity={
+            "domain": "it.fluidos.eu",
+            "ip": "172.18.0.7:30001",
+            "nodeID": "my-node",
+        }
+    )
+
+    finder = REARResourceFinder(configuration)
+
+    local = finder._find_local(Resource(id="123", architecture="amd64"), "default")
+
+    assert local is not None
+    assert len(local) == 0
 
 
 def test_solver_creation_and_check(k8s: AClusterManager) -> None:
