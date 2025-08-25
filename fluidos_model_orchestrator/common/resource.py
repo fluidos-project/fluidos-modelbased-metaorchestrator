@@ -112,6 +112,11 @@ class ResourceProvider(ABC):
     def to_json(self) -> dict[str, Any]:
         raise NotImplementedError("Abstract method")
 
+    def __str__(self) -> str:
+        return f"Resource Provider: {
+            str(type(self)).split("'")[1].split(".")[-1]  # retrieve only class name
+        }[{self.flavor.metadata.name}]"
+
 
 class ExternalResourceProvider(ABC):
     def enrich(self, container: dict[str, Any], name: str) -> None:
