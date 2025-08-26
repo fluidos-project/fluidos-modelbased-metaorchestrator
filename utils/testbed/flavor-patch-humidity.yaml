@@ -1,0 +1,8 @@
+# flavor-patch-humidity.yaml
+spec:
+  flavorType:
+    typeData:
+      properties:
+        additionalProperties:
+          sensors:
+            - "humidity"

@@ -1,0 +1,7 @@
+spec:
+  flavorType:
+    typeData:
+      properties:
+        additionalProperties:
+          sensors:
+            - "temperature"
