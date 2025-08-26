@@ -41,7 +41,7 @@ def test_local() -> None:
     )
 
     assert provider
-    assert str(provider) == "Resource Provider: LocalResourceProvider[test{my.nodeID@my.domain.com}]"
+    assert str(provider) == "LocalResourceProvider[test{my.nodeID@my.domain.com}]"
 
 
 def test_remote(k8s: AClusterManager) -> None:
@@ -87,4 +87,4 @@ def test_remote(k8s: AClusterManager) -> None:
     )
 
     assert provider
-    assert str(provider) == "Resource Provider: RemoteResourceProvider[test{my.nodeID@my.domain.com}]"
+    assert str(provider) == "RemoteResourceProvider[test{my.nodeID@my.domain.com}]"
