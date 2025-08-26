@@ -1,7 +1,7 @@
+import importlib.resources
 from typing import Any
 
 import kubernetes  # type: ignore
-import pkg_resources  # type: ignore
 import pytest  # type: ignore
 from pytest_kubernetes.providers.base import AClusterManager  # type: ignore
 
@@ -74,10 +74,10 @@ def test_resource_buying(k8s: AClusterManager) -> None:
 
     k8s_client = kubernetes.client.CustomObjectsApi(_build_k8s_client(myconfig))
 
-    k8s.apply(pkg_resources.resource_filename(__name__, "node/crds/tests/node/crds/reservation.fluidos.eu_reservations.yaml"))
+    k8s.apply(importlib.resources.files(__package__) / "node/crds/tests/node/crds/reservation.fluidos.eu_reservations.yaml")
 
     # create reservation
-    k8s.apply(pkg_resources.resource_filename(__name__, "node/crds/tests/node/examples/example-reservation-test.yaml"))
+    k8s.apply(importlib.resources.files(__package__) / "node/crds/tests/node/examples/example-reservation-test.yaml")
 
     owner: dict[str, Any] = {
         "domain": "fluidos.eu",

@@ -1,4 +1,5 @@
-import pkg_resources  # type: ignore
+import importlib.resources
+
 import yaml
 
 from fluidos_model_orchestrator.model import convert_to_model_request
@@ -9,7 +10,7 @@ from fluidos_model_orchestrator.model.ensemble import FluidosModelEnsemble
 
 
 def test_something_is_returned_even_with_no_intents():
-    with pkg_resources.resource_stream(__name__, "k8s/deployment.yaml") as stream:
+    with (importlib.resources.files(__package__) / "k8s/deployment.yaml").open() as stream:
         spec = convert_to_model_request(yaml.safe_load(stream), "fluidos")
     assert spec is not None
 
@@ -17,7 +18,7 @@ def test_something_is_returned_even_with_no_intents():
 
 
 def test_returns_most_matching():
-    with pkg_resources.resource_stream(__name__, "k8s/pod_throughput_location.yaml") as stream:
+    with (importlib.resources.files(__package__) / "k8s/pod_throughput_location.yaml").open() as stream:
         spec = convert_to_model_request(yaml.safe_load(stream), "fluidos")
     assert spec is not None
 
@@ -25,7 +26,7 @@ def test_returns_most_matching():
 
 
 def test_returns_ensamble():
-    with pkg_resources.resource_stream(__name__, "k8s/rse-example.yaml") as stream:
+    with (importlib.resources.files(__package__) / "k8s/rse-example.yaml").open() as stream:
         spec = convert_to_model_request(
             yaml.safe_load(stream)["spec"],
             "fluidos"

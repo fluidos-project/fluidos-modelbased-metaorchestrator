@@ -1,4 +1,5 @@
-import pkg_resources  # type: ignore
+import importlib.resources
+
 import yaml
 
 from fluidos_model_orchestrator.common import ModelPredictResponse
@@ -108,7 +109,7 @@ def test_validate_output() -> None:
 
     providers: list[ResourceProvider] = [bad_no_price, good, less_cost]
 
-    with pkg_resources.resource_stream(__name__, "examples/test-pod-w-intent.yaml") as stream:
+    with (importlib.resources.files(__package__) / "examples/test-pod-w-intent.yaml").open() as stream:
         request = convert_to_model_request(
             yaml.safe_load(stream)["spec"],
             "fluidos"

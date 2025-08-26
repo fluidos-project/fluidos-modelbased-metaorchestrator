@@ -1,4 +1,5 @@
-import pkg_resources  # type: ignore
+import importlib.resources
+
 import yaml
 from kubernetes import client  # type: ignore
 from kubernetes import config
@@ -12,7 +13,7 @@ def test_loading_of_objects(k8s: AClusterManager) -> None:
     config.kube_config.load_kube_config(client_configuration=myconfig, config_file=str(k8s.kubeconfig))
 
     k8s_client = client.ApiClient(myconfig)  # type: ignore
-    with pkg_resources.resource_stream(__name__, "k8s/pod.yaml") as stream:
+    with (importlib.resources.files(__package__) / "k8s/pod.yaml").open() as stream:
         pod_dict = yaml.safe_load(stream)
 
     assert pod_dict
