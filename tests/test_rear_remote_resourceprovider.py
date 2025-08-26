@@ -120,5 +120,4 @@ def test_resource_buying(k8s: AClusterManager) -> None:
     assert provider
 
     contract_information = provider._buy()
-
     assert contract_information

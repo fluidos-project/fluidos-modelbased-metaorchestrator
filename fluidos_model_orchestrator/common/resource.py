@@ -105,17 +105,14 @@ class ResourceProvider(ABC):
     def get_label(self) -> dict[str, str]:
         raise NotImplementedError("Abstract method")
 
-    # def __str__(self) -> str:
-    #     return f"{self.id=}: {self.flavor=}"
-
     @abstractmethod
     def to_json(self) -> dict[str, Any]:
         raise NotImplementedError("Abstract method")
 
     def __str__(self) -> str:
-        return f"Resource Provider: {
+        return f"{
             str(type(self)).split("'")[1].split(".")[-1]  # retrieve only class name
-        }[{self.flavor.metadata.name}]"
+        }[{self.flavor.metadata.name}{{{self.flavor.spec.owner.get("nodeID")}@{self.flavor.spec.owner.get("domain")}}}]"
 
 
 class ExternalResourceProvider(ABC):
