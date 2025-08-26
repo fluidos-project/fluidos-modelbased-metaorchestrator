@@ -112,7 +112,7 @@ class ResourceProvider(ABC):
     def __str__(self) -> str:
         return f"{
             str(type(self)).split("'")[1].split(".")[-1]  # retrieve only class name
-        }[{self.flavor.metadata.name}{{{self.flavor.spec.owner.get("nodeID")}@{self.flavor.spec.owner.get("domain")}}}]"
+        }[{self.flavor.metadata.name}{{{self.flavor.spec.owner.get('nodeID')}@{self.flavor.spec.owner.get('domain')}}}]"
 
 
 class ExternalResourceProvider(ABC):
