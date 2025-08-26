@@ -66,7 +66,7 @@ async def redeploy(name: str, namespace: str, kind: str, provider: ResourceProvi
                 "spec": {
                     "template": {
                         "spec": {
-                            "nodeselector": new_label
+                            "nodeSelector": new_label
                         }
                     }
                 }
