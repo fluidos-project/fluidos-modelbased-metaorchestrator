@@ -1,0 +1,103 @@
+apiVersion: fluidos.eu/v1
+kind: FLUIDOSDeployment
+metadata:
+  name: temp-sensor
+  namespace: sensors
+  annotations:
+    fluidos-intent-sensor: "humidity"
+    fluidos-intent-latency: "100"
+spec:
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    namespace: sensors
+    name: temp-sensor
+    labels:
+      app: temp-sensor
+  spec:
+    containers:
+      - name: sensor
+        image: python:3.11-slim
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/sh","-c"]
+        args:
+          - |
+            pip install --quiet flask && \
+            python - <<'PY'
+            from flask import Flask, jsonify
+            import random, time
+            app = Flask(__name__)
+            @app.route('/sensor')
+            def sensor():
+                data = {
+                    'timestamp': int(time.time()),
+                    'temperature': round(20 + 10*random.random(), 2),
+                    'humidity':    round(30 + 20*random.random(), 2)
+                }
+                return jsonify(data)
+            app.run(host='0.0.0.0', port=8080)
+            PY
+        ports:
+          - containerPort: 8080
+        resources:               # REQUIRED by the model
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "250m"
+            memory: "128Mi"
+
+
+
+
+# apiVersion: fluidos.eu/v1
+# kind: FLUIDOSDeployment
+# metadata:
+#   name: temp-sensor
+#   namespace: fluidos
+#   annotations:
+#     fluidos-intent-sensor: "humidity"
+#     fluidos-intent-latency: "100"
+# spec:
+#   apiVersion: v1
+#   kind: Pod
+#   metadata:
+#     namespace: sensors
+#     name: temp-sensor
+#     labels:
+#       app: temp-sensor
+#   spec:
+#     restartPolicy: Always
+#     containers:
+#       - name: sensor
+#         image: python:3.11-slim
+#         imagePullPolicy: IfNotPresent
+#         command: ["/bin/sh","-c"]
+#         args:
+#           - |
+#             python - <<'PY'
+#             from http.server import BaseHTTPRequestHandler, HTTPServer
+#             import json, random, time
+#             class Handler(BaseHTTPRequestHandler):
+#                 def do_GET(self):
+#                     if self.path == "/sensor":
+#                         data = {
+#                             "timestamp": int(time.time()),
+#                             "temperature": round(20 + 10*random.random(), 2),
+#                             "humidity":    round(30 + 20*random.random(), 2)
+#                         }
+#                         body = json.dumps(data).encode("utf-8")
+#                         self.send_response(200)
+#                         self.send_header("Content-Type","application/json")
+#                         self.send_header("Content-Length", str(len(body)))
+#                         self.end_headers()
+#                         self.wfile.write(body)
+#                     else:
+#                         self.send_response(404); self.end_headers()
+#             HTTPServer(("0.0.0.0", 8080), Handler).serve_forever()
+#             PY
+#         ports:
+#           - containerPort: 8080
+#         resources:
+#           requests: { cpu: "50m",  memory: "64Mi" }
+#           limits:   { cpu: "250m", memory: "128Mi" }
