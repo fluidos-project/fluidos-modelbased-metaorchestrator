@@ -207,8 +207,10 @@ def _validate_cyber_deception(provider: ResourceProvider, value: str) -> bool:
     if provider.flavor.spec.flavor_type.type_identifier is FlavorType.K8SLICE:
         properties = cast(FlavorK8SliceData, provider.flavor.spec.flavor_type.type_data).properties
         security_featues = properties.get("additionalProperties", {}).get("security_features", {})
-        if "cyber_deception" in security_featues:
-            return True
+        return any([
+            str(security_featues.get("cyber_deception", "false")).lower() == "true",
+            str(security_featues.get("cyber-deception", "false")).lower() == "true",
+        ])
     return False
 
 
